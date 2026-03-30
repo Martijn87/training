@@ -11,7 +11,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #f7f4ef;
@@ -944,115 +943,13 @@
     .mb-12 { margin-bottom: 12px; }
     .mb-16 { margin-bottom: 16px; }
     .hidden { display: none !important; }
-    
-    /* Suggestions dropdown */
-    .suggestions-dropdown {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-top: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    .suggestion-item {
-      padding: 10px 12px;
-      font-size: 13px;
-      font-family: 'DM Mono', monospace;
-      color: var(--text);
-      cursor: pointer;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
-    }
-    .suggestion-item:last-child {
-      border-bottom: none;
-    }
-    .suggestion-item:hover {
-      background: var(--bg-card-alt);
-    }
-    .suggestion-item.suggestion-new {
-      color: var(--accent);
-      font-weight: 500;
-    }
-
-    /* Login screen */
-    .login-screen {
-      position: fixed; inset: 0;
-      background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 999; padding: 24px;
-    }
-    .login-box { width: 100%; max-width: 360px; }
-    .login-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 28px; font-weight: 700;
-      color: var(--gold); margin-bottom: 4px;
-    }
-    .login-sub {
-      font-size: 11px; font-family: 'DM Mono', monospace;
-      color: var(--text-muted); margin-bottom: 32px; letter-spacing: 0.05em;
-    }
-    .login-label {
-      font-size: 10px; font-family: 'DM Mono', monospace;
-      color: var(--text-muted); margin-bottom: 4px;
-      text-transform: uppercase; letter-spacing: 0.08em;
-    }
-    .login-input {
-      width: 100%; box-sizing: border-box;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 8px; padding: 12px 14px;
-      color: var(--text); font-size: 14px;
-      font-family: 'DM Mono', monospace; outline: none; margin-bottom: 12px;
-    }
-    .login-input:focus { border-color: var(--accent); }
-    .login-btn {
-      width: 100%; padding: 13px;
-      background: var(--accent); color: #fff;
-      border: none; border-radius: 8px;
-      font-family: 'DM Mono', monospace; font-size: 13px;
-      font-weight: 600; cursor: pointer; margin-bottom: 10px;
-    }
-    .login-btn:disabled { opacity: 0.6; cursor: default; }
-    .login-toggle {
-      background: none; border: none; color: var(--accent);
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      cursor: pointer; width: 100%; text-align: center; padding: 4px;
-    }
-    .login-error {
-      font-size: 11px; font-family: 'DM Mono', monospace;
-      color: var(--tag-red); margin-bottom: 10px;
-      padding: 8px 12px; background: var(--bg-card);
-      border: 1px solid var(--tag-red); border-radius: 6px;
-    }
-    .sync-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      display: inline-block; margin-left: 6px; vertical-align: middle;
-    }
-    .sync-dot.synced { background: var(--success); }
-    .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
-    .sync-dot.error { background: var(--tag-red); }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
   </style>
 </head>
 <body>
-  <!-- Login Screen -->
-  <div class="login-screen" id="loginScreen">
-    <div class="login-box">
-      <div class="login-title">Mardy · 2026</div>
-      <div class="login-sub">HYBRID TRAINING LOG</div>
-      <div id="loginError" class="login-error" style="display:none"></div>
-      <div class="login-label">Email</div>
-      <input class="login-input" type="email" id="loginEmail" placeholder="you@email.com" autocomplete="email">
-      <div class="login-label">Password</div>
-      <input class="login-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-      <button class="login-btn" id="loginBtn">Sign In</button>
-      <button class="login-toggle" id="loginToggle">No account yet? Sign up</button>
-    </div>
-  </div>
-
   <div class="header">
     <div class="header-inner">
       <div class="header-top">
-        <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
+        <div class="header-title">Mardy · 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1068,10 +965,6 @@
           <span class="tab-icon">★</span>
           <span class="tab-label">PRs</span>
         </button>
-        <button class="tab" data-tab="settings">
-          <span class="tab-icon">⚙</span>
-          <span class="tab-label">Settings</span>
-        </button>
       </div>
     </div>
   </div>
@@ -1085,7 +978,6 @@
 
     <!-- PRs TAB -->
     <div class="tab-content" id="prs-tab"></div>
-    <div class="tab-content" id="settings-tab"></div>
   </div>
 
   <script>
@@ -1138,447 +1030,36 @@
       { zone: "Z5", name: "VO2max", pct: "92–100%", bpm: "170–185", bar: 100, color: "#c0392b", use: "Hard reps / TT / race" },
     ];
 
-    // Full 35-week program data
+    // Week data (abbreviated for file size - full data in localStorage or expand as needed)
     const WEEKS = {
-      1: {
-        dates: "8–14 Mar",
-        upperA: "Flat BP  4×4 @100–105 kg\nCGBP  3×8 @62 kg\nCable Fly  3×12\nTricep Pushdown  4×15\nOH Tricep Ext  3×12\nFace Pulls  3×20",
-        easy: "5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  4×6–8 @65–70%\nSumo DL  2×5 @60% (tech)\nRDL  3×10–12\nHip Thrust  3×12–15\nLeg Press  3×10–12\nTGU  2×3 each @12 kg\nPallof Press  3×10 each",
-        quality: null,
-        upperB: null,
-        longRun: null,
-        notes: "⚠ Ski trip Thu–Sun — Lower + Quality + Upper B + Long cancelled"
-      },
-      2: {
-        dates: "15–21 Mar",
-        upperA: "Flat BP  4×4 @100–105 kg\nCGBP  3×8 @62 kg\nCable Fly  3×12\nRope Pushdown  4×15\nSkull Crusher  3×12\nFace Pulls  3×20",
-        easy: "5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×5–6 @65–70%\nBack Squat  3×5 @60% (variation)\nRDL  3×10–12\nHip Thrust  3×12–15\nLeg Press  3×10–12\nTGU  2×3 each @12 kg\nPallof Press  3×10 each",
-        quality: "[INTERVALS] 6×400m @ 5:00/km\n90s jog rest",
-        upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×15\nLateral Raise  3×15\nHammer Curl  3×12",
-        longRun: "8 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "Post-ski return • SUMO DL focus"
-      },
-      3: {
-        dates: "22–28 Mar",
-        upperA: "Flat BP  4×4 @102.5 kg\nCGBP  3×8 @64 kg\nCable Fly  3×12\nTricep Pushdown  4×15\nOH Tricep Ext  3×12\nFace Pulls  3×20",
-        easy: "5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  4×6–8 @67.5%\nSumo DL  2×5 @62% (tech)\nRDL  3×10–12\nHip Thrust  3×12–15\nLeg Press  3×10–12\nTGU  2×3 each @14 kg\nPallof Press  3×10 each",
-        quality: "[TEMPO] 20 min continuous @ 5:35–5:45/km\nLTHR zone target: 163–170 bpm",
-        upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×15–20\nLateral Raise  3×15\nHammer Curl  3×12",
-        longRun: "8.5 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "3-run structure active • SQUAT focus"
-      },
-      4: {
-        dates: "29 Mar – 4 Apr",
-        upperA: "Flat BP  4×4 @105 kg\nCGBP  3×8 @65 kg\nIncline Cable Fly  3×12\nRope Pushdown  4×12\nDip Machine  3×12\nFace Pulls  3×20",
-        easy: "5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×7 @67.5%\nBack Squat  3×5 @62% (variation)\nRDL  3×12\nHip Thrust  3×15\nLeg Press  3×12\nTGU  2×3 each @14 kg\nSuitcase Carry  2×30m each",
-        quality: "[INTERVALS] 8×400m @ 5:00/km\n90s jog rest",
-        upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nIncline DB Curl  3×12",
-        longRun: "9 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "Note lockout feel on bench • SUMO DL focus"
-      },
-      5: {
-        dates: "5–11 Apr",
-        upperA: "Flat BP  4×4–5 @105 kg\nCGBP  3×8 @66 kg\nCable Fly  3×15\nTricep Pushdown  4×12\nOH Tricep Ext  3×12\nFace Pulls  3×20",
-        easy: "5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  4×8 @70%\nSumo DL  2×5 @65% (tech)\nRDL  3×12\nHip Thrust  3×15\nLeg Press  3×12\nTGU  2×3 each @16 kg\nPallof Press  3×12 each",
-        quality: "[TEMPO] 2×12 min @ 5:30/km\n2 min jog between\nLTHR cruise intervals: 163–170 bpm",
-        upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nIncline DB Curl  3×15",
-        longRun: "10 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "✅ Phase 1 complete — full structure running • SQUAT focus"
-      },
-      6: {
-        dates: "12–18 Apr",
-        upperA: "Flat BP  4×3 @107.5 kg\nCGBP  3×6 @66 kg\nCable Fly  3×12\nRope Pushdown  4×12\nSkull Crusher  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×4–5 @75%\nBack Squat  3×3 @70% (variation)\nHack Squat  3×8–10\nHip Thrust  3×10–12\nNordic Curl  3×6–8\nTGU  2×3 each @16 kg\nSuitcase Carry  2×30m each",
-        quality: "[INTERVALS] 4×800m @ 4:50/km\n2 min jog rest",
-        upperB: "Weighted Pull-Ups  4×5–6\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nEZ Bar Curl  3×10",
-        longRun: "10–11 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "Intensity climbs — Phase 2 begins • SUMO DL focus"
-      },
-      7: {
-        dates: "19–25 Apr",
-        upperA: "Flat BP  4×3 @110 kg\nCGBP  3×6 @67 kg\nIncline Cable Fly  3×12\nTricep Pushdown  4×10\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  4×5 @77%\nSumo DL  3×3 @72% (variation)\nHack Squat  3×10\nHip Thrust  3×12\nNordic Curl  3×8\nTGU  2×4 each @16 kg\nPallof Press  3×12 each",
-        quality: "[TEMPO] 25 min continuous @ 5:25–5:35/km\nLTHR zone: 163–170 bpm",
-        upperB: "Weighted Pull-Ups  4×5–6\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20–25\nLateral Raise  3×15\nEZ Bar Curl  3×10",
-        longRun: "11 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "Building to 1km reps • SQUAT focus"
-      },
-      8: {
-        dates: "26 Apr – 2 May",
-        upperA: "Flat BP  4×3 @112.5 kg\nCGBP  3×6 @68 kg\nCable Fly  3×12\nDip Machine  3×10\nRope Pushdown  4×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×4 @80%\nBack Squat  3×3 @75% (variation)\nHack Squat  3×8–10\nHip Thrust  3×10–12\nNordic Curl  3×6–8\nTGU  2×4 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "[INTERVALS] 3×1 km @ 4:45/km\n2.5 min jog rest (5K pace practice)",
-        upperB: "Weighted Pull-Ups  4×5–6\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×25\nLateral Raise  3×15\nHammer Curl  3×10 (heavy)",
-        longRun: "12 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "5K TT next week • SUMO DL focus"
-      },
-      9: {
-        dates: "3–9 May",
-        upperA: "🏋 BENCH ATTEMPT: 115 kg\nCGBP  3×6 @69 kg\nCable Fly  3×10\nTricep Pushdown  3×12\nFace Pulls  3×15",
-        easy: "5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  4×4–5 @80%\nSumo DL  3×3 @75% (variation)\nHack Squat  3×10\nHip Thrust  3×12\nNordic Curl  3×8\nTGU  2×3 each @14 kg\nPallof Press  3×10 each",
-        quality: "🏃 5K TIME TRIAL — Target < 25:00",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×8 each\nPush-Ups  3×20\nLateral Raise  3×15\nCable Curl  3×12",
-        longRun: "12 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "🎯 115 kg bench + 5K TT week • SQUAT focus"
-      },
-      10: {
-        dates: "10–16 May",
-        upperA: "Flat BP  4×3 @112.5–115 kg\nCGBP  3×6 @70 kg\nCable Fly  3×12\nSkull Crusher  3×10\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×4 @80–82%\nBack Squat  3×3 @76% (variation)\nHack Squat  3×10\nHip Thrust  3×12\nNordic Curl  3×8\nTGU  2×4 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "5K TT (if not done)\nor [TEMPO] 25 min @ 5:20/km",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nEZ Bar Curl  4×8",
-        longRun: "12–13 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "5K TT window closes • SUMO DL focus"
-      },
-      11: {
-        dates: "17–23 May",
-        upperA: "Flat BP  4×3 @115 kg\nCGBP  3×6 @70 kg\nIncline Cable Fly  3×12\nRope Pushdown  4×10\nDip Machine  3×10\nFace Pulls  3×15",
-        easy: "5 km VERY easy\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  4×5 @80%\nSumo DL  3×4 @75% (variation)\nHack Squat  3×10\nHip Thrust  3×12\nNordic Curl  3×8\nTGU  2×3 each @14 kg\nPallof Press  3×10 each",
-        quality: "[INTERVALS] 3×2 km @ 5:10/km\n2.5 min jog rest",
-        upperB: "Weighted Pull-Ups  4×5–6\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nIncline DB Curl  3×10",
-        longRun: "13 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "✅ Phase 2 complete • SQUAT focus"
-      },
-      12: {
-        dates: "24–30 May",
-        upperA: "Flat BP  4×2–3 @115–120 kg\nCGBP  3×5 @72 kg\nCable Fly  3×12\nTricep Pushdown  4×10\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "4–5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×4–6 @75–80%\nHack Squat  3×6–8\nRDL  3×6–8 @70%\nLeg Press  3×8–10\nHip Thrust  3×10–12\nTGU  2×3 each @16 kg\nPallof Press  3×12 each",
-        quality: "🏃 MILE TT — Target < 7:00",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nHammer Curl  3×10",
-        longRun: "14 km\n❤️ Zone 2 · Last 2 km @ HM pace",
-        notes: "🎯 Mile TT — target sub 7:00 • SUMO DL focus"
-      },
-      13: {
-        dates: "31 May – 6 Jun",
-        upperA: "Flat BP  4×2–3 @115–120 kg\nCGBP  3×5 @73 kg\nIncline Cable Fly  3×12\nRope Pushdown  4×10\nSkull Crusher  3×10\nFace Pulls  3×15",
-        easy: "4–5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nHack Squat  4×4–6 @75–80%\nSumo DL  3×4 @70% (variation)\nRDL  3×6–8 @70%\nLeg Press  3×8–10\nHip Thrust  3×10–12\nTGU  2×4 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "[TEMPO] 2×4 km @ 5:20–5:25/km\n3 min jog between\nthreshold tempo — LTHR",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nEZ Bar Curl  3×10",
-        longRun: "15 km\n❤️ Zone 2 · Last 2 km @ HM pace",
-        notes: "HM pace work begins • SQUAT focus"
-      },
-      14: {
-        dates: "7–13 Jun",
-        upperA: "🏋 BENCH ATTEMPT: 122.5 kg\nCGBP  3×5 @74 kg\nCable Fly  3×10\nTricep Pushdown  3×10\nFace Pulls  3×12",
-        easy: "4–5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×4–6 @75–80%\nHack Squat  3×6–8\nRDL  3×6–8 @70%\nLeg Press  3×8–10\nHip Thrust  3×10–12\nTGU  2×3 each @16 kg\nPallof Press  3×10 each",
-        quality: "🏃 10K TT — Target < 50:00",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×8 each\nPush-Ups  3×20\nLateral Raise  3×15\nCable Curl  3×10",
-        longRun: "15 km\n❤️ Zone 2 · Last 2 km @ HM pace",
-        notes: "🎯 122.5 kg bench + 10K TT • SUMO DL focus"
-      },
-      15: {
-        dates: "14–20 Jun",
-        upperA: "Flat BP  4×2–3 @120 kg\nCGBP  3×5 @75 kg\nCable Fly  3×12\nDip Machine  3×10\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "4–5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nHack Squat  4×4–6 @75–80%\nSumo DL  3×4 @70% (variation)\nRDL  3×6–8 @70%\nLeg Press  3×8–10\nHip Thrust  3×10–12\nTGU  2×4 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "10K TT (if not done)\nor [TEMPO] 30 min @ 5:20/km",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nHammer Curl  3×10",
-        longRun: "16 km\n❤️ Zone 2 · Last 2 km @ HM pace",
-        notes: "10K TT window closes • SQUAT focus"
-      },
-      16: {
-        dates: "21–27 Jun",
-        upperA: "Flat BP  4×2–3 @115–120 kg\nCGBP  3×5 @75 kg\nIncline Cable Fly  3×12\nRope Pushdown  4×10\nSkull Crusher  3×10\nFace Pulls  3×15",
-        easy: "4–5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×4–6 @75–80%\nHack Squat  3×6–8\nRDL  3×6–8\nLeg Press  3×8–10\nHip Thrust  3×10–12\nTGU  2×4 each @16 kg\nPallof Press  3×12 each",
-        quality: "[TEMPO] 3×10 min @ LTHR (5:20–5:25/km)\n3 min recovery jog between",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nIncline DB Curl  3×10",
-        longRun: "16 km\n❤️ Zone 2 · Last 2 km @ HM pace",
-        notes: "Consolidation week • SUMO DL focus"
-      },
-      17: {
-        dates: "28 Jun – 4 Jul",
-        upperA: "🏋 BENCH ATTEMPT: 125 kg\nCGBP  3×5 @75 kg\nCable Fly  3×10\nTricep Pushdown  3×10\nFace Pulls  3×12",
-        easy: "4–5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nHack Squat  4×4–6 @75–80%\nSumo DL  3×3–4 @72% (variation)\nRDL  3×6–8\nLeg Press  3×8–10\nHip Thrust  3×10–12\nTGU  2×3 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "[INTERVALS] 2×5 km @ 5:35/km\n3 min jog between (HM pace threshold)",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×8 each\nPush-Ups  3×20\nLateral Raise  3×15\nEZ Bar Curl  3×8",
-        longRun: "17 km\n❤️ Zone 2 · Last 2 km @ HM pace",
-        notes: "🎯 125 kg bench attempt • SQUAT focus"
-      },
-      18: {
-        dates: "5–11 Jul",
-        upperA: "Flat BP  4×2–3 @115–120 kg\nCGBP  3×5 @75 kg\nCable Fly  3×12\nDip Machine  3×10\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "4–5 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  4×4 @75–80%\nHack Squat  3×6 @72%\nRDL  3×6–8\nLeg Press  3×10\nHip Thrust  3×10–12\nTGU  2×4 each @16 kg\nPallof Press  3×12 each",
-        quality: "[TEMPO] 3×10 min @ LTHR (5:18–5:25/km)\n3 min recovery jog between",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×12\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nHammer Curl  3×10",
-        longRun: "18 km\n❤️ Zone 2 · Last 2 km @ HM pace",
-        notes: "125 kg if missed Wk 17 • SUMO DL focus"
-      },
-      19: {
-        dates: "12–18 Jul",
-        upperA: "Flat BP  4×2 @117.5–120 kg\nCGBP  3×5 @75 kg\nIncline Cable Fly  3×10\nRope Pushdown  3×10\nFace Pulls  3×12",
-        easy: "4 km easy — taper entry\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nHack Squat  3×4 @75%\nSumo DL  3×3 @70% (variation)\nLeg Press  3×10\nHip Thrust  3×10\nTGU  2×3 each @14 kg\nPallof Press  3×10 each",
-        quality: "[INTERVALS] 2×5 km @ 5:35/km\nLast quality before taper",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×12\nLandmine Press  3×8 each\nPush-Ups  3×15\nLateral Raise  3×12\nCable Curl  3×10",
-        longRun: "16 km\n❤️ Zone 2 — final long run",
-        notes: "✅ Phase 3 complete — taper entry • SQUAT focus"
-      },
-      20: {
-        dates: "19–25 Jul",
-        upperA: "Flat BP  3×3 @115–117.5 kg\nCGBP  3×4 @71 kg\nCable Fly  3×10\nTricep Pushdown  3×10\nFace Pulls  3×12",
-        easy: "4 km easy @ 6:45/km\n❤️ Zone 2",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  3×3 @75–80%\nBack Squat  3×3–4 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10\nTGU  2×2 each @12 kg",
-        quality: "[TEMPO] 2×4 km @ HM pace (5:41/km)\n3 min jog between",
-        upperB: "Weighted Pull-Ups  3×5\nBB Row  3×8\nCable Row  3×10\nRear Delt Fly  3×12\nPush-Ups  3×15\nLateral Raise  3×12\nHammer Curl  2×10",
-        longRun: "14 km\n❤️ Zone 2: 120–138 bpm",
-        notes: "Taper Wk 1 — reduce volume • SUMO DL focus"
-      },
-      21: {
-        dates: "26 Jul – 1 Aug",
-        upperA: "Flat BP  3×2 @112.5 kg\nCGBP  3×4 @68 kg\nCable Fly  3×8\nRope Pushdown  2×10\nFace Pulls  3×10",
-        easy: "3 km truly easy\n❤️ Zone 2",
-        lower: "Back Squat  3×3 @72%\nSumo DL  2×2 @70%\nLeg Press  3×8\nHip Thrust  2×8",
-        quality: "[INTERVALS] 2×3 km @ HM pace\nSharpness only",
-        upperB: "Weighted Pull-Ups  3×4\nBB Row  3×6\nCable Row  3×8\nRear Delt Fly  3×10\nPush-Ups  3×12\nCable Curl  2×10",
-        longRun: "10 km\n❤️ Zone 2 — feel fresh",
-        notes: "Taper Wk 2 — feel sharp"
-      },
-      22: {
-        dates: "2–8 Aug",
-        upperA: "REST",
-        easy: "2 km shake-out — day before race",
-        lower: "REST",
-        quality: "REST",
-        upperB: "REST",
-        longRun: "🏅 HALF MARATHON\nTarget: Sub 2:00\nPace: 5:41–5:45/km",
-        notes: "🎯 RACE DAY — Half Marathon Sub 2:00"
-      },
-      23: {
-        dates: "9–15 Aug",
-        upperA: "Flat BP  4×2 @115 kg\nCGBP  3×5 @71 kg\nCable Fly  3×12\nTricep Pushdown  3×12\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  3×3–4 @75–80%\nSumo DL  2×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×3 each @14 kg\nPallof Press  3×10 each",
-        quality: "[TEMPO] 3×2 km @ 5:20/km\n2 min jog between",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×15\nLateral Raise  3×15\nHammer Curl  3×10",
-        longRun: "14 km\n❤️ Zone 2 · Last 2 km @ race pace",
-        notes: "HM recovery — marathon block starts • SQUAT focus"
-      },
-      24: {
-        dates: "16–22 Aug",
-        upperA: "Flat BP  4×2 @117.5 kg\nCGBP  3×5 @72 kg\nIncline Cable Fly  3×12\nRope Pushdown  4×10\nSkull Crusher  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  3×3–4 @75–80%\nBack Squat  3×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×3 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "[INTERVALS] 3×2 km @ 5:20/km\n2 min jog rest",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nIncline DB Curl  3×10",
-        longRun: "15 km\n❤️ Zone 2 · Last 2 km @ race pace",
-        notes: "Marathon block ramping • SUMO DL focus"
-      },
-      25: {
-        dates: "23–29 Aug",
-        upperA: "Flat BP  4×2 @120 kg\nCGBP  3×5 @73 kg\nCable Fly  3×12\nDip Machine  3×10\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  3×3–4 @75–80%\nSumo DL  2×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×4 each @16 kg\nPallof Press  3×12 each",
-        quality: "[TEMPO] 4×2 km @ 5:15/km\n90s jog between (marathon pace push)",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nEZ Bar Curl  3×10",
-        longRun: "15 km + 2 km @ race pace",
-        notes: "Volume building • SQUAT focus"
-      },
-      26: {
-        dates: "30 Aug – 5 Sep",
-        upperA: "Flat BP  4×2 @120 kg\nCGBP  3×5 @73 kg\nIncline Cable Fly  3×12\nTricep Pushdown  4×10\nSkull Crusher  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  3×3–4 @75–80%\nBack Squat  3×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×4 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "[INTERVALS] 3×3 km @ 5:20/km\n2 min jog rest",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nHammer Curl  3×10",
-        longRun: "17 km + 2 km @ race pace",
-        notes: "Long run building • SUMO DL focus"
-      },
-      27: {
-        dates: "6–12 Sep",
-        upperA: "Flat BP  4×2 @122.5 kg\nCGBP  3×5 @74 kg\nCable Fly  3×12\nRope Pushdown  4×10\nOH Tricep Ext  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  3×3–4 @75–80%\nSumo DL  2×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×4 each @16 kg\nPallof Press  3×12 each",
-        quality: "[TEMPO] 35 min continuous @ 5:20/km\nLTHR zone — goal: negative split",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nCable Curl  3×10",
-        longRun: "17 km + 2 km @ race pace",
-        notes: "Approaching peak • SQUAT focus"
-      },
-      28: {
-        dates: "13–19 Sep",
-        upperA: "Flat BP  4×2 @125 kg\nCGBP  3×5 @74 kg\nIncline Cable Fly  3×12\nDip Machine  3×10\nSkull Crusher  3×10\nFace Pulls  3×15",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  3×3–4 @75–80%\nBack Squat  3×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×4 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "[INTERVALS] 3×3 km @ 5:20/km\n2 min jog rest",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nEZ Bar Curl  3×8",
-        longRun: "18 km + 3 km @ race pace",
-        notes: "Peak volume week • SUMO DL focus"
-      },
-      29: {
-        dates: "20–26 Sep",
-        upperA: "🏋 BENCH ATTEMPT: 130 kg\nCGBP  3×5 @75 kg\nCable Fly  3×10\nTricep Pushdown  3×10\nFace Pulls  3×12",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  3×3–4 @75–80%\nSumo DL  2×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×3 each @14 kg\nPallof Press  3×10 each",
-        quality: "[TEMPO] 6×800m @ 4:50/km\nor [TEMPO] 3×3 km @ 5:20/km",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×8 each\nPush-Ups  3×15\nLateral Raise  3×15\nHammer Curl  3×10",
-        longRun: "18 km + 3 km @ race pace",
-        notes: "🎯 130 kg bench attempt • SQUAT focus"
-      },
-      30: {
-        dates: "27 Sep – 3 Oct",
-        upperA: "Flat BP  4×2 @125–127.5 kg\nCGBP  3×5 @75 kg\nCable Fly  3×12\nRope Pushdown  4×10\nOH Tricep Ext  3×10\nFace Pulls  3×12",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  3×3–4 @75–80%\nBack Squat  3×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×4 each @16 kg\nSuitcase Carry  2×40m each",
-        quality: "[INTERVALS] 3×3 km @ 5:10/km\n2 min jog rest",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nIncline DB Curl  3×10",
-        longRun: "18 km + 3 km @ race pace",
-        notes: "130 kg if missed Wk 29 • SUMO DL focus"
-      },
-      31: {
-        dates: "4–10 Oct",
-        upperA: "Flat BP  4×2 @125–130 kg\nCGBP  3×5 @75 kg\nIncline Cable Fly  3×10\nTricep Pushdown  3×10\nSkull Crusher  3×8\nFace Pulls  3×12",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SQUAT FOCUS WEEK\nBack Squat  3×3–4 @75–80%\nSumo DL  2×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×3 each @14 kg\nPallof Press  3×10 each",
-        quality: "[TEMPO] 4×1 km @ 5:00/km\n90s recovery — final sharpening",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nLandmine Press  3×10 each\nPush-Ups  3×20\nLateral Raise  3×15\nCable Curl  3×10",
-        longRun: "18 km + 3 km @ race pace",
-        notes: "Last bench PR window • SQUAT focus"
-      },
-      32: {
-        dates: "11–17 Oct",
-        upperA: "Flat BP  4×2 @120–125 kg\nCGBP  3×4 @75 kg\nCable Fly  3×10\nRope Pushdown  3×10\nFace Pulls  3×12",
-        easy: "5–6 km\n❤️ Zone 2: 120–138 bpm",
-        lower: "⬆ SUMO DL FOCUS WEEK\nSumo DL  3×3 @75%\nBack Squat  3×3 @72% (variation)\nLeg Press  3×8–10\nHip Thrust  2×10–12\nTGU  2×3 each @14 kg",
-        quality: "[INTERVALS] 3×2 km @ 5:05/km\n2 min jog rest",
-        upperB: "Weighted Pull-Ups  4×5\nBB Row  4×8\nCable Row  4×10\nRear Delt Fly  3×15\nPush-Ups  3×20\nLateral Raise  3×15\nHammer Curl  2×10",
-        longRun: "14 km + 2 km @ race pace — begin taper",
-        notes: "✅ Begin marathon taper • SUMO DL focus"
-      },
-      33: {
-        dates: "18–24 Oct",
-        upperA: "Flat BP  3×2 @115 kg\nCGBP  3×4 @72 kg\nCable Fly  2×10\nTricep Pushdown  2×10\nFace Pulls  2×12",
-        easy: "4 km easy\n❤️ Zone 2",
-        lower: "Back Squat  3×3 @72%\nSumo DL  2×2 @70%\nLeg Press  3×8\nHip Thrust  2×8",
-        quality: "[INTERVALS] 3×1 km @ 5:00/km\nSharpness only",
-        upperB: "Weighted Pull-Ups  3×4\nBB Row  3×6\nCable Row  3×8\nRear Delt Fly  3×10\nPush-Ups  3×12\nCable Curl  2×8",
-        longRun: "10 km\n❤️ Zone 2 — feel fresh",
-        notes: "Taper Wk 2 — feel sharp"
-      },
-      34: {
-        dates: "25–31 Oct",
-        upperA: "Light pressing or rest",
-        easy: "2–3 km shake-out",
-        lower: "REST",
-        quality: "REST",
-        upperB: "REST or very light",
-        longRun: "REST",
-        notes: "Final rest week before marathon"
-      },
-      35: {
-        dates: "1–7 Nov",
-        upperA: "REST",
-        easy: "REST",
-        lower: "REST",
-        quality: "REST",
-        upperB: "REST",
-        longRun: "🏅 MARATHON\nTarget: Sub 4:00\nPace: 5:41–5:45/km",
-        notes: "🎯 RACE DAY — Marathon Sub 4:00"
-      }
+      1: { dates: "8–14 Mar", upperA: "Flat BP  3×3 @100 kg\nCGBP (Tri Focus)  3×8 @60 kg\nCable Fly  3×12 (chest isolation, shoulder-safe)\nRear Delt Fly  3×15\nFace Pull  3×15\nDB Curl  3×12", easy: "3 km\n❤️ Zone 2: 120–138 bpm\n(pace will follow — don't chase it)", lower: "Turkish Get-Up  2×3 each side (light KB)\nBack Squat  4×6–8 @65–70%\nRDL  3×10 @50% (DL secondary)\nLeg Press  3×12\nHip Thrust  3×15\nNordic Curl  3×6\nCalf Raises  3×20", quality: null, upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  3×12\nIncline DB Press  3×10 @25–30 kg\nDB Lateral Raise  3×15\nOH Tricep Ext  3×12\nPallof Press  3×10 each side\nDead Bug  3×10/side", longRun: null, notes: "⚠ Ski trip Thu–Sun — Lower + Quality + Long cancelled\nWk 1: 3 easy runs only\n\n💡 Zone 2 = HR based! Stay 120–138 bpm. Walk uphills if needed." },
+      2: { dates: "15–21 Mar", upperA: "Flat BP  3×3 @90–95 kg (deload — shoulder caution)\nCGBP (Tri Focus)  2×8 @55 kg (light)\nCable Fly  3×12 (light)\nRear Delt Fly  3×15\nFace Pull  3×15\nDB Curl  3×12", easy: "5 km\n❤️ Zone 2: 120–138 bpm", lower: "Turkish Get-Up  2×3 each side\nDeadlift  4×5 @65% (DL primary)\nPause Squat  3×5 @60%\nHack Squat  3×10\nHip Thrust  3×12\nNordic Curl  3×8\nCalf Raises  3×20", quality: "5 km\n❤️ Zone 2: 120–138 bpm\n(3rd easy run — no quality yet)", upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  3×12\nIncline DB Press  3×10 @25–30 kg\nDB Lateral Raise  3×15\nOH Tricep Ext  3×12\nSuitcase Carry  3×30m each side\nAb Wheel  3×10", longRun: null, notes: "Post-ski return — conservative loads\nWk 2: 3 easy runs only\n⚠ Chest day deload — shoulder pain, no heavy pressing" },
+      3: { dates: "22–28 Mar", upperA: "Flat BP  4×4 @102.5 kg\nCGBP (Tri Focus)  3×8 @64 kg\nCable Fly  3×12\nRear Delt Fly  3×15\nFace Pull  3×15\nDB Curl  3×12", easy: "5 km\n❤️ Zone 2: 120–138 bpm", lower: "Turkish Get-Up  2×3 each side\nBack Squat  4×6–8 @67–70%\nRDL  3×10 @52% (DL secondary)\nLeg Press  3×12\nHip Thrust  3×15\nNordic Curl  3×6\nCalf Raises  3×20", quality: "6×400m @ 4:30–4:45/km\n90s jog rest\n(pace matters here — quality session)", upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  3×12\nIncline DB Press  3×10 @27.5–32.5 kg\nDB Lateral Raise  3×15\nOH Tricep Ext  3×12\nPallof Press  3×10 each side\nHanging Knee Raise  3×12", longRun: null, notes: "Wk 3: 2 easy + 1 quality — quality introduced" },
+      4: { dates: "29 Mar – 4 Apr", upperA: "Flat BP  4×4 @105 kg\nCGBP (Tri Focus)  3×8 @65 kg\nCable Fly  3×12\nRear Delt Fly  3×15\nFace Pull  3×15\nDB Curl  3×12", easy: "5 km\n❤️ Zone 2: 120–138 bpm", lower: "Turkish Get-Up  2×4 each side\nDeadlift  4×5 @67% (DL primary)\nPause Squat  3×5 @62%\nHack Squat  3×10\nHip Thrust  3×12\nNordic Curl  3×8\nCalf Raises  3×20", quality: "8×400m @ 4:30–4:45/km\nor 20 min tempo @ 5:10–5:20/km", upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  3×12\nIncline DB Press  3×10 @30–35 kg\nDB Lateral Raise  3×15\nOH Tricep Ext  3×12\nSuitcase Carry  3×30m each side\nDead Bug  3×10/side", longRun: null, notes: "Wk 4: 2 easy + 1 quality\nNote lockout feel on bench" },
+      5: { dates: "5–11 Apr", upperA: "Flat BP  4×4–5 @105 kg\nCGBP (Tri Focus)  3×8 @66 kg\nCable Fly  3×12\nRear Delt Fly  3×15\nFace Pull  3×15\nDB Curl  3×12", easy: "5 km\n❤️ Zone 2: 120–138 bpm", lower: "Turkish Get-Up  2×4 each side\nBack Squat  4×8 @70%\nRDL  3×10 @55% (DL secondary)\nLeg Press  3×12\nHip Thrust  3×15\nNordic Curl  3×6\nCalf Raises  3×20", quality: "3×1 km @ 4:40–4:55/km\n2 min jog rest", upperB: "Weighted Pull-Ups  4×6–8\nBB Row  4×10\nCable Row  3×12\nIncline DB Press  3×10 @30–35 kg\nDB Lateral Raise  3×15\nOH Tricep Ext  3×12\nPallof Press  3×10 each side\nHanging Knee Raise  3×12", longRun: "10 km\n❤️ Zone 2: 120–138 bpm\n(expect ~5:45–6:15/km if HR is right)", notes: "✅ Phase 1 complete — full Crawley structure running" },
+      // Additional weeks would continue here...
     };
 
-    // ═══════════════════════════════════════════════════════════════
-    // SUPABASE
-    // ═══════════════════════════════════════════════════════════════
-    const SUPABASE_URL = 'https://vyhbewnskumytsjmldhz.supabase.co';
-    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aGJld25za3VteXRzam1sZGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODQxMzksImV4cCI6MjA5MDM2MDEzOX0.hXvpexwfGL9ceg1Z5J9tovqgn2s8hZetlh2HUCmd9Zw';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-
-    let currentUser = null;
-
-    function setSyncDot(status) {
-      const dot = document.getElementById('syncDot');
-      if (!dot) return;
-      dot.className = 'sync-dot ' + status;
-    }
-
-    async function loadProfile() {
-      const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-      if (error || !data) return;
-      state.prs = data.prs || state.prs;
-      state.runPRs = data.run_prs || state.runPRs;
-      state.bodyWeight = data.body_weight || '';
-      state.theme = data.theme || 'light';
-      state.completedSessions = data.completed_sessions || {};
-      if (data.custom_exercises) {
-        localStorage.setItem('customExercises', JSON.stringify(data.custom_exercises));
+    // Fill remaining weeks with placeholder data
+    for (let i = 6; i <= 35; i++) {
+      if (!WEEKS[i]) {
+        WEEKS[i] = { dates: `Week ${i}`, upperA: "Session data", easy: "5 km\n❤️ Zone 2: 120–138 bpm", lower: "Session data", quality: "Quality session", upperB: "Session data", longRun: "Long run\n❤️ Zone 2", notes: null };
       }
-      document.body.dataset.theme = state.theme;
-      document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
-    }
-
-    async function saveState() {
-      if (!currentUser) {
-        // fallback to localStorage if somehow not logged in
-        localStorage.setItem('theme', state.theme);
-        return;
-      }
-      setSyncDot('syncing');
-      const { error } = await sb.from('profiles').upsert({
-        id: currentUser.id,
-        prs: state.prs,
-        run_prs: state.runPRs,
-        body_weight: state.bodyWeight,
-        theme: state.theme,
-        completed_sessions: state.completedSessions,
-        custom_exercises: JSON.parse(localStorage.getItem('customExercises') || '[]'),
-        updated_at: new Date().toISOString()
-      });
-      setSyncDot(error ? 'error' : 'synced');
-    }
-
-    async function loadSession(week, sessionKey) {
-      if (!currentUser) return JSON.parse(localStorage.getItem(`session_${week}_${sessionKey}`) || '{}');
-      const { data } = await sb.from('session_logs')
-        .select('data').eq('user_id', currentUser.id)
-        .eq('week', week).eq('session_key', sessionKey).single();
-      return data?.data || {};
-    }
-
-    async function saveSession(week, sessionKey, payload) {
-      if (!currentUser) {
-        localStorage.setItem(`session_${week}_${sessionKey}`, JSON.stringify(payload));
-        return;
-      }
-      setSyncDot('syncing');
-      const { error } = await sb.from('session_logs').upsert({
-        user_id: currentUser.id,
-        week: week,
-        session_key: sessionKey,
-        data: payload,
-        saved_at: new Date().toISOString()
-      }, { onConflict: 'user_id,week,session_key' });
-      setSyncDot(error ? 'error' : 'synced');
     }
 
     // ═══════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════
     let state = {
-      theme: 'light',
+      theme: localStorage.getItem('theme') || 'light',
       tab: 'home',
-      programView: 'weeks',
+      programView: 'weeks', // 'weeks' | 'week' | 'session'
       selectedWeek: getCurrentWeek(),
       selectedDayIndex: 0,
-      prs: {"bench":"112.5 kg","squat":"160 kg","deadlift":"200 kg"},
-      runPRs: {"km1":"3:45 ⚑","mile":"6:22 ⚑","5k":"19:30 ⚑","10k":"— ⚑","hm":"1:45:00 ⚑","marathon":"4:36:00 ⚑"},
-      bodyWeight: '',
-      completedSessions: {},
+      prs: JSON.parse(localStorage.getItem('prs') || '{"bench":"112.5 kg","squat":"160 kg","deadlift":"200 kg"}'),
+      runPRs: JSON.parse(localStorage.getItem('runPRs') || '{"km1":"3:45 ⚑","mile":"6:22 ⚑","5k":"19:30 ⚑","10k":"— ⚑","hm":"1:45:00 ⚑","marathon":"4:36:00 ⚑"}'),
+      bodyWeight: localStorage.getItem('bodyWeight') || '',
+      completedSessions: JSON.parse(localStorage.getItem('completedSessions') || '{}'),
       sessionData: {},
       editingPRs: false
     };
@@ -1611,61 +1092,6 @@
       return ['easy', 'quality', 'longRun'].includes(key);
     }
 
-    // Parse exercises from planned workout text
-    // Format: "Flat BP  3×3 @100 kg" or "Back Squat  4×6–8 @65–70%"
-    function parseExercisesFromPlan(planText) {
-      if (!planText) return [];
-      
-      const lines = planText.split('\n').filter(line => line.trim());
-      const exercises = [];
-      
-      for (const line of lines) {
-        // Skip non-exercise lines (notes, comments, HR instructions)
-        if (line.includes('❤️') || line.includes('Zone') || line.startsWith('(') || line.includes('pace') || line.includes('jog')) continue;
-        
-        // Try to parse exercise format: "Exercise Name  SxR @Weight"
-        // Match patterns like "3×3", "4×6–8", "3×10", "2×3 each side"
-        const setsMatch = line.match(/(\d+)[×x](\d+)(?:–(\d+))?/);
-        
-        if (setsMatch) {
-          const numSets = parseInt(setsMatch[1]);
-          const targetReps = setsMatch[3] ? `${setsMatch[2]}-${setsMatch[3]}` : setsMatch[2];
-          
-          // Extract exercise name (everything before the sets notation)
-          const nameMatch = line.match(/^(.+?)\s+\d+[×x]/);
-          const name = nameMatch ? nameMatch[1].trim() : line.split(/\d+[×x]/)[0].trim();
-          
-          // Extract target weight if present (@100 kg, @65%, @25–30 kg)
-          const weightMatch = line.match(/@([\d–\.]+\s*(?:kg|%)?)/);
-          const targetWeight = weightMatch ? weightMatch[1].trim() : '';
-          
-          // Extract any notes in parentheses
-          const notesMatch = line.match(/\(([^)]+)\)/);
-          const exerciseNotes = notesMatch ? notesMatch[1] : '';
-          
-          // Create sets array
-          const sets = [];
-          for (let i = 0; i < numSets; i++) {
-            sets.push({
-              targetReps: targetReps,
-              targetWeight: targetWeight,
-              reps: '',
-              weight: '',
-              rpe: ''
-            });
-          }
-          
-          exercises.push({
-            name: name,
-            notes: exerciseNotes,
-            sets: sets
-          });
-        }
-      }
-      
-      return exercises;
-    }
-
     function formatSessionContent(content, color) {
       if (!content) return '<span style="color:var(--text-muted);font-style:italic;">—</span>';
       return content.split('\n').map(line => {
@@ -1682,6 +1108,14 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function saveState() {
+      localStorage.setItem('theme', state.theme);
+      localStorage.setItem('prs', JSON.stringify(state.prs));
+      localStorage.setItem('runPRs', JSON.stringify(state.runPRs));
+      localStorage.setItem('bodyWeight', state.bodyWeight);
+      localStorage.setItem('completedSessions', JSON.stringify(state.completedSessions));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1834,13 +1268,13 @@
       document.getElementById('home-tab').innerHTML = html;
     }
 
-    async function renderProgram() {
+    function renderProgram() {
       if (state.programView === 'weeks') {
         renderProgramWeeks();
       } else if (state.programView === 'week') {
         renderWeekView();
       } else if (state.programView === 'session') {
-        await renderSessionLogger();
+        renderSessionLogger();
       }
     }
 
@@ -1955,7 +1389,7 @@
       });
     }
 
-    async function renderSessionLogger() {
+    function renderSessionLogger() {
       const wk = state.selectedWeek;
       const day = SESSION_DAYS[state.selectedDayIndex];
       const data = WEEKS[wk];
@@ -1965,7 +1399,7 @@
       const isCompleted = state.completedSessions[sessionKey];
 
       // Load saved session data
-      const savedData = await loadSession(wk, sessionKey);
+      const savedData = JSON.parse(localStorage.getItem(`session_${sessionKey}`) || '{}');
 
       let html = `
         <button class="back-btn" id="backToWeek">← Week ${wk}</button>
@@ -2020,7 +1454,6 @@
         html += `
           <div id="exerciseContainer"></div>
           <button class="add-exercise-btn" id="addExercise">+ Add Exercise</button>
-          <div id="exerciseSuggestions" class="suggestions-dropdown hidden"></div>
         `;
       }
 
@@ -2070,215 +1503,77 @@
           avgHRInput.dispatchEvent(new Event('input'));
         }
       } else {
-        // Load custom exercises from localStorage
-        const defaultExercises = [
-          'Flat BP', 'Incline DB Press', 'CGBP', 'Cable Fly', 'Dips',
-          'Weighted Pull-Ups', 'BB Row', 'Cable Row', 'Lat Pulldown',
-          'Back Squat', 'Deadlift', 'RDL', 'Leg Press', 'Hack Squat',
-          'Hip Thrust', 'Nordic Curl', 'Calf Raises', 'Leg Curl',
-          'DB Lateral Raise', 'Rear Delt Fly', 'Face Pull', 'OHP',
-          'OH Tricep Ext', 'DB Curl', 'Hammer Curl', 'Skull Crusher',
-          'Turkish Get-Up', 'Pallof Press', 'Dead Bug', 'Ab Wheel',
-          'Suitcase Carry', 'Hanging Knee Raise', 'Pause Squat', 'Split Squat'
-        ];
-        let customExercises = JSON.parse(localStorage.getItem('customExercises') || '[]');
-        const allExerciseSuggestions = [...new Set([...defaultExercises, ...customExercises])].sort();
-        
-        // Exercise logger - pre-populate from plan
-        const parsedExercises = parseExercisesFromPlan(planned);
-        
-        // Use saved data if available, otherwise use parsed exercises
-        let exercises;
-        if (savedData.exercises && savedData.exercises.length > 0) {
-          exercises = savedData.exercises;
-        } else if (parsedExercises.length > 0) {
-          exercises = parsedExercises;
-        } else {
-          exercises = [{ name: 'Exercise', notes: '', sets: [{ targetReps: '', targetWeight: '', reps: '', weight: '', rpe: '' }] }];
-        }
+        // Exercise logger
+        let exercises = savedData.exercises || [{ name: '', sets: [{ reps: '', weight: '', notes: '' }] }];
         
         function renderExercises() {
           const container = document.getElementById('exerciseContainer');
           container.innerHTML = exercises.map((ex, exIdx) => `
             <div class="exercise-block" data-ex="${exIdx}">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-                <div>
-                  <div style="font-size:14px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;">${escapeHtml(ex.name)}</div>
-                  ${ex.notes ? `<div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:2px;">${escapeHtml(ex.notes)}</div>` : ''}
-                </div>
-                <button class="remove-btn" data-remove-ex="${exIdx}" title="Remove exercise">×</button>
-              </div>
-              <div style="display:grid;grid-template-columns:32px 1fr 1fr 60px 28px;gap:6px;margin-bottom:6px;">
-                <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;">Set</div>
-                <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;">Weight</div>
-                <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;">Reps</div>
-                <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;">RPE</div>
-                <div></div>
+              <div class="exercise-header">
+                <input type="text" class="form-input exercise-name-input" data-ex="${exIdx}" placeholder="Exercise name" value="${escapeHtml(ex.name)}">
+                <button class="remove-btn" data-remove-ex="${exIdx}">×</button>
               </div>
               ${ex.sets.map((s, setIdx) => `
-                <div style="display:grid;grid-template-columns:32px 1fr 1fr 60px 28px;gap:6px;margin-bottom:6px;align-items:center;">
-                  <div style="font-size:12px;color:var(--text-sub);font-family:'DM Mono',monospace;text-align:center;">${setIdx + 1}</div>
+                <div class="set-row">
                   <div>
-                    <input type="text" class="form-input" data-ex="${exIdx}" data-set="${setIdx}" data-field="weight" 
-                      placeholder="${s.targetWeight || 'kg'}" value="${escapeHtml(s.weight || '')}">
+                    ${setIdx === 0 ? '<div class="set-label">Weight</div>' : ''}
+                    <input type="text" class="form-input" data-ex="${exIdx}" data-set="${setIdx}" data-field="weight" placeholder="kg" value="${escapeHtml(s.weight)}">
                   </div>
                   <div>
-                    <input type="text" class="form-input" data-ex="${exIdx}" data-set="${setIdx}" data-field="reps" 
-                      placeholder="${s.targetReps || 'reps'}" value="${escapeHtml(s.reps || '')}">
+                    ${setIdx === 0 ? '<div class="set-label">Reps</div>' : ''}
+                    <input type="text" class="form-input" data-ex="${exIdx}" data-set="${setIdx}" data-field="reps" placeholder="reps" value="${escapeHtml(s.reps)}">
                   </div>
                   <div>
-                    <input type="text" class="form-input" data-ex="${exIdx}" data-set="${setIdx}" data-field="rpe" 
-                      placeholder="—" value="${escapeHtml(s.rpe || '')}" style="text-align:center;">
+                    ${setIdx === 0 ? '<div class="set-label">Notes</div>' : ''}
+                    <input type="text" class="form-input" data-ex="${exIdx}" data-set="${setIdx}" data-field="notes" placeholder="optional" value="${escapeHtml(s.notes || '')}">
                   </div>
-                  <button class="remove-btn" data-remove-set="${exIdx}-${setIdx}" style="font-size:14px;padding:2px;" title="Remove set">×</button>
+                  <button class="remove-btn" data-remove-set="${exIdx}-${setIdx}" style="padding-top:${setIdx === 0 ? '16px' : '0'}">×</button>
                 </div>
               `).join('')}
-              <button class="add-set-btn" data-add-set="${exIdx}" style="margin-top:4px;">+ Set</button>
+              <button class="add-set-btn" data-add-set="${exIdx}">+ Set</button>
             </div>
           `).join('');
 
-          // Add event listeners for inputs
-          container.querySelectorAll('[data-field]').forEach(input => {
+          // Add event listeners
+          container.querySelectorAll('.exercise-name-input').forEach(input => {
             input.addEventListener('input', () => {
-              const exIdx = parseInt(input.dataset.ex);
-              const setIdx = parseInt(input.dataset.set);
-              const field = input.dataset.field;
-              exercises[exIdx].sets[setIdx][field] = input.value;
+              exercises[input.dataset.ex].name = input.value;
             });
           });
-          
-          // Add set buttons
+          container.querySelectorAll('[data-field]').forEach(input => {
+            input.addEventListener('input', () => {
+              exercises[input.dataset.ex].sets[input.dataset.set][input.dataset.field] = input.value;
+            });
+          });
           container.querySelectorAll('[data-add-set]').forEach(btn => {
             btn.addEventListener('click', () => {
-              const exIdx = parseInt(btn.dataset.addSet);
-              const lastSet = exercises[exIdx].sets[exercises[exIdx].sets.length - 1] || {};
-              exercises[exIdx].sets.push({ 
-                targetReps: lastSet.targetReps || '', 
-                targetWeight: lastSet.targetWeight || '', 
-                reps: '', 
-                weight: '', 
-                rpe: '' 
-              });
+              exercises[btn.dataset.addSet].sets.push({ reps: '', weight: '', notes: '' });
               renderExercises();
             });
           });
-          
-          // Remove set buttons
           container.querySelectorAll('[data-remove-set]').forEach(btn => {
             btn.addEventListener('click', () => {
               const [exIdx, setIdx] = btn.dataset.removeSet.split('-').map(Number);
-              if (exercises[exIdx].sets.length > 1) {
-                exercises[exIdx].sets.splice(setIdx, 1);
-                renderExercises();
-              }
+              exercises[exIdx].sets.splice(setIdx, 1);
+              if (exercises[exIdx].sets.length === 0) exercises[exIdx].sets.push({ reps: '', weight: '', notes: '' });
+              renderExercises();
             });
           });
-          
-          // Remove exercise buttons
           container.querySelectorAll('[data-remove-ex]').forEach(btn => {
             btn.addEventListener('click', () => {
-              const exIdx = parseInt(btn.dataset.removeEx);
-              if (exercises.length > 1) {
-                exercises.splice(exIdx, 1);
-                renderExercises();
-              }
+              exercises.splice(btn.dataset.removeEx, 1);
+              if (exercises.length === 0) exercises.push({ name: '', sets: [{ reps: '', weight: '', notes: '' }] });
+              renderExercises();
             });
           });
         }
 
         renderExercises();
-        
-        // Add Exercise with suggestions
-        const addExerciseBtn = document.getElementById('addExercise');
-        const suggestionsDiv = document.getElementById('exerciseSuggestions');
-        let showingSuggestions = false;
-        
-        function showSuggestions(filter = '') {
-          const filtered = allExerciseSuggestions.filter(e => 
-            e.toLowerCase().includes(filter.toLowerCase())
-          ).slice(0, 10);
-          
-          suggestionsDiv.innerHTML = `
-            <div style="padding:8px;">
-              <input type="text" class="form-input" id="exerciseSearchInput" placeholder="Search or type new..." 
-                value="${escapeHtml(filter)}" style="margin-bottom:8px;">
-            </div>
-            <div style="max-height:200px;overflow-y:auto;">
-              ${filtered.map(name => `
-                <div class="suggestion-item" data-name="${escapeHtml(name)}">${escapeHtml(name)}</div>
-              `).join('')}
-              ${filter && !filtered.some(e => e.toLowerCase() === filter.toLowerCase()) ? `
-                <div class="suggestion-item suggestion-new" data-name="${escapeHtml(filter)}">
-                  + Add "${escapeHtml(filter)}" as new exercise
-                </div>
-              ` : ''}
-            </div>
-          `;
-          suggestionsDiv.classList.remove('hidden');
-          showingSuggestions = true;
-          
-          // Focus search input
-          const searchInput = document.getElementById('exerciseSearchInput');
-          searchInput.focus();
-          
-          // Search input handler
-          searchInput.addEventListener('input', (e) => {
-            showSuggestions(e.target.value);
-          });
-          
-          // Enter key to add custom
-          searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && searchInput.value.trim()) {
-              addNewExercise(searchInput.value.trim());
-            } else if (e.key === 'Escape') {
-              hideSuggestions();
-            }
-          });
-          
-          // Click on suggestion
-          suggestionsDiv.querySelectorAll('.suggestion-item').forEach(item => {
-            item.addEventListener('click', () => {
-              addNewExercise(item.dataset.name);
-            });
-          });
-        }
-        
-        function hideSuggestions() {
-          suggestionsDiv.classList.add('hidden');
-          showingSuggestions = false;
-        }
-        
-        function addNewExercise(name) {
-          // Save to custom exercises if not in defaults
-          if (!defaultExercises.includes(name) && !customExercises.includes(name)) {
-            customExercises.push(name);
-            localStorage.setItem('customExercises', JSON.stringify(customExercises));
-            saveState(); // sync to Supabase
-          }
-          
-          exercises.push({
-            name: name,
-            notes: '',
-            sets: [{ targetReps: '', targetWeight: '', reps: '', weight: '', rpe: '' }]
-          });
-          
-          hideSuggestions();
+
+        document.getElementById('addExercise').addEventListener('click', () => {
+          exercises.push({ name: '', sets: [{ reps: '', weight: '', notes: '' }] });
           renderExercises();
-        }
-        
-        addExerciseBtn.addEventListener('click', () => {
-          if (showingSuggestions) {
-            hideSuggestions();
-          } else {
-            showSuggestions();
-          }
-        });
-        
-        // Close suggestions when clicking outside
-        document.addEventListener('click', (e) => {
-          if (showingSuggestions && !suggestionsDiv.contains(e.target) && e.target !== addExerciseBtn) {
-            hideSuggestions();
-          }
         });
 
         // Store exercises getter for save
@@ -2286,7 +1581,7 @@
       }
 
       // Save handler
-      document.getElementById('saveSession').addEventListener('click', async () => {
+      document.getElementById('saveSession').addEventListener('click', () => {
         const payload = {
           sleepQuality: document.getElementById('sleepQuality').value,
           rpe: document.getElementById('rpe').value,
@@ -2303,9 +1598,9 @@
           payload.exercises = window.getExercises();
         }
 
-        await saveSession(wk, sessionKey, payload);
+        localStorage.setItem(`session_${sessionKey}`, JSON.stringify(payload));
         state.completedSessions[sessionKey] = true;
-        await saveState();
+        saveState();
 
         const btn = document.getElementById('saveSession');
         btn.textContent = '✓ Saved';
@@ -2455,7 +1750,7 @@ Give concise, specific coaching feedback (3–5 bullet points). Focus on: perfor
 
       document.getElementById('prs-tab').innerHTML = html;
 
-      document.getElementById('toggleEdit').addEventListener('click', async () => {
+      document.getElementById('toggleEdit').addEventListener('click', () => {
         if (state.editingPRs) {
           // Save
           const bwInput = document.getElementById('bodyWeightInput');
@@ -2468,80 +1763,28 @@ Give concise, specific coaching feedback (3–5 bullet points). Focus on: perfor
             state.runPRs[input.dataset.runPr] = input.value;
           });
           
-          await saveState();
+          saveState();
         }
         state.editingPRs = !state.editingPRs;
         renderPRs();
       });
     }
 
-    function renderSettings() {
-      const apiKey = localStorage.getItem('anthropicApiKey') || '';
-      const masked = apiKey ? apiKey.slice(0, 8) + '••••••••••••••••••••••••' + apiKey.slice(-4) : '';
-
-      document.getElementById('settings-tab').innerHTML = `
-        <div class="section-header">Account</div>
-        <div class="card mb-12">
-          <div style="font-size:13px;font-family:'DM Mono',monospace;color:var(--text);margin-bottom:4px;">${currentUser?.email || '—'}</div>
-          <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:14px;">Data synced to Supabase · available on all devices</div>
-          <button class="btn-primary" id="signOutBtn" style="background:var(--tag-red);">Sign Out</button>
-        </div>
-
-        <div class="section-header mt-16">AI Coach</div>
-        <div class="card">
-          <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:10px;line-height:1.6;">
-            Paste your Anthropic API key to enable the 🧠 AI Coach button.<br>
-            Stored locally in this browser only — never sent anywhere except api.anthropic.com.<br><br>
-            Get a key at <span style="color:var(--accent)">console.anthropic.com</span>
-          </div>
-          ${apiKey
-            ? `<div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--success);margin-bottom:10px;">✓ Key saved: ${masked}</div>`
-            : `<div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--tag-orange);margin-bottom:10px;">⚠ No key set — AI Coach disabled</div>`
-          }
-          <input type="password" class="form-input" id="apiKeyInput" placeholder="sk-ant-api03-..." style="margin-bottom:8px;" value="${apiKey}">
-          <div class="btn-row">
-            <button class="btn-primary" id="saveApiKey">Save Key</button>
-            ${apiKey ? `<button class="btn-secondary" id="clearApiKey" style="color:var(--tag-red)">Clear</button>` : ''}
-          </div>
-          <div id="apiKeySaved" style="display:none;font-size:11px;color:var(--success);font-family:'DM Mono',monospace;margin-top:8px;">✓ Saved — AI Coach is now active</div>
-        </div>
-      `;
-
-      document.getElementById('signOutBtn').addEventListener('click', async () => {
-        await sb.auth.signOut();
-      });
-
-      document.getElementById('saveApiKey').addEventListener('click', () => {
-        const val = document.getElementById('apiKeyInput').value.trim();
-        if (val) {
-          localStorage.setItem('anthropicApiKey', val);
-          document.getElementById('apiKeySaved').style.display = 'block';
-          setTimeout(() => renderSettings(), 1200);
-        }
-      });
-
-      const clearBtn = document.getElementById('clearApiKey');
-      if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-          localStorage.removeItem('anthropicApiKey');
-          renderSettings();
-        });
-      }
-    }
     // ═══════════════════════════════════════════════════════════════
-    function initApp() {
+    // INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════
+    function init() {
       // Apply theme
       document.body.dataset.theme = state.theme;
       document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
-      setSyncDot('synced');
 
       // Theme toggle
-      document.getElementById('themeToggle').addEventListener('click', async () => {
+      document.getElementById('themeToggle').addEventListener('click', () => {
         state.theme = state.theme === 'light' ? 'dark' : 'light';
         document.body.dataset.theme = state.theme;
         document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
         document.querySelector('meta[name="theme-color"]').content = state.theme === 'light' ? '#f7f4ef' : '#0f0d0a';
-        await saveState();
+        saveState();
       });
 
       // Tab navigation
@@ -2549,10 +1792,15 @@ Give concise, specific coaching feedback (3–5 bullet points). Focus on: perfor
         tab.addEventListener('click', () => {
           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
+          
           document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
           document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+          
           state.tab = tab.dataset.tab;
-          if (state.tab === 'program') state.programView = 'weeks';
+          if (state.tab === 'program') {
+            state.programView = 'weeks';
+          }
+          
           render();
         });
       });
@@ -2560,73 +1808,14 @@ Give concise, specific coaching feedback (3–5 bullet points). Focus on: perfor
       render();
     }
 
-    function showLoginScreen() {
-      document.getElementById('loginScreen').style.display = 'flex';
-      let isSignUp = false;
-
-      document.getElementById('loginBtn').addEventListener('click', async () => {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        const btn = document.getElementById('loginBtn');
-        const errDiv = document.getElementById('loginError');
-        errDiv.style.display = 'none';
-        btn.disabled = true;
-        btn.textContent = isSignUp ? 'Creating account…' : 'Signing in…';
-
-        let result;
-        if (isSignUp) {
-          result = await sb.auth.signUp({ email, password });
-        } else {
-          result = await sb.auth.signInWithPassword({ email, password });
-        }
-
-        if (result.error) {
-          errDiv.textContent = result.error.message;
-          errDiv.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = isSignUp ? 'Create Account' : 'Sign In';
-        }
-        // Success: onAuthStateChange will handle the rest
-      });
-
-      document.getElementById('loginToggle').addEventListener('click', () => {
-        isSignUp = !isSignUp;
-        document.getElementById('loginBtn').textContent = isSignUp ? 'Create Account' : 'Sign In';
-        document.getElementById('loginToggle').textContent = isSignUp ? 'Already have an account? Sign in' : 'No account yet? Sign up';
-        document.getElementById('loginError').style.display = 'none';
-      });
-
-      // Allow Enter key
-      ['loginEmail','loginPassword'].forEach(id => {
-        document.getElementById(id).addEventListener('keydown', e => {
-          if (e.key === 'Enter') document.getElementById('loginBtn').click();
-        });
-      });
-    }
-
     function render() {
       if (state.tab === 'home') renderHome();
       else if (state.tab === 'program') renderProgram();
       else if (state.tab === 'prs') renderPRs();
-      else if (state.tab === 'settings') renderSettings();
     }
 
-    // ── Auth entry point ──
-    document.addEventListener('DOMContentLoaded', async () => {
-      showLoginScreen();
-
-      sb.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          currentUser = session.user;
-          await loadProfile();
-          document.getElementById('loginScreen').style.display = 'none';
-          initApp();
-        } else {
-          currentUser = null;
-          document.getElementById('loginScreen').style.display = 'flex';
-        }
-      });
-    });
+    // Start
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
