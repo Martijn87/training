@@ -2,7 +2,7 @@
   "name": "Mardy · 2026 Training",
   "short_name": "Training",
   "description": "Hybrid training log - 35 week program",
-  "start_url": "/",
+  "start_url": "/training/",
   "display": "standalone",
   "background_color": "#f7f4ef",
   "theme_color": "#2a5298",
