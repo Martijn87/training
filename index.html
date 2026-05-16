@@ -1390,7 +1390,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.07 · built 16 May 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.08 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -2321,6 +2321,19 @@
       // goal_set has to write through to state.milestones; the override
       // record is the audit/undo trail. Failures here are non-fatal (the
       // override is still stored; the user can re-trigger if needed).
+      // v1.08 — goal_delete: remove the milestone from state.milestones. The
+      // override payload carries a snapshot of the deleted record so undo can
+      // restore it.
+      if (upgraded.kind === 'goal_delete' && upgraded.payload && upgraded.payload.milestoneLabel) {
+        try {
+          if (!Array.isArray(state.milestones)) getMilestones();
+          const idx = state.milestones.findIndex(x => x.label === upgraded.payload.milestoneLabel);
+          if (idx >= 0) {
+            state.milestones.splice(idx, 1);
+            localStorage.setItem('milestones', JSON.stringify(state.milestones));
+          }
+        } catch (e) { console.warn('goal_delete side-effect failed:', e); }
+      }
       if (upgraded.kind === 'goal_set' && upgraded.payload && upgraded.payload.milestoneLabel && upgraded.payload.newDate) {
         try {
           if (!Array.isArray(state.milestones)) getMilestones();
@@ -2347,6 +2360,22 @@
       if (!state.programOverrides || state.programOverrides.length === 0) return false;
       // v1.05 — kind-aware undo: goal_set needs to restore state.milestones.
       const last = state.programOverrides[state.programOverrides.length - 1];
+      // v1.08 — undo a goal_delete by re-inserting the snapshotted milestone.
+      if (last && last.kind === 'goal_delete' && last.payload && last.payload.milestoneLabel && last.payload.snapshotDate) {
+        try {
+          if (!Array.isArray(state.milestones)) getMilestones();
+          // Don't duplicate if it somehow already exists.
+          if (!state.milestones.find(x => x.label === last.payload.milestoneLabel)) {
+            state.milestones.push({
+              label: last.payload.milestoneLabel,
+              date:  last.payload.snapshotDate,
+              emoji: last.payload.snapshotEmoji || '🎯'
+            });
+            state.milestones.sort((a, b) => new Date(a.date) - new Date(b.date));
+            localStorage.setItem('milestones', JSON.stringify(state.milestones));
+          }
+        } catch (e) { console.warn('goal_delete undo failed:', e); }
+      }
       if (last && last.kind === 'goal_set' && last.payload && last.payload.milestoneLabel) {
         try {
           if (!Array.isArray(state.milestones)) getMilestones();
@@ -2428,7 +2457,9 @@ const DOW_LABEL_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Frid
 const COACH_HOLD_EXERCISES = {
   bench:    { sessions: ['upperA', 'upperB'], pattern: /\b(?:flat\s+)?(?:bp|bench(?:\s+press)?)\b/i, label: 'Bench' },
   squat:    { sessions: ['lower'],            pattern: /\bsquat\b/i,                                  label: 'Squat' },
-  deadlift: { sessions: ['lower'],            pattern: /\b(?:deadlift|\bdl\b|sumo)\b/i,               label: 'Deadlift' }
+  deadlift: { sessions: ['lower'],            pattern: /\b(?:deadlift|\bdl\b|sumo)\b/i,               label: 'Deadlift' },
+  // v1.08: OHP added for SET_LIFT (HOLD_FLAT doesn't use this entry but it's harmless).
+  ohp:      { sessions: ['upperA', 'upperB'], pattern: /\b(?:ohp|overhead\s+press)\b/i,                label: 'OHP' }
 };
 
 function findSessionsInText(t) {
@@ -2473,6 +2504,46 @@ function parseCoachIntent(text, currentWk) {
   const t = (text || '').toLowerCase().trim();
   if (!t) return { intent: 'empty' };
   if (/^(?:help|what can you do|examples?)\b/i.test(t)) return { intent: 'help' };
+
+  // ─── v1.08 query intents (placed first so they win over operation patterns) ───
+
+  // QUERY_NEXT: "what's tomorrow" / "what's today" / "what's next" / "what's planned for thursday"
+  const qnext = t.match(/^what'?s\s+(?:planned\s+(?:for\s+|on\s+)?|on\s+)?(today|tomorrow|next|this\s+week|the\s+week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i);
+  if (qnext) {
+    return { intent: 'QUERY_NEXT', params: { when: qnext[1].toLowerCase() } };
+  }
+
+  // QUERY_WEEK: "what week am i in" / "which week"
+  if (/^(?:what|which)\s+week\b/i.test(t)) {
+    return { intent: 'QUERY_WEEK', params: {} };
+  }
+
+  // QUERY_COUNTDOWN: "how long until marathon" / "weeks until HM" / "how many days until X"
+  const qcd = t.match(/(?:how\s+(?:long|many\s+(?:days|weeks))|days|weeks)\s+(?:until|to|till)\s+(?:the\s+|my\s+)?([\w\s\-:'.()]+?)(?:\?|$)/i);
+  if (qcd) {
+    return { intent: 'QUERY_COUNTDOWN', params: { target: qcd[1].trim() } };
+  }
+
+  // QUERY_MILESTONES: "show milestones" / "list my races" / "upcoming races"
+  if (/^(?:show|list|display)\s+(?:my\s+|the\s+|all\s+)?(?:milestones?|races?|targets?|goals?|upcoming)\b/i.test(t)
+      || /^upcoming\s+(?:races?|milestones?)\b/i.test(t)) {
+    return { intent: 'QUERY_MILESTONES', params: {} };
+  }
+
+  // QUERY_PR: "what's my bench PR" / "show my PRs" / "best bench"
+  const qpr = t.match(/^(?:what'?s|show|list)\s+(?:my\s+)?(?:(bench|squat|deadlift|dead\s*lift|ohp)\s+)?(?:pr|prs|personal\s+records?|bests?)\b/i);
+  if (qpr) {
+    const lift = qpr[1] ? qpr[1].toLowerCase().replace(/\s+/g, '') : null;
+    return { intent: 'QUERY_PR', params: { lift } };
+  }
+
+  // ─── v1.08 operation intents ───
+
+  // DELETE_MILESTONE: "remove the 5k milestone" / "delete 10k race"
+  const delMs = t.match(/^(?:remove|delete|drop|cancel)\s+(?:the\s+|my\s+)?(.+?)\s+(?:milestone|race|goal|target)s?\b/i);
+  if (delMs) {
+    return { intent: 'DELETE_MILESTONE', params: { labelHint: delMs[1].trim() } };
+  }
 
   const wk = parseWeekFromText(t, currentWk);
 
@@ -2541,6 +2612,66 @@ function parseCoachIntent(text, currentWk) {
     // Marathon mentioned with a verb but no parseable date — surface an
     // error so the user gets a useful hint rather than 'unknown'.
     return { intent: 'ANCHOR_GOAL_NEEDS_DATE' };
+  }
+
+  // SET_LIFT: "set bench to 110 next week" / "bench 110 next week" / "bump squat to 165"
+  // Requires lift name + a weight number; 'kg' is optional (most users skip it
+  // in casual phrasing); requires an action verb so queries don't match.
+  const liftRe = /\b(bench|squat|deadlift|dead\s*lift|ohp|overhead\s+press)\b/i;
+  const setLiftWeight = t.match(/\b(\d+(?:\.\d+)?)\s*(?:kg)?\b/i);
+  if (liftRe.test(t) && setLiftWeight && /\b(set|bump|change|make|raise|drop|reduce)\b/i.test(t)) {
+    const liftMatch = t.match(liftRe);
+    const exNorm = liftMatch[1].toLowerCase().replace(/\s+/g, '').replace('overheadpress', 'ohp');
+    // Default target week: NEXT week unless the user said "this week" / "wk N".
+    let targetWk = currentWk + 1;
+    const wkMatch = t.match(/(?:in\s+)?(?:wk\.?\s*|week\s+)(\d+)/i);
+    if (wkMatch) targetWk = parseInt(wkMatch[1], 10);
+    else if (/\bthis\s+week\b/i.test(t)) targetWk = currentWk;
+    else if (/\bnext\s+week\b/i.test(t)) targetWk = currentWk + 1;
+    return { intent: 'SET_LIFT', params: { exercise: exNorm, weight: parseFloat(setLiftWeight[1]), week: targetWk } };
+  }
+
+  // SET_LONG_RUN: "make long run 20 km this week" / "long run 18 km next week"
+  const longRunMatch = t.match(/\blong\s*run\b[^.]*?\b(\d+(?:\.\d+)?)\s*km\b/i);
+  if (longRunMatch) {
+    let targetWk = currentWk;
+    const wkMatch = t.match(/(?:in\s+)?(?:wk\.?\s*|week\s+)(\d+)/i);
+    if (wkMatch) targetWk = parseInt(wkMatch[1], 10);
+    else if (/\bnext\s+week\b/i.test(t)) targetWk = currentWk + 1;
+    return { intent: 'SET_LONG_RUN', params: { km: parseFloat(longRunMatch[1]), week: targetWk } };
+  }
+
+  // REST_WEEK: "recovery week" / "easy week" / "make next week a recovery week"
+  // Distinct from DELOAD_NEXT — softer, drops intensity rather than slashing weights.
+  // Excludes the explicit "deload" keyword which has its own intent.
+  if (/\b(?:recovery|easy)\s+week\b/i.test(t) && !/\bdeload\b/i.test(t)) {
+    let targetWk = currentWk;
+    const wkMatch = t.match(/(?:in\s+)?(?:wk\.?\s*|week\s+)(\d+)/i);
+    if (wkMatch) targetWk = parseInt(wkMatch[1], 10);
+    else if (/\bnext\s+week\b/i.test(t)) targetWk = currentWk + 1;
+    return { intent: 'REST_WEEK', params: { week: targetWk } };
+  }
+
+  // SKIP_SESSION: "skip wednesday" / "rest tomorrow" / "skip the run today" / "skip legs this week"
+  // Fires on "skip" verb OR "rest" + a day/today/tomorrow reference.
+  const hasSkipVerb = /\bskip\b/i.test(t);
+  const hasRestDay = /\brest\b/i.test(t) && (findDaysInText(t).length > 0 || /\b(today|tomorrow)\b/i.test(t));
+  if (hasSkipVerb || hasRestDay) {
+    let targetDow = null;
+    let targetSession = null;
+    const days = findDaysInText(t);
+    if (days.length > 0) targetDow = days[0];
+    else if (/\btomorrow\b/i.test(t)) targetDow = (new Date().getDay() + 1) % 7;
+    else if (/\btoday\b/i.test(t))    targetDow = new Date().getDay();
+    const sessions = findSessionsInText(t);
+    if (sessions.length > 0) targetSession = sessions[0];
+    if (targetDow !== null || targetSession !== null) {
+      let targetWk = currentWk;
+      const wkMatch = t.match(/(?:in\s+)?(?:wk\.?\s*|week\s+)(\d+)/i);
+      if (wkMatch) targetWk = parseInt(wkMatch[1], 10);
+      else if (/\bnext\s+week\b/i.test(t)) targetWk = currentWk + 1;
+      return { intent: 'SKIP_SESSION', params: { dow: targetDow, sessionKey: targetSession, week: targetWk } };
+    }
   }
 
   // SHIFT: 'move/shift <session> to <day>' (with optional 'from <day>')
@@ -2940,6 +3071,296 @@ function coachResumeAnchorGoal(msgId) {
 }
 
 
+
+
+// ─────────────────────────────────────────────────────────────────────
+// v1.08 — additional offline intents
+// ─────────────────────────────────────────────────────────────────────
+
+// Day-of-week helpers for queries.
+function coachTodayDow() { return new Date().getDay(); }
+
+// Resolve "when" → dow integer (0..6) or null for "next".
+function coachResolveWhen(when) {
+  const today = coachTodayDow();
+  switch ((when || '').toLowerCase()) {
+    case 'today':    return today;
+    case 'tomorrow': return (today + 1) % 7;
+    case 'monday':   return 1;
+    case 'tuesday':  return 2;
+    case 'wednesday':return 3;
+    case 'thursday': return 4;
+    case 'friday':   return 5;
+    case 'saturday': return 6;
+    case 'sunday':   return 0;
+    default:         return null; // 'next' / 'this week' / 'the week'
+  }
+}
+
+// ── Query planners (no changes; return { message }) ──────────────────
+
+function planQueryNext({ when }) {
+  const wk = getCurrentWeek();
+  const sched = getWeeklySchedule(wk);
+  const dow = coachResolveWhen(when);
+  // Multi-day summary for 'next'/'this week'/'the week'
+  if (dow === null || /week/i.test(when || '')) {
+    const today = coachTodayDow();
+    const lines = [];
+    for (let i = 0; i < 7; i++) {
+      const d = (today + i) % 7;
+      const sk = sched[d];
+      if (!sk) { lines.push(DOW_LABEL_FULL[d] + ': rest'); continue; }
+      const planned = resolvePlanned(wk, sk);
+      const oneLine = (planned || '').split('\n')[0].slice(0, 60);
+      lines.push(DOW_LABEL_FULL[d] + ' (' + SESSION_KEY_LABEL[sk] + '): ' + (oneLine || '(no content)'));
+    }
+    return { message: 'Wk ' + wk + ' from ' + DOW_LABEL_FULL[today] + ':\n' + lines.join('\n') };
+  }
+  // Single-day detail
+  const sk = sched[dow];
+  if (!sk) return { message: DOW_LABEL_FULL[dow] + ' is a rest day. Nothing planned.' };
+  const planned = resolvePlanned(wk, sk);
+  return { message: DOW_LABEL_FULL[dow] + ' (Wk ' + wk + ' · ' + SESSION_KEY_LABEL[sk] + '):\n\n' + (planned || '(no content)') };
+}
+
+function planQueryWeek() {
+  const wk = getCurrentWeek();
+  const phase = (typeof getPhase === 'function') ? getPhase(wk) : null;
+  const phaseStr = phase && phase.label ? phase.label : '';
+  // Days into the program
+  const start = new Date(2026, 2, 8);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const daysIn = Math.floor((today - start) / 86400000);
+  return { message: 'Week ' + wk + (phaseStr ? ' — ' + phaseStr : '') + '.\nDay ' + (daysIn + 1) + ' of the 35-week program.' };
+}
+
+function planQueryCountdown({ target }) {
+  const milestones = (typeof getMilestones === 'function') ? getMilestones() : (state.milestones || []);
+  if (!Array.isArray(milestones) || milestones.length === 0) {
+    return { error: 'No milestones set — nothing to count down to.' };
+  }
+  const targetNorm = (target || '').toLowerCase().trim();
+  // Fuzzy match: substring in either direction
+  const m = milestones.find(ms =>
+    ms.label.toLowerCase().includes(targetNorm) || targetNorm.includes(ms.label.toLowerCase().split(' ')[0])
+  );
+  if (!m) {
+    const names = milestones.map(x => '"' + x.label + '"').join(', ');
+    return { error: 'Couldn\'t match "' + target + '" to a milestone. Yours: ' + names + '.' };
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target_d = new Date(m.date); target_d.setHours(0,0,0,0);
+  const days = Math.round((target_d - today) / 86400000);
+  if (days < 0) return { message: m.label + ' (' + coachDateLabel(m.date) + ') was ' + (-days) + ' day' + (-days === 1 ? '' : 's') + ' ago.' };
+  if (days === 0) return { message: m.label + ' is today.' };
+  const weeks = Math.floor(days / 7);
+  const remDays = days % 7;
+  const wkStr = weeks > 0 ? weeks + ' week' + (weeks === 1 ? '' : 's') : '';
+  const dayStr = remDays > 0 ? remDays + ' day' + (remDays === 1 ? '' : 's') : '';
+  const joined = [wkStr, dayStr].filter(Boolean).join(' ' + (wkStr && dayStr ? 'and ' : '') + '').trim() || days + ' days';
+  return { message: m.label + ' (' + coachDateLabel(m.date) + ') is in ' + joined + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').' };
+}
+
+function planQueryMilestones() {
+  const milestones = (typeof getMilestones === 'function') ? getMilestones() : (state.milestones || []);
+  if (!Array.isArray(milestones) || milestones.length === 0) {
+    return { message: 'No milestones set yet. Use "add a 10k on jul 12" to add one.' };
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = milestones
+    .filter(m => new Date(m.date).setHours(0,0,0,0) >= today.getTime())
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (upcoming.length === 0) return { message: 'No upcoming milestones — all dates are in the past.' };
+  const lines = upcoming.map(m => {
+    const d = Math.round((new Date(m.date).setHours(0,0,0,0) - today.getTime()) / 86400000);
+    return (m.emoji || '·') + ' ' + m.label + ' — ' + coachDateLabel(m.date) + ' (' + d + 'd)';
+  });
+  return { message: 'Upcoming milestones:\n' + lines.join('\n') };
+}
+
+function planQueryPR({ lift }) {
+  const prs = state.prs || {};
+  const liftMap = { bench: 'bench', squat: 'squat', deadlift: 'deadlift', ohp: 'ohp' };
+  if (lift && liftMap[lift]) {
+    const v = prs[liftMap[lift]];
+    return { message: (lift.charAt(0).toUpperCase() + lift.slice(1)) + ' PR: ' + (v ? v + ' kg' : 'not set') + '.' };
+  }
+  const order = ['bench', 'squat', 'deadlift', 'ohp'];
+  const lines = order.filter(k => prs[k]).map(k => k.charAt(0).toUpperCase() + k.slice(1) + ': ' + prs[k] + ' kg');
+  if (lines.length === 0) return { message: 'No PRs recorded yet. Log a session and they\'ll auto-populate.' };
+  return { message: 'Strength PRs:\n' + lines.join('\n') };
+}
+
+// ── Operation planners (produce changes) ─────────────────────────────
+
+function planSkipSession({ dow, sessionKey, week }) {
+  if (!WEEKS[week]) return { error: 'Wk ' + week + ' isn\'t in the program.' };
+  const sched = getWeeklySchedule(week);
+  let targetSession = sessionKey;
+  if (!targetSession && Number.isInteger(dow)) targetSession = sched[dow];
+  if (!targetSession) return { error: 'No session to skip — that day is already rest, or I couldn\'t resolve which session you meant.' };
+  const planned = resolvePlanned(week, targetSession);
+  if (!planned) return { error: 'No planned content for ' + SESSION_KEY_LABEL[targetSession] + ' in Wk ' + week + '.' };
+  const newValue = 'REST — session skipped\n(Original plan preserved in Settings → Program Updates if you want to restore.)';
+  const change = {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'text_replace',
+    week, sessionKey: targetSession,
+    payload: { oldValue: planned, newValue },
+    oldValue: planned, newValue,
+    label: 'Wk ' + week + ' ' + SESSION_KEY_LABEL[targetSession] + ': skipped',
+    principleRefs: [],
+    rationale: 'User-requested skip. Undo in Settings restores the original session.'
+  };
+  return { message: 'Skipping ' + SESSION_KEY_LABEL[targetSession] + ' in Wk ' + week + '.', changes: [change] };
+}
+
+function planSetLift({ exercise, weight, week }) {
+  if (!WEEKS[week]) return { error: 'Wk ' + week + ' isn\'t in the program.' };
+  const lift = COACH_HOLD_EXERCISES[exercise];
+  if (!lift) return { error: 'Don\'t recognise lift "' + exercise + '". Supported: bench, squat, deadlift, ohp.' };
+  const changes = [];
+  for (const sk of lift.sessions) {
+    const planned = resolvePlanned(week, sk);
+    if (!planned) continue;
+    const lines = planned.split('\n');
+    const idx = lines.findIndex(l => lift.pattern.test(l));
+    if (idx < 0) continue;
+    const wm = lines[idx].match(/@(\d+(?:\.\d+)?)\s*kg/);
+    if (!wm) continue;
+    if (parseFloat(wm[1]) === weight) continue;
+    const newLine = lines[idx].replace(/@\d+(?:\.\d+)?\s*kg/, '@' + weight + ' kg');
+    const newValue = lines.map((l, j) => j === idx ? newLine : l).join('\n');
+    changes.push({
+      changeId: newChangeIdForCoach(),
+      ts: new Date().toISOString(),
+      sourceMsgId: null,
+      kind: 'text_replace',
+      week, sessionKey: sk,
+      payload: { oldValue: planned, newValue }, oldValue: planned, newValue,
+      label: 'Wk ' + week + ' ' + SESSION_KEY_LABEL[sk] + ': ' + lift.label + ' → ' + weight + ' kg',
+      principleRefs: [],
+      rationale: 'Set ' + lift.label + ' target to ' + weight + ' kg.'
+    });
+  }
+  if (changes.length === 0) return { error: 'Couldn\'t find a ' + lift.label + ' @kg target in Wk ' + week + ' to change.' };
+  return {
+    message: 'Setting ' + lift.label + ' to ' + weight + ' kg in Wk ' + week + ' (' + changes.length + ' session' + (changes.length === 1 ? '' : 's') + ' affected).',
+    changes
+  };
+}
+
+function planSetLongRun({ km, week }) {
+  if (!WEEKS[week]) return { error: 'Wk ' + week + ' isn\'t in the program.' };
+  const planned = resolvePlanned(week, 'longRun');
+  if (!planned) return { error: 'Wk ' + week + ' has no long run.' };
+  const m = planned.match(/(\d+(?:\.\d+)?)\s*km/i);
+  if (!m) return { error: 'Couldn\'t parse the current long-run distance.' };
+  if (parseFloat(m[1]) === km) return { error: 'Long run is already ' + km + ' km in Wk ' + week + '.' };
+  const newValue = planned.replace(/(\d+(?:\.\d+)?)\s*km/i, km + ' km');
+  const change = {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'text_replace',
+    week, sessionKey: 'longRun',
+    payload: { oldValue: planned, newValue }, oldValue: planned, newValue,
+    label: 'Wk ' + week + ' Long Run: ' + m[1] + ' km → ' + km + ' km',
+    principleRefs: [],
+    rationale: 'Set long run distance to ' + km + ' km.'
+  };
+  return { message: 'Setting long run to ' + km + ' km in Wk ' + week + ' (was ' + m[1] + ' km).', changes: [change] };
+}
+
+function planRestWeek({ week }) {
+  if (!WEEKS[week]) return { error: 'Wk ' + week + ' isn\'t in the program.' };
+  const changes = [];
+  // Quality run → easy Z2 recovery
+  const qPlanned = resolvePlanned(week, 'quality');
+  if (qPlanned) {
+    const nv = 'EASY Z2 RECOVERY — 6–8 km @ 6:00–6:30/km\n(Recovery week — original intervals/tempo replaced with easy aerobic.)';
+    changes.push({
+      changeId: newChangeIdForCoach(), ts: new Date().toISOString(), sourceMsgId: null,
+      kind: 'text_replace', week, sessionKey: 'quality',
+      payload: { oldValue: qPlanned, newValue: nv }, oldValue: qPlanned, newValue: nv,
+      label: 'Wk ' + week + ' Quality: → easy Z2',
+      principleRefs: [], rationale: 'Recovery week — intensity removed.'
+    });
+  }
+  // Long run -25%
+  const lrPlanned = resolvePlanned(week, 'longRun');
+  if (lrPlanned) {
+    const m = lrPlanned.match(/(\d+(?:\.\d+)?)\s*km/i);
+    if (m) {
+      const scaled = Math.round(parseFloat(m[1]) * 0.75 * 2) / 2;
+      const nv = lrPlanned.replace(/(\d+(?:\.\d+)?)\s*km/i, scaled + ' km') + ' (recovery week — 25% reduced)';
+      changes.push({
+        changeId: newChangeIdForCoach(), ts: new Date().toISOString(), sourceMsgId: null,
+        kind: 'text_replace', week, sessionKey: 'longRun',
+        payload: { oldValue: lrPlanned, newValue: nv }, oldValue: lrPlanned, newValue: nv,
+        label: 'Wk ' + week + ' Long Run: ' + m[1] + ' km → ' + scaled + ' km',
+        principleRefs: [], rationale: 'Long run scaled down for recovery week.'
+      });
+    }
+  }
+  // Strength -5% (softer than deload's -10%)
+  for (const sk of ['upperA', 'lower', 'upperB']) {
+    const sp = resolvePlanned(week, sk);
+    if (!sp) continue;
+    const nv = sp.replace(/@(\d+(?:\.\d+)?)\s*kg/g, function(_, w) {
+      return '@' + (Math.round(parseFloat(w) * 0.95 / 2.5) * 2.5) + ' kg';
+    });
+    if (nv === sp) continue;
+    changes.push({
+      changeId: newChangeIdForCoach(), ts: new Date().toISOString(), sourceMsgId: null,
+      kind: 'text_replace', week, sessionKey: sk,
+      payload: { oldValue: sp, newValue: nv }, oldValue: sp, newValue: nv,
+      label: 'Wk ' + week + ' ' + SESSION_KEY_LABEL[sk] + ': lifts -5%',
+      principleRefs: [], rationale: 'Lifts reduced 5% for recovery week (softer than full deload).'
+    });
+  }
+  if (changes.length === 0) return { error: 'Wk ' + week + ' has nothing to soft-deload.' };
+  return {
+    message: 'Soft recovery week for Wk ' + week + ' — intensity drops, volume mostly preserved. Different from a full deload: lifts only -5%, long run -25%, quality replaced with easy aerobic.',
+    changes
+  };
+}
+
+function planDeleteMilestone({ labelHint }) {
+  const milestones = (typeof getMilestones === 'function') ? getMilestones() : (state.milestones || []);
+  if (!Array.isArray(milestones) || milestones.length === 0) {
+    return { error: 'No milestones to delete.' };
+  }
+  const hint = (labelHint || '').toLowerCase().trim();
+  const matches = milestones.filter(m => m.label.toLowerCase().includes(hint));
+  if (matches.length === 0) {
+    const names = milestones.map(x => '"' + x.label + '"').join(', ');
+    return { error: 'No milestone matches "' + labelHint + '". Yours: ' + names + '.' };
+  }
+  if (matches.length > 1) {
+    const names = matches.map(x => '"' + x.label + '"').join(', ');
+    return { error: '"' + labelHint + '" is ambiguous — matches ' + matches.length + ' milestones: ' + names + '. Be more specific.' };
+  }
+  const found = matches[0];
+  const change = {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'goal_delete',
+    payload: {
+      milestoneLabel: found.label,
+      snapshotDate:   found.date,
+      snapshotEmoji:  found.emoji || '🎯'
+    },
+    label: 'Remove milestone: ' + found.label + ' (' + coachDateLabel(found.date) + ')',
+    principleRefs: [],
+    rationale: 'User-requested milestone removal. Undo in Settings restores it.'
+  };
+  return { message: 'Removing milestone "' + found.label + '" (' + coachDateLabel(found.date) + ').', changes: [change] };
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // ADD_RACE (v1.07) — multi-strategy race insertion
@@ -3523,6 +3944,18 @@ function planForIntent(parsed, currentWk) {
     case 'ANCHOR_GOAL_NEEDS_DATE': return { error: 'Got "marathon" but no date — try "move marathon to oct 18" or "marathon on 2026-10-18".' };
     case 'ADD_RACE':    result = planAddRace(parsed.params); break;
     case 'ADD_RACE_NEEDS_DATE': return { error: 'Got "' + (parsed.params && parsed.params.distance ? parsed.params.distance.toUpperCase() : 'race') + '" but no date — try "add a 10k on jul 12" or "schedule a 5k on 2026-06-07".' };
+    // v1.08 queries (no changes; return directly)
+    case 'QUERY_NEXT':       return planQueryNext(parsed.params);
+    case 'QUERY_WEEK':       return planQueryWeek(parsed.params);
+    case 'QUERY_COUNTDOWN':  return planQueryCountdown(parsed.params);
+    case 'QUERY_MILESTONES': return planQueryMilestones(parsed.params);
+    case 'QUERY_PR':         return planQueryPR(parsed.params);
+    // v1.08 operations
+    case 'SKIP_SESSION':     result = planSkipSession(parsed.params); break;
+    case 'SET_LIFT':         result = planSetLift(parsed.params); break;
+    case 'SET_LONG_RUN':     result = planSetLongRun(parsed.params); break;
+    case 'REST_WEEK':        result = planRestWeek(parsed.params); break;
+    case 'DELETE_MILESTONE': result = planDeleteMilestone(parsed.params); break;
     case 'help':        return { message: COACH_HELP_TEXT };
     case 'empty':       return { error: '' };
     default:
@@ -3537,13 +3970,27 @@ function planForIntent(parsed, currentWk) {
 }
 
 const COACH_HELP_TEXT =
-  "• Move a session: \"move Thursday Quality to Friday\"\n" +
-  "• Swap two sessions: \"swap Easy Run and Legs\"\n" +
-  "• Deload next week: \"deload next week\" or \"deload week 9\"\n" +
+  "SCHEDULE\n" +
+  "• Move a session: \"move thursday quality to friday\"\n" +
+  "• Swap two sessions: \"swap easy and legs\"\n" +
+  "• Skip a session: \"skip wednesday\" / \"rest tomorrow\"\n\n" +
+  "VOLUME / INTENSITY\n" +
+  "• Deload: \"deload next week\" / \"deload week 9\"\n" +
+  "• Recovery week (soft): \"recovery week\" / \"easy week next week\"\n" +
   "• Hold a lift flat: \"hold bench flat for 2 weeks\"\n" +
-  "• Move marathon date: \"move marathon to oct 18\"\n" +
-  "• Add a race: \"add a 10k on jul 12\" / \"schedule a HM on aug 10\" / \"add an ultra on sep 20\"\n\n" +
-  "Every change is checked against Crawley's hybrid principles — if a change breaks consolidate-stressors, polarised-cardio spacing, deload spacing, or race spacing, you'll see a warning and (where possible) a one-tap fix. Apply with or without the fix; warning is informational, never blocking.\n\n" +
+  "• Set a lift: \"set bench to 110 next week\"\n" +
+  "• Set long run: \"long run 20 km this week\"\n\n" +
+  "RACES / GOALS\n" +
+  "• Move marathon: \"move marathon to oct 18\"\n" +
+  "• Add a race: \"add a 10k on jul 12\" / \"schedule a HM on aug 10\"\n" +
+  "• Remove milestone: \"remove the 5k milestone\"\n\n" +
+  "QUERIES\n" +
+  "• What's planned: \"what's tomorrow\" / \"what's this week\"\n" +
+  "• Current week: \"what week am i in\"\n" +
+  "• Countdown: \"how long until marathon\"\n" +
+  "• Races: \"show my races\" / \"list milestones\"\n" +
+  "• PRs: \"what's my bench pr\" / \"show my prs\"\n\n" +
+  "Every change is checked against Crawley's hybrid principles. If a change breaks consolidate-stressors, polarised-cardio spacing, deload spacing, or race spacing, you'll see a warning and (where possible) a one-tap fix.\n\n" +
   "Coming next: discipline focus (\"strength primary for 4 weeks\"), free-form sparring online.";
 
 
