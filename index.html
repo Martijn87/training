@@ -1084,7 +1084,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.01 · built 16 May 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.02 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1531,16 +1531,25 @@
       // Pre-v1.01, an apply that failed to reach Supabase could be silently
       // overwritten here. Now we keep any local-only entries and push the
       // union back to remote, so a failed sync recovers on next login.
+      // v1.02 additionally migrates the merged set to the v2 schema in-place
+      // (idempotent — running twice yields the same ids, no duplicates).
       if (data.program_overrides && Array.isArray(data.program_overrides)) {
         const local = Array.isArray(state.programOverrides) ? state.programOverrides : [];
         const remoteTs = new Set(data.program_overrides.map(o => o && o.ts).filter(Boolean));
         const localOnly = local.filter(o => o && o.ts && !remoteTs.has(o.ts));
-        const merged = [...data.program_overrides, ...localOnly];
+        const merged = migrateOverridesV2([...data.program_overrides, ...localOnly]);
         state.programOverrides = merged;
         localStorage.setItem('programOverrides', JSON.stringify(merged));
         if (localOnly.length > 0) {
           // Push the reconciled set back so future logins see it as remote.
           saveState().catch(e => console.warn('override reconcile push failed (non-fatal):', e));
+        }
+      } else {
+        // No remote data — still migrate the local set so it's v2-shaped
+        // before any other code reads it this session.
+        if (Array.isArray(state.programOverrides) && state.programOverrides.length > 0) {
+          state.programOverrides = migrateOverridesV2(state.programOverrides);
+          localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides));
         }
       }
       // ── Optional cross-device sync for HR config + milestones ──────────
@@ -1770,22 +1779,212 @@
       editingMilestones: false
     };
 
+    // v1.02 cold-start migration: ensure any overrides loaded from
+    // localStorage are v2-shaped before the first render runs. Idempotent.
+    // (loadProfile also migrates after Supabase merge; this covers the
+    // window between state init and the first network round-trip.)
+    try {
+      if (Array.isArray(state.programOverrides) && state.programOverrides.length > 0) {
+        const before = JSON.stringify(state.programOverrides);
+        state.programOverrides = state.programOverrides.map(o => {
+          // Inline subset of upgradeOverrideToV2 — the function is defined
+          // later in the file. Same logic; kept short here.
+          if (!o || typeof o !== 'object') return o;
+          if (o.kind && o.payload && o.changeId) return o;
+          return {
+            ...o,
+            kind: o.kind || 'text_replace',
+            payload: o.payload || { oldValue: o.oldValue, newValue: o.newValue },
+            changeId: o.changeId || (
+              o.ts && o.week != null && o.sessionKey
+                ? 'legacy_' + o.ts + '_' + o.week + '_' + o.sessionKey
+                : 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10)
+            ),
+            sourceMsgId: o.sourceMsgId || '',
+            principleRefs: Array.isArray(o.principleRefs) ? o.principleRefs : [],
+            ts: o.ts || new Date().toISOString()
+          };
+        });
+        const after = JSON.stringify(state.programOverrides);
+        if (before !== after) localStorage.setItem('programOverrides', after);
+      }
+    } catch (e) {
+      console.warn('v1.02 cold-start override migration failed (non-fatal):', e);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // HELPERS
     // ═══════════════════════════════════════════════════════════════
-    // ── Program Override helpers ──
+    // ─── Program Override helpers (v2 schema, Phase 2.0) ──────────────────
+    //
+    // ProposedChange v2 — the canonical shape every override is stored in.
+    // The earlier (v1.x) shape only supported full-text session rewrites;
+    // v2 adds a `kind` discriminator so future change types (day shifts,
+    // volume scales, race anchors, goal edits, etc.) plug in without
+    // touching the storage or merge layers.
+    //
+    // /** @typedef {object} ProposedChange
+    //  *  @property {string} changeId        Globally unique (UUID-like).
+    //  *  @property {string} ts              ISO timestamp; ALSO the merge
+    //  *                                     dedupe key for cross-device sync.
+    //  *  @property {string} [sourceMsgId]   Groups changes from the same
+    //  *                                     coach turn (used by Phase 2.1+).
+    //  *  @property {('text_replace'
+    //  *              |'session_day_shift'
+    //  *              |'session_swap'
+    //  *              |'session_scale'
+    //  *              |'block_scale'
+    //  *              |'session_insert'
+    //  *              |'session_delete'
+    //  *              |'week_replace'
+    //  *              |'goal_set'
+    //  *              |'discipline_focus')} kind
+    //  *  @property {number} [week]
+    //  *  @property {string} [sessionKey]
+    //  *  @property {object} payload         Shape depends on kind:
+    //  *      text_replace        → { oldValue, newValue }
+    //  *      session_day_shift   → { fromDow, toDow }
+    //  *      session_swap        → { sessionA, sessionB }
+    //  *      session_scale       → { volumeFactor?, weightDelta? }
+    //  *      block_scale         → { fromWeek, toWeek, factor }
+    //  *      session_insert      → { dow, content }
+    //  *      session_delete      → { dow }
+    //  *      week_replace        → { content: { [sessionKey]: string } }
+    //  *      goal_set            → { milestone }
+    //  *      discipline_focus    → { primary, maintenance }
+    //  *  @property {string[]} [principleRefs] Which Crawley principles drove
+    //  *                                       this (e.g. ['thirty_pct_maint']).
+    //  *  @property {string} [rationale]     Prose 'why' shown in UI.
+    //  *
+    //  *  Legacy fields preserved for the v1.x display code (Settings list,
+    //  *  coach badge, etc.): label, emoji, reason, week, sessionKey,
+    //  *  oldValue, newValue, id (numeric counter from suggestion builder).
+    //  */
+
+    function newChangeId() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+      return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+    }
+
+    // Idempotent: an already-v2 record passes through unchanged. A v1 record
+    // gains `kind`, `payload`, `changeId`, `principleRefs`. Original fields
+    // are preserved so v1 display code (label/emoji/reason/oldValue/newValue)
+    // keeps working without edits.
+    function upgradeOverrideToV2(o) {
+      if (!o || typeof o !== 'object') return o;
+      if (o.kind && o.payload && o.changeId) return o; // already v2
+      const upgraded = {
+        ...o,
+        kind: o.kind || 'text_replace',
+        payload: o.payload || {
+          oldValue: o.oldValue,
+          newValue: o.newValue
+        },
+        // Stable changeId for legacy records → migration is idempotent
+        // (running twice yields the same id, so no duplicates appear).
+        changeId: o.changeId || (
+          o.ts && o.week != null && o.sessionKey
+            ? 'legacy_' + o.ts + '_' + o.week + '_' + o.sessionKey
+            : newChangeId()
+        ),
+        sourceMsgId: o.sourceMsgId || '',
+        principleRefs: Array.isArray(o.principleRefs) ? o.principleRefs : []
+      };
+      // Ensure ts is present (v1.01 already stamped it, but be defensive).
+      if (!upgraded.ts) upgraded.ts = new Date().toISOString();
+      return upgraded;
+    }
+
+    // Migrates an entire override array. Returns a NEW array; doesn't mutate.
+    function migrateOverridesV2(list) {
+      if (!Array.isArray(list)) return [];
+      return list.map(upgradeOverrideToV2);
+    }
+
+    // ─── resolvePlanned — the new canonical reader ──────────────────────
+    //
+    // Walks the override chain for (wk, sessionKey) in chronological order
+    // and dispatches on `kind`. Today only `text_replace` is implemented
+    // (last-writer-wins, identical to v1.x). Phase 2.1 adds session_scale;
+    // Phase 2.2 adds week_replace; the day-shift / swap kinds don't affect
+    // CONTENT — they affect WHICH DAY a session sits on, handled separately
+    // by getWeeklySchedule().
+    function resolvePlanned(wk, sessionKey) {
+      const base = WEEKS[wk]?.[sessionKey] ?? null;
+      const relevant = (state.programOverrides || []).filter(o =>
+        o && o.week === wk && o.sessionKey === sessionKey
+      );
+      if (relevant.length === 0) return base;
+      let value = base;
+      for (const raw of relevant) {
+        const o = raw.kind ? raw : upgradeOverrideToV2(raw); // tolerate stragglers
+        switch (o.kind) {
+          case 'text_replace':
+          case 'week_replace': // week_replace at the session level acts like text_replace
+            value = (o.payload && o.payload.newValue !== undefined)
+              ? o.payload.newValue
+              : (o.newValue !== undefined ? o.newValue : value);
+            break;
+          // Phase 2.1+ kinds dispatch here. Until they're implemented,
+          // unknown kinds are no-ops so we never crash on forward-compat data.
+          default:
+            break;
+        }
+      }
+      return value;
+    }
+
+    // Back-compat wrapper. Every existing call site (renderHome, renderWeek,
+    // renderSessionLogger, coach builder, etc.) keeps calling getPlanned()
+    // and gets the resolved value through the new pipeline.
     function getPlanned(wk, key) {
-      const relevant = (state.programOverrides || []).filter(o => o.week === wk && o.sessionKey === key);
-      return relevant.length === 0 ? (WEEKS[wk]?.[key] ?? null) : relevant[relevant.length - 1].newValue;
+      return resolvePlanned(wk, key);
+    }
+
+    // ─── Weekly schedule (DOW → sessionKey) ────────────────────────────
+    //
+    // The static default the app shipped with. Phase 2.1 will let users
+    // shift a session to a different day-of-week via the coach; this
+    // function honours those shifts per-week (no rippling — see the
+    // design doc). For v1.02 it always returns the default since no
+    // shift overrides exist yet.
+    const DEFAULT_DOW_SESSION = [null, 'upperA', 'easy', 'lower', 'quality', 'upperB', 'longRun'];
+
+    function getWeeklySchedule(wk) {
+      const base = DEFAULT_DOW_SESSION.slice();
+      const shifts = (state.programOverrides || []).filter(o =>
+        o && o.week === wk &&
+        (o.kind === 'session_day_shift' || o.kind === 'session_swap')
+      );
+      if (shifts.length === 0) return base;
+      // Apply shifts in chronological order. Each shift swaps two slots.
+      const dow = base.slice();
+      for (const o of shifts) {
+        if (o.kind === 'session_day_shift') {
+          const from = o.payload?.fromDow;
+          const to   = o.payload?.toDow;
+          if (Number.isInteger(from) && Number.isInteger(to) && from !== to) {
+            const tmp = dow[to]; dow[to] = dow[from]; dow[from] = tmp;
+          }
+        } else if (o.kind === 'session_swap') {
+          const a = o.payload?.sessionA;
+          const b = o.payload?.sessionB;
+          if (a && b) {
+            const ia = dow.indexOf(a), ib = dow.indexOf(b);
+            if (ia >= 0 && ib >= 0) {
+              const tmp = dow[ia]; dow[ia] = dow[ib]; dow[ib] = tmp;
+            }
+          }
+        }
+      }
+      return dow;
     }
 
     async function applyProgramUpdate(override) {
       if (!state.programOverrides) state.programOverrides = [];
-      // Stamp a ts if missing — used by the load-time merge to dedupe.
-      if (!override.ts) override.ts = new Date().toISOString();
-      state.programOverrides.push(override);
-      // localStorage is canonical: the merge on next load recovers anything
-      // that didn't reach Supabase here.
+      // Upgrade-on-write: every record reaching storage is v2.
+      const upgraded = upgradeOverrideToV2(override);
+      state.programOverrides.push(upgraded);
       localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides));
       try { await saveState(); } catch (e) { console.warn('saveState failed (override stored locally):', e); }
     }
