@@ -1232,7 +1232,7 @@
     .coach-input-bar {
       display: flex; gap: 8px;
       padding: 10px 12px;
-      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       background: var(--bg);
     }
     .coach-input-bar input {
@@ -1272,7 +1272,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.03 · built 16 May 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.04 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1317,11 +1317,11 @@
       </div>
       <button class="coach-clear" id="coachClear">Clear</button>
     </div>
-    <div class="coach-messages" id="coachMessages"></div>
     <div class="coach-input-bar">
       <input type="text" id="coachInput" placeholder='Try "move thursday quality to friday"' autocomplete="off" autocapitalize="off">
       <button class="coach-send" id="coachSend">Send</button>
     </div>
+    <div class="coach-messages" id="coachMessages"></div>
   </div>
 
 
@@ -2592,10 +2592,23 @@ const COACH_HELP_TEXT =
         bindCoachEmptyExamples();
         return;
       }
-      container.innerHTML = state.coachConversation.map(renderCoachMessage).join('');
+      // Group into turn pairs (user, coach) so each exchange stays intact, then
+      // reverse the pairs — newest pair renders first (directly under the input
+      // bar, which now sits at the top). Within each pair, user→coach order is
+      // preserved. See v1.04 note for the iOS bottom dead-zone rationale.
+      const conv = state.coachConversation;
+      const pairs = [];
+      for (let i = 0; i < conv.length; i += 2) {
+        const pair = [conv[i], conv[i + 1]].filter(Boolean);
+        pairs.push(pair);
+      }
+      pairs.reverse();
+      container.innerHTML = pairs
+        .map(pair => pair.map(renderCoachMessage).join(''))
+        .join('');
       bindCoachChangeCardEvents();
-      // Auto-scroll to bottom on render
-      container.scrollTop = container.scrollHeight;
+      // Newest is now at the top; reset scroll so it's the first thing seen.
+      container.scrollTop = 0;
     }
 
     function renderCoachEmptyState() {
