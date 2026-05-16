@@ -1250,6 +1250,57 @@
       cursor: pointer;
     }
     .coach-input-bar .coach-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── ANCHOR_GOAL clarification (v1.05) ────────────────────────── */
+    .coach-clarify {
+      margin-top: 10px; padding: 12px;
+      background: var(--bg-card-alt); border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .coach-clarify .ccx-q {
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      color: var(--text); margin: 4px 0 8px 0;
+      letter-spacing: 0.02em;
+    }
+    .coach-clarify .ccx-options {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 14px;
+    }
+    .coach-clarify .ccx-opt {
+      flex: 1 1 auto;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      padding: 7px 10px; border-radius: 6px;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text-sub); cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .coach-clarify .ccx-opt.chosen {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .coach-clarify.resumed .ccx-opt {
+      opacity: 0.55; cursor: default;
+    }
+    .coach-clarify.resumed .ccx-opt.chosen { opacity: 1; }
+    .coach-clarify .ccx-confirm {
+      width: 100%;
+      padding: 9px 12px; border-radius: 8px;
+      background: var(--accent); color: #fff; border: none;
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600;
+      cursor: pointer; letter-spacing: 0.04em;
+    }
+    .coach-clarify .ccx-confirm:disabled {
+      opacity: 0.45; cursor: not-allowed;
+    }
+    .coach-clarify.resumed .ccx-confirm {
+      display: none;
+    }
+    .coach-clarify.resumed::after {
+      content: '↓ Plan generated below';
+      display: block; text-align: center;
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      color: var(--success); margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
   </style>
 </head>
 <body>
@@ -1272,7 +1323,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.04 · built 16 May 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.05 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -2199,11 +2250,40 @@
       const upgraded = upgradeOverrideToV2(override);
       state.programOverrides.push(upgraded);
       localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides));
+      // v1.05 — side-effect for kinds that mutate non-override state.
+      // goal_set has to write through to state.milestones; the override
+      // record is the audit/undo trail. Failures here are non-fatal (the
+      // override is still stored; the user can re-trigger if needed).
+      if (upgraded.kind === 'goal_set' && upgraded.payload && upgraded.payload.milestoneLabel && upgraded.payload.newDate) {
+        try {
+          if (!Array.isArray(state.milestones)) getMilestones();
+          const m = state.milestones.find(x => x.label === upgraded.payload.milestoneLabel);
+          if (m) {
+            m.date = upgraded.payload.newDate;
+            // Auto-sort so the timeline stays in order on Home.
+            state.milestones.sort((a, b) => new Date(a.date) - new Date(b.date));
+            localStorage.setItem('milestones', JSON.stringify(state.milestones));
+          }
+        } catch (e) { console.warn('goal_set side-effect failed:', e); }
+      }
       try { await saveState(); } catch (e) { console.warn('saveState failed (override stored locally):', e); }
     }
 
     function undoLastProgramUpdate() {
       if (!state.programOverrides || state.programOverrides.length === 0) return false;
+      // v1.05 — kind-aware undo: goal_set needs to restore state.milestones.
+      const last = state.programOverrides[state.programOverrides.length - 1];
+      if (last && last.kind === 'goal_set' && last.payload && last.payload.milestoneLabel && last.payload.oldDate) {
+        try {
+          if (!Array.isArray(state.milestones)) getMilestones();
+          const m = state.milestones.find(x => x.label === last.payload.milestoneLabel);
+          if (m) {
+            m.date = last.payload.oldDate;
+            state.milestones.sort((a, b) => new Date(a.date) - new Date(b.date));
+            localStorage.setItem('milestones', JSON.stringify(state.milestones));
+          }
+        } catch (e) { console.warn('goal_set undo side-effect failed:', e); }
+      }
       state.programOverrides.pop();
       localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides));
       saveState();
@@ -2350,6 +2430,21 @@ function parseCoachIntent(text, currentWk) {
         weeks: holdMatch[2] ? parseInt(holdMatch[2], 10) : 1
       }
     };
+  }
+
+  // ANCHOR_GOAL: 'move/shift/change marathon to <date>' (v1.05)
+  // Detected BEFORE the generic SHIFT clause so 'move marathon to oct 18'
+  // doesn't accidentally fall through. Half marathon excluded — the cascade
+  // handles HMs as dependents, not as the anchor.
+  if (/\bmarathon\b/i.test(t) && !/\bhalf\b/i.test(t) &&
+      /\b(?:move|shift|change|set|update|reschedule|moved|moving|is\s+now|on)\b/i.test(t)) {
+    const dt = coachParseDate(t);
+    if (dt) {
+      return { intent: 'ANCHOR_GOAL', params: { milestone: 'marathon', newDate: coachDateToISO(dt) } };
+    }
+    // Marathon mentioned with a verb but no parseable date — surface an
+    // error so the user gets a useful hint rather than 'unknown'.
+    return { intent: 'ANCHOR_GOAL_NEEDS_DATE' };
   }
 
   // SHIFT: 'move/shift <session> to <day>' (with optional 'from <day>')
@@ -2528,12 +2623,232 @@ function planHoldFlat({ exercise, weeks }) {
   };
 }
 
+// ── Date parsing (v1.05) ───────────────────────────────────────────────
+// Accepts: 'oct 18', 'october 18 2026', '18 oct', '18 oct 2026', '18/10',
+//          '18/10/2026', '2026-10-18'. en-GB DD/MM ordering for slash dates.
+function coachParseDate(text) {
+  if (!text) return null;
+  const s = String(text).toLowerCase();
+  const thisYear = (new Date()).getFullYear();
+
+  // ISO: 2026-10-18
+  let m = s.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+  if (m) {
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const MONTHS = {
+    jan:0,january:0, feb:1,february:1, mar:2,march:2,
+    apr:3,april:3, may:4, jun:5,june:5, jul:6,july:6,
+    aug:7,august:7, sep:8,sept:8,september:8, oct:9,october:9,
+    nov:10,november:10, dec:11,december:11
+  };
+
+  // "oct 18", "october 18, 2026", "oct 18th"
+  m = s.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?(?:[,\s]+(\d{4}))?\b/);
+  if (m) {
+    const month = MONTHS[m[1]];
+    const day = +m[2];
+    const yr = m[3] ? +m[3] : thisYear;
+    const d = new Date(yr, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // "18 oct", "18th october", "18 oct 2026"
+  m = s.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?:[,\s]+(\d{4}))?\b/);
+  if (m) {
+    const day = +m[1];
+    const month = MONTHS[m[2]];
+    const yr = m[3] ? +m[3] : thisYear;
+    const d = new Date(yr, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Slash format: DD/MM or DD/MM/YYYY (en-GB)
+  m = s.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+  if (m) {
+    const day = +m[1], month = +m[2];
+    let yr = m[3] ? +m[3] : thisYear;
+    if (yr < 100) yr += 2000;
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const d = new Date(yr, month - 1, day);
+      return isNaN(d.getTime()) ? null : d;
+    }
+  }
+  return null;
+}
+
+function coachDateToISO(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function coachDateLabel(iso) {
+  // 2026-10-18 → "Sat 18 Oct 2026"
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+}
+
+// ── Milestone classifiers (v1.05) ─────────────────────────────────────
+function coachIsMarathonMilestone(m) {
+  if (!m || !m.label) return false;
+  return /\bmarathon\b/i.test(m.label) && !/\bhalf\b/i.test(m.label);
+}
+function coachIsHMMilestone(m) {
+  if (!m || !m.label) return false;
+  return /\b(?:half\s*marathon|hm)\b/i.test(m.label);
+}
+
+// ── ANCHOR_GOAL planner ────────────────────────────────────────────────
+// Returns either:
+//   { error: '...' }
+//   { message, changes }                     — no clarification needed
+//   { message, clarifications, pendingResume } — needs HM cascade decision
+function planAnchorGoal({ milestone, newDate }) {
+  if (milestone !== 'marathon') {
+    return { error: 'For now I can only anchor the marathon. HM / 5K / 10K anchoring is on the roadmap.' };
+  }
+  const ms = (state.milestones && state.milestones.length > 0) ? state.milestones : getMilestones();
+  const m = ms.find(coachIsMarathonMilestone);
+  if (!m) return { error: 'No marathon milestone in your goals to anchor.' };
+
+  const oldDate = m.date;
+  if (oldDate === newDate) {
+    return { error: 'Marathon is already on ' + coachDateLabel(newDate) + '.' };
+  }
+  const dOld = new Date(oldDate);
+  const dNew = new Date(newDate);
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (dNew < today) {
+    return { error: 'New marathon date is in the past — try a date after today.' };
+  }
+  const deltaDays = Math.round((dNew - dOld) / 86400000);
+  if (Math.abs(deltaDays) > 56) {
+    return { error: 'Shift is ' + Math.abs(deltaDays) + ' days (' + Math.round(Math.abs(deltaDays)/7) + ' weeks). That\'s a full program restructure — better handled by editing your milestones directly on Home.' };
+  }
+
+  const deltaStr = (deltaDays > 0 ? '+' : '') + deltaDays + ' day' + (Math.abs(deltaDays) !== 1 ? 's' : '');
+
+  // Find HMs that the cascade should ask about.
+  const hms = ms.filter(coachIsHMMilestone);
+
+  if (hms.length === 0) {
+    // No HMs → produce the plan immediately.
+    const change = {
+      changeId: newChangeIdForCoach(),
+      ts: new Date().toISOString(),
+      sourceMsgId: null,
+      kind: 'goal_set',
+      payload: { milestoneLabel: m.label, oldDate, newDate },
+      label: `Move ${m.label}: ${coachDateLabel(oldDate)} → ${coachDateLabel(newDate)}`,
+      principleRefs: [],
+      rationale: `${deltaStr} from original date.`
+    };
+    return {
+      message: `Marathon → ${coachDateLabel(newDate)} (${deltaStr}). No HMs in your milestones, so just the one change.`,
+      changes: [change]
+    };
+  }
+
+  // HMs present → return a clarification-message structure.
+  const clarifications = hms.map((hm, i) => {
+    const hmShiftedISO = coachDateToISO(new Date(new Date(hm.date).getTime() + deltaDays * 86400000));
+    return {
+      id: 'hm_' + i,
+      milestoneLabel: hm.label,
+      question: `${hm.label} (${coachDateLabel(hm.date)}):`,
+      options: [
+        { key: 'shift', label: `Shift ${deltaStr} → ${coachDateLabel(hmShiftedISO)}`, newDate: hmShiftedISO },
+        { key: 'keep',  label: 'Keep current date',                                    newDate: hm.date }
+      ],
+      chosen: null
+    };
+  });
+
+  return {
+    message: `Marathon → ${coachDateLabel(newDate)} (${deltaStr}). Need a decision per HM before I can finalise:`,
+    clarifications,
+    pendingResume: {
+      intentType: 'ANCHOR_GOAL',
+      params: { milestoneLabel: m.label, oldDate, newDate, deltaDays }
+    }
+  };
+}
+
+// ── ANCHOR_GOAL resume (Confirm tapped) ────────────────────────────────
+// Reads the chosen options from the clarification message and produces
+// the final change list, which we post as a new coach message.
+function coachResumeAnchorGoal(msgId) {
+  const msg = state.coachConversation.find(x => x.id === msgId);
+  if (!msg || !msg.clarifications || !msg.pendingResume) return;
+  const allAnswered = msg.clarifications.every(c => c.chosen);
+  if (!allAnswered) return;
+
+  const pr = msg.pendingResume;
+  const changes = [];
+
+  // 1. The marathon date change itself
+  changes.push({
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'goal_set',
+    payload: { milestoneLabel: pr.params.milestoneLabel, oldDate: pr.params.oldDate, newDate: pr.params.newDate },
+    label: `Move ${pr.params.milestoneLabel}: ${coachDateLabel(pr.params.oldDate)} → ${coachDateLabel(pr.params.newDate)}`,
+    principleRefs: [],
+    rationale: `Anchor change, ${pr.params.deltaDays > 0 ? '+' : ''}${pr.params.deltaDays} day(s).`
+  });
+
+  // 2. One per HM clarification (only if shifted; 'keep' = no change)
+  for (const c of msg.clarifications) {
+    const chosenOpt = c.options.find(o => o.key === c.chosen);
+    if (!chosenOpt || c.chosen === 'keep') continue;
+    // Find current date for the HM (in case it's been edited since)
+    const cur = (state.milestones || []).find(m => m.label === c.milestoneLabel);
+    if (!cur) continue;
+    if (cur.date === chosenOpt.newDate) continue;
+    changes.push({
+      changeId: newChangeIdForCoach(),
+      ts: new Date().toISOString(),
+      sourceMsgId: null,
+      kind: 'goal_set',
+      payload: { milestoneLabel: c.milestoneLabel, oldDate: cur.date, newDate: chosenOpt.newDate },
+      label: `Move ${c.milestoneLabel}: ${coachDateLabel(cur.date)} → ${coachDateLabel(chosenOpt.newDate)}`,
+      principleRefs: [],
+      rationale: `Cascading from marathon shift.`
+    });
+  }
+
+  // Mark the clarification message as resumed and re-render.
+  msg.resumed = true;
+  persistCoachConversation();
+
+  // Build the follow-up coach reply text.
+  const kept = msg.clarifications.filter(c => c.chosen === 'keep').length;
+  const shifted = msg.clarifications.filter(c => c.chosen === 'shift').length;
+  let txt = `Plan ready — ${changes.length} change${changes.length === 1 ? '' : 's'} to apply.`;
+  if (kept > 0 && shifted > 0) txt += ` (${shifted} HM shifted, ${kept} kept on date.)`;
+  else if (kept > 0)            txt += ` (${kept} HM kept on date.)`;
+  else if (shifted > 0)         txt += ` (${shifted} HM shifted alongside marathon.)`;
+  // Heads-up about the structural gap — informational only.
+  if (Math.abs(pr.params.deltaDays) >= 7) {
+    const wks = Math.round(Math.abs(pr.params.deltaDays) / 7);
+    txt += `\n\nNote: this leaves a ${wks}-week gap vs the original taper. The weekly training structure isn't auto-reshaped — you may want an extra taper week. I can help with that in a follow-up request (later phase).`;
+  }
+  addCoachMessage('coach', txt, changes);
+}
+
 function planForIntent(parsed, currentWk) {
   switch (parsed.intent) {
     case 'SHIFT_DAY':   return planShiftDay(parsed.params);
     case 'SWAP_DAY':    return planSwapDay(parsed.params);
     case 'DELOAD_NEXT': return planDeloadNext(parsed.params);
     case 'HOLD_FLAT':   return planHoldFlat(parsed.params);
+    case 'ANCHOR_GOAL': return planAnchorGoal(parsed.params);
+    case 'ANCHOR_GOAL_NEEDS_DATE': return { error: 'Got "marathon" but no date — try "move marathon to oct 18" or "marathon on 2026-10-18".' };
     case 'help':        return { message: COACH_HELP_TEXT };
     case 'empty':       return { error: '' };
     default:
@@ -2547,8 +2862,9 @@ const COACH_HELP_TEXT =
   "• Move a session: \"move Thursday Quality to Friday\"\n" +
   "• Swap two sessions: \"swap Easy Run and Legs\"\n" +
   "• Deload next week: \"deload next week\" or \"deload week 9\"\n" +
-  "• Hold a lift flat: \"hold bench flat for 2 weeks\"\n\n" +
-  "More (open online): adjust season goals, fit a marathon to a date, add a race, free-form sparring. (Online coach lands in a later update.)";
+  "• Hold a lift flat: \"hold bench flat for 2 weeks\"\n" +
+  "• Move marathon date: \"move marathon to oct 18\"\n\n" +
+  "Coming next: add a race (5K/10K/HM/marathon/ultra), Crawley principle warnings on every change, free-form sparring online.";
 
 
     // ── Persistence ────────────────────────────────────────────────
@@ -2558,14 +2874,20 @@ const COACH_HELP_TEXT =
       } catch (e) { console.warn('coach persistence failed:', e); }
     }
 
-    function addCoachMessage(role, text, changes) {
+    function addCoachMessage(role, text, changes, extras) {
       const msgId = 'm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
       const msg = { id: msgId, ts: new Date().toISOString(), role, text: text || '' };
       if (Array.isArray(changes) && changes.length > 0) {
-        // Stamp sourceMsgId on each change so apply/undo can group later.
         msg.changes = changes.map(c => ({ ...c, sourceMsgId: msgId }));
-        msg.statuses = {}; // changeId → 'pending' | 'applied' | 'skipped'
+        msg.statuses = {};
         msg.changes.forEach(c => { msg.statuses[c.changeId] = 'pending'; });
+      }
+      // v1.05: clarification carries sub-questions and the params needed to
+      // resume planning once all sub-questions are answered.
+      if (extras && Array.isArray(extras.clarifications) && extras.clarifications.length > 0) {
+        msg.clarifications = extras.clarifications;
+        msg.pendingResume = extras.pendingResume || null;
+        msg.resumed = false;
       }
       state.coachConversation.push(msg);
       // Cap to last 50 messages so localStorage doesn't grow unbounded.
@@ -2616,7 +2938,8 @@ const COACH_HELP_TEXT =
         { label: 'Shift a session', text: 'move thursday quality to friday' },
         { label: 'Swap two sessions', text: 'swap easy run and legs' },
         { label: 'Deload next week', text: 'deload next week' },
-        { label: 'Hold a lift flat', text: 'hold bench flat for 2 weeks' }
+        { label: 'Hold a lift flat', text: 'hold bench flat for 2 weeks' },
+        { label: 'Move marathon date', text: 'move marathon to oct 18' }
       ];
       return `
         <div class="coach-empty">
@@ -2640,7 +2963,8 @@ const COACH_HELP_TEXT =
         'move thursday quality to friday',
         'swap easy run and legs',
         'deload next week',
-        'hold bench flat for 2 weeks'
+        'hold bench flat for 2 weeks',
+        'move marathon to oct 18'
       ];
       document.querySelectorAll('.coach-empty .ex').forEach((el) => {
         el.addEventListener('click', () => {
@@ -2664,6 +2988,9 @@ const COACH_HELP_TEXT =
       const changesHtml = (msg.changes && msg.changes.length > 0)
         ? msg.changes.map(c => renderChangeCard(c, msg)).join('')
         : '';
+      const clarifyHtml = (msg.clarifications && msg.clarifications.length > 0)
+        ? renderClarifyCard(msg)
+        : '';
       return `
         <div class="coach-msg coach-msg-coach">
           <div class="meta">
@@ -2672,8 +2999,26 @@ const COACH_HELP_TEXT =
           </div>
           <div class="bubble ${isError ? 'error' : ''}">${escapeHtml(msg.text)}</div>
           ${changesHtml}
+          ${clarifyHtml}
         </div>
       `;
+    }
+
+    // v1.05 — clarification card with per-question option chips + Confirm.
+    function renderClarifyCard(msg) {
+      const resumed = msg.resumed === true;
+      const allAnswered = msg.clarifications.every(c => c.chosen);
+      const blocks = msg.clarifications.map((c, qi) => {
+        const opts = c.options.map((o, oi) => {
+          const chosen = c.chosen === o.key;
+          return `<button class="ccx-opt${chosen ? ' chosen' : ''}" data-mid="${msg.id}" data-qi="${qi}" data-okey="${o.key}"${resumed ? ' disabled' : ''}>${escapeHtml(o.label)}</button>`;
+        }).join('');
+        return `
+          <div class="ccx-q">${escapeHtml(c.question)}</div>
+          <div class="ccx-options">${opts}</div>`;
+      }).join('');
+      const confirmBtn = `<button class="ccx-confirm" data-mid="${msg.id}"${(!allAnswered || resumed) ? ' disabled' : ''}>Confirm</button>`;
+      return `<div class="coach-clarify${resumed ? ' resumed' : ''}">${blocks}${confirmBtn}</div>`;
     }
 
     function renderChangeCard(change, msg) {
@@ -2744,6 +3089,24 @@ const COACH_HELP_TEXT =
           coachSkipChange(btn.dataset.mid, btn.dataset.cid);
         });
       });
+      // v1.05: clarification option buttons + Confirm
+      document.querySelectorAll('.coach-clarify .ccx-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const msg = state.coachConversation.find(m => m.id === btn.dataset.mid);
+          if (!msg || msg.resumed) return;
+          const qi = parseInt(btn.dataset.qi, 10);
+          if (!msg.clarifications[qi]) return;
+          msg.clarifications[qi].chosen = btn.dataset.okey;
+          persistCoachConversation();
+          renderCoachChat();
+        });
+      });
+      document.querySelectorAll('.coach-clarify .ccx-confirm').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.disabled) return;
+          coachResumeAnchorGoal(btn.dataset.mid);
+        });
+      });
     }
 
     async function coachApplyChange(msgId, changeId) {
@@ -2801,7 +3164,12 @@ const COACH_HELP_TEXT =
         renderCoachChat();
         return;
       }
-      addCoachMessage('coach', result.message || '', result.changes);
+      // v1.05: planners may return clarifications instead of changes when a
+      // cascade decision is needed. Both can also be empty (just a message).
+      addCoachMessage('coach', result.message || '', result.changes, {
+        clarifications: result.clarifications,
+        pendingResume: result.pendingResume
+      });
     }
 
     // One-time wiring for the coach overlay controls. Called from initApp().
