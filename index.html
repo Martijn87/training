@@ -1390,7 +1390,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.06 · built 16 May 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.07 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -2326,11 +2326,18 @@
           if (!Array.isArray(state.milestones)) getMilestones();
           const m = state.milestones.find(x => x.label === upgraded.payload.milestoneLabel);
           if (m) {
+            // Edit existing milestone.
             m.date = upgraded.payload.newDate;
-            // Auto-sort so the timeline stays in order on Home.
-            state.milestones.sort((a, b) => new Date(a.date) - new Date(b.date));
-            localStorage.setItem('milestones', JSON.stringify(state.milestones));
+          } else {
+            // v1.07: ADD path. payload.oldDate is null/undefined for adds.
+            state.milestones.push({
+              label: upgraded.payload.milestoneLabel,
+              date:  upgraded.payload.newDate,
+              emoji: upgraded.payload.emoji || '🏃'
+            });
           }
+          state.milestones.sort((a, b) => new Date(a.date) - new Date(b.date));
+          localStorage.setItem('milestones', JSON.stringify(state.milestones));
         } catch (e) { console.warn('goal_set side-effect failed:', e); }
       }
       try { await saveState(); } catch (e) { console.warn('saveState failed (override stored locally):', e); }
@@ -2340,15 +2347,19 @@
       if (!state.programOverrides || state.programOverrides.length === 0) return false;
       // v1.05 — kind-aware undo: goal_set needs to restore state.milestones.
       const last = state.programOverrides[state.programOverrides.length - 1];
-      if (last && last.kind === 'goal_set' && last.payload && last.payload.milestoneLabel && last.payload.oldDate) {
+      if (last && last.kind === 'goal_set' && last.payload && last.payload.milestoneLabel) {
         try {
           if (!Array.isArray(state.milestones)) getMilestones();
-          const m = state.milestones.find(x => x.label === last.payload.milestoneLabel);
-          if (m) {
-            m.date = last.payload.oldDate;
-            state.milestones.sort((a, b) => new Date(a.date) - new Date(b.date));
-            localStorage.setItem('milestones', JSON.stringify(state.milestones));
+          const idx = state.milestones.findIndex(x => x.label === last.payload.milestoneLabel);
+          if (last.payload.oldDate && idx >= 0) {
+            // Undo an EDIT: restore the old date.
+            state.milestones[idx].date = last.payload.oldDate;
+          } else if (!last.payload.oldDate && idx >= 0) {
+            // v1.07: undo an ADD — remove the milestone.
+            state.milestones.splice(idx, 1);
           }
+          state.milestones.sort((a, b) => new Date(a.date) - new Date(b.date));
+          localStorage.setItem('milestones', JSON.stringify(state.milestones));
         } catch (e) { console.warn('goal_set undo side-effect failed:', e); }
       }
       state.programOverrides.pop();
@@ -2497,6 +2508,24 @@ function parseCoachIntent(text, currentWk) {
         weeks: holdMatch[2] ? parseInt(holdMatch[2], 10) : 1
       }
     };
+  }
+
+  // ADD_RACE: 'add/schedule a [distance] race on [date]' (v1.07)
+  // Detected BEFORE ANCHOR_GOAL / SHIFT so a verb+distance phrase doesn't
+  // fall through. Distance regex order matters — HM before MARATHON, ultra
+  // before bare numbers — to avoid 'half marathon' being read as marathon.
+  if (/\b(?:add|schedule|register|race|sign\s+up)\b/i.test(t)) {
+    let distance = null;
+    if (/\b(?:half\s*marathon|halfie|\bhm\b)\b/i.test(t)) distance = 'hm';
+    else if (/\b(?:ultra|50\s*k|50\s*km|100\s*k|100\s*km|50\s*mile|50\s*mi|100\s*mile|100\s*mi)\b/i.test(t)) distance = 'ultra';
+    else if (/\bmarathon\b/i.test(t)) distance = 'marathon';
+    else if (/\b10\s*k\b|\b10\s*km\b/i.test(t)) distance = '10k';
+    else if (/\b5\s*k\b|\b5\s*km\b/i.test(t)) distance = '5k';
+    if (distance) {
+      const dt = coachParseDate(t);
+      if (dt) return { intent: 'ADD_RACE', params: { distance, date: coachDateToISO(dt) } };
+      return { intent: 'ADD_RACE_NEEDS_DATE', params: { distance } };
+    }
   }
 
   // ANCHOR_GOAL: 'move/shift/change marathon to <date>' (v1.05)
@@ -2911,6 +2940,321 @@ function coachResumeAnchorGoal(msgId) {
 }
 
 
+
+// ─────────────────────────────────────────────────────────────────────
+// ADD_RACE (v1.07) — multi-strategy race insertion
+// ─────────────────────────────────────────────────────────────────────
+// Five distances supported. Each surfaces 2–3 handling strategies as a
+// single-question clarification. The user picks one; the strategy's
+// adjustments + a goal_set ADD become the proposed changes.
+
+function coachWeekFromDate(iso) {
+  const d = new Date(iso); d.setHours(0,0,0,0);
+  const start = new Date(2026, 2, 8); // PLAN_START: 2026-03-08
+  const days = Math.floor((d - start) / 86400000);
+  const wk = Math.floor(days / 7) + 1;
+  return wk;
+}
+
+// Build a text_replace change scaling the long run by a factor, with a note.
+function raceScaleLongRun(week, factor, note) {
+  const planned = resolvePlanned(week, 'longRun');
+  if (!planned) return null;
+  const m = planned.match(/(\d+(?:\.\d+)?)\s*km/i);
+  if (!m) return null;
+  const scaled = Math.round(parseFloat(m[1]) * factor * 2) / 2; // nearest 0.5 km
+  const newValue = planned.replace(/(\d+(?:\.\d+)?)\s*km/i, scaled + ' km') + (note ? ' (' + note + ')' : '');
+  return {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'text_replace',
+    week, sessionKey: 'longRun',
+    payload: { oldValue: planned, newValue },
+    oldValue: planned, newValue,
+    label: 'Wk ' + week + ' Long Run: ' + m[1] + ' km → ' + scaled + ' km',
+    principleRefs: [],
+    rationale: note || 'Scaled for race.'
+  };
+}
+
+// Build a text_replace change for the quality session with a race-specific note.
+function raceReplaceQuality(week, replacement, labelSuffix, rationale) {
+  const planned = resolvePlanned(week, 'quality');
+  if (!planned) return null;
+  return {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'text_replace',
+    week, sessionKey: 'quality',
+    payload: { oldValue: planned, newValue: replacement },
+    oldValue: planned, newValue: replacement,
+    label: 'Wk ' + week + ' Quality: ' + labelSuffix,
+    principleRefs: [],
+    rationale: rationale || 'Quality replaced for race week.'
+  };
+}
+
+function raceReplaceLongRun(week, replacement, labelSuffix, rationale) {
+  const planned = resolvePlanned(week, 'longRun');
+  if (!planned) return null;
+  return {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'text_replace',
+    week, sessionKey: 'longRun',
+    payload: { oldValue: planned, newValue: replacement },
+    oldValue: planned, newValue: replacement,
+    label: 'Wk ' + week + ' Long Run: ' + labelSuffix,
+    principleRefs: [],
+    rationale: rationale || 'Long run replaced for race day.'
+  };
+}
+
+// Strategy templates per distance. Each `build` is a function taking
+// (week, dateISO) → ProposedChange[] (excluding the milestone goal_set
+// add, which is appended by coachResumeAddRace).
+const RACE_TEMPLATES = {
+  '5k': {
+    label: '5K', emoji: '🏃',
+    milestoneLabel: '5K race',
+    strategies: [
+      {
+        key: 'race_hard',
+        label: 'Race effort',
+        description: 'Race replaces this week\'s quality run. No formal taper — just a normal week with the race in place of intervals.',
+        build: (wk, date) => [
+          raceReplaceQuality(wk, '5K RACE — full effort\nGoal: PR or hard test.', '→ 5K race', 'Race replaces planned intervals.')
+        ].filter(Boolean)
+      },
+      {
+        key: 'workout_race',
+        label: 'Workout race',
+        description: 'Race at tempo pace as the week\'s quality work; don\'t go all-out. Use it as a hard tempo session, not a peak performance.',
+        build: (wk, date) => [
+          raceReplaceQuality(wk, '5K WORKOUT RACE — tempo pace (~5:00–5:15/km)\nNot full effort. Sit in the pack, hold tempo.', '→ 5K tempo race', 'Race used as a hard tempo, not a peak.')
+        ].filter(Boolean)
+      }
+    ]
+  },
+  '10k': {
+    label: '10K', emoji: '🏃',
+    milestoneLabel: '10K race',
+    strategies: [
+      {
+        key: 'race_hard',
+        label: 'Race effort',
+        description: 'Race replaces quality; long run cut 20% for recovery (longer race = more residual fatigue than a 5K).',
+        build: (wk, date) => [
+          raceReplaceQuality(wk, '10K RACE — full effort\nGoal: PR or hard test.', '→ 10K race', 'Race replaces planned intervals.'),
+          raceScaleLongRun(wk, 0.8, 'Reduced 20% for race recovery')
+        ].filter(Boolean)
+      },
+      {
+        key: 'workout_race',
+        label: 'Workout race',
+        description: 'Race at tempo pace; treat as the week\'s key tempo session. Long run stays planned.',
+        build: (wk, date) => [
+          raceReplaceQuality(wk, '10K WORKOUT RACE — tempo pace (~5:10–5:25/km)\nNot full effort.', '→ 10K tempo race', 'Race used as a hard tempo.')
+        ].filter(Boolean)
+      },
+      {
+        key: 'mini_taper',
+        label: 'Mini-taper',
+        description: 'Race at full effort with a 3-day reduced volume window. Drop Friday Upper B; long run cut 30%.',
+        build: (wk, date) => [
+          raceReplaceQuality(wk, '10K RACE — full effort, peaked\nGoal: PR.', '→ 10K race (peaked)', 'Full-effort race with mini-taper.'),
+          raceScaleLongRun(wk, 0.7, 'Mini-taper for 10K race'),
+          (() => {
+            const planned = resolvePlanned(wk, 'upperB');
+            if (!planned) return null;
+            const newValue = 'PRE-RACE REST or light mobility\n(Upper B skipped for mini-taper)';
+            return {
+              changeId: newChangeIdForCoach(), ts: new Date().toISOString(), sourceMsgId: null,
+              kind: 'text_replace', week: wk, sessionKey: 'upperB',
+              payload: { oldValue: planned, newValue }, oldValue: planned, newValue,
+              label: 'Wk ' + wk + ' Upper B: → pre-race rest',
+              principleRefs: [], rationale: 'Skipped for race-week mini-taper.'
+            };
+          })()
+        ].filter(Boolean)
+      }
+    ]
+  },
+  'hm': {
+    label: 'Half Marathon', emoji: '🏅',
+    milestoneLabel: 'HM race',
+    strategies: [
+      {
+        key: 'race_hard',
+        label: 'Race effort',
+        description: 'Full taper week. Long run becomes the race; quality replaced with easy shakeout; reduce upper volume.',
+        build: (wk, date) => [
+          raceReplaceLongRun(wk, 'HM RACE — target effort\nRace day.', '→ HM race', 'Race replaces planned long run.'),
+          raceReplaceQuality(wk, 'EASY 6 km Z2 — pre-race shakeout\n4×100m strides at race pace.', '→ pre-race shakeout', 'Replaces intervals for taper.'),
+          (() => {
+            const planned = resolvePlanned(wk, 'upperB');
+            if (!planned) return null;
+            const newValue = 'TAPER — light pull work only\n2×8 pull-ups, 2×12 rope face pulls. No bench.';
+            return {
+              changeId: newChangeIdForCoach(), ts: new Date().toISOString(), sourceMsgId: null,
+              kind: 'text_replace', week: wk, sessionKey: 'upperB',
+              payload: { oldValue: planned, newValue }, oldValue: planned, newValue,
+              label: 'Wk ' + wk + ' Upper B: → light taper',
+              principleRefs: [], rationale: 'Reduced upper work for HM taper.'
+            };
+          })()
+        ].filter(Boolean)
+      },
+      {
+        key: 'workout_race',
+        label: 'Workout race',
+        description: 'Race at HM pace as a key tempo session. Long run stays Z2; quality replaced with the race.',
+        build: (wk, date) => [
+          raceReplaceQuality(wk, 'HM WORKOUT RACE — HM pace (~5:40/km)\nKey tempo session. Long run remains as planned for Saturday.', '→ HM tempo race', 'Race used as HM-pace tempo session.')
+        ].filter(Boolean)
+      },
+      {
+        key: 'long_slow',
+        label: 'Long-slow run',
+        description: 'Treat as a Z2 long run, not a race. Long run becomes the HM-distance Z2 effort. Matches the Wk 13 bucket-list pattern.',
+        build: (wk, date) => [
+          raceReplaceLongRun(wk, 'SLOW HM — 21 km Z2 (sub-138 bpm)\nNot a race — endurance run at the event.', '→ slow HM (21 km Z2)', 'HM as Z2 endurance, not racing.')
+        ].filter(Boolean)
+      }
+    ]
+  },
+  'marathon': {
+    label: 'Marathon', emoji: '🏅',
+    milestoneLabel: 'Marathon race',
+    strategies: [
+      {
+        key: 'milestone_only',
+        label: 'Calendar marker only',
+        description: 'Add the race to your milestone list without changing training. Use this if you\'re tracking an event but not training specifically for it.',
+        build: (wk, date) => []
+      },
+      {
+        key: 'race_effort_warn',
+        label: 'Race effort (program restructure needed)',
+        description: 'Marathon training takes 12–16 weeks of specific build. Adding one mid-program needs significant restructuring. Coach adds the milestone now; use future commands to reshape the lead-in.',
+        build: (wk, date) => []
+      }
+    ]
+  },
+  'ultra': {
+    label: 'Ultra', emoji: '🏔',
+    milestoneLabel: 'Ultra race',
+    strategies: [
+      {
+        key: 'milestone_only',
+        label: 'Calendar marker only',
+        description: 'Add to your milestone list without changing training. Use this if you\'re tracking an event but not training specifically for it.',
+        build: (wk, date) => []
+      },
+      {
+        key: 'training_run',
+        label: 'Long training run',
+        description: 'Treat the ultra distance as a Z2 long run that week. Replaces planned long run with the event. Note: ultra distances substantially exceed typical weekly long-run volume — only use if your base supports it.',
+        build: (wk, date) => [
+          raceReplaceLongRun(wk, 'ULTRA — Z2 effort, time-on-feet\nTreat as a long training run. Eat early, hydrate, stay sub-138 bpm.', '→ ultra (Z2 training run)', 'Ultra used as long Z2 effort, not racing.')
+        ].filter(Boolean)
+      },
+      {
+        key: 'race_effort_warn',
+        label: 'Race effort (program restructure needed)',
+        description: 'Ultras need specific volume + course prep. Adding mid-program is risky. Coach adds the milestone; restructure separately.',
+        build: (wk, date) => []
+      }
+    ]
+  }
+};
+
+function planAddRace({ distance, date }) {
+  const template = RACE_TEMPLATES[distance];
+  if (!template) return { error: 'Unknown distance: ' + distance + '. Supported: 5K, 10K, HM, marathon, ultra.' };
+  if (!date) return { error: 'Need a date — try "add a ' + template.label + ' on jul 12" or "on 2026-07-12".' };
+  const wk = coachWeekFromDate(date);
+  if (wk < 1 || wk > 35) {
+    return { error: 'Race date is outside the program window (Wk ' + wk + '). Stick to Wk 1–35 (8 Mar 2026 – early Nov 2026) for now.' };
+  }
+  const clarifications = [{
+    id: 'strategy',
+    milestoneLabel: null,
+    question: 'How do you want to handle this ' + template.label + ' on ' + coachDateLabel(date) + ' (Wk ' + wk + ')?',
+    options: template.strategies.map(s => ({
+      key: s.key,
+      label: s.label + ' — ' + s.description
+    })),
+    chosen: null
+  }];
+  return {
+    message: 'Adding a ' + template.label + ' ' + template.emoji + ' on ' + coachDateLabel(date) + '. Pick a strategy:',
+    clarifications,
+    pendingResume: {
+      intentType: 'ADD_RACE',
+      params: { distance, date, week: wk }
+    }
+  };
+}
+
+function coachResumeAddRace(msgId) {
+  const msg = state.coachConversation.find(m => m.id === msgId);
+  if (!msg || msg.resumed) return;
+  if (!msg.clarifications || !msg.clarifications.every(c => c.chosen)) return;
+  const pr = msg.pendingResume;
+  const { distance, date, week } = pr.params;
+  const template = RACE_TEMPLATES[distance];
+  const strategyKey = msg.clarifications[0].chosen;
+  const strategy = template.strategies.find(s => s.key === strategyKey);
+  if (!strategy) return;
+
+  const changes = [];
+  // 1. Add the race milestone (goal_set with oldDate=null = ADD)
+  changes.push({
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'goal_set',
+    payload: {
+      milestoneLabel: template.milestoneLabel,
+      oldDate: null,         // marker for ADD path
+      newDate: date,
+      emoji: template.emoji
+    },
+    label: 'Add ' + template.milestoneLabel + ' on ' + coachDateLabel(date),
+    principleRefs: [],
+    rationale: template.label + ' on ' + coachDateLabel(date) + ' using "' + strategy.label + '" strategy.'
+  });
+  // 2. Strategy-specific session adjustments
+  const adjustments = strategy.build(week, date) || [];
+  for (const adj of adjustments) if (adj) changes.push(adj);
+
+  // 3. Run Crawley validators (race_spacing might fire if too close to existing race)
+  attachCrawleyValidations(changes);
+
+  msg.resumed = true;
+  persistCoachConversation();
+
+  let txt = 'Plan ready — ' + changes.length + ' change' + (changes.length === 1 ? '' : 's') + ' to apply. Strategy: ' + strategy.label + '.';
+  if (changes.length === 1) txt += '\n\n(Calendar-only — no training adjustments. You can use other commands to reshape the week if needed.)';
+  addCoachMessage('coach', txt, changes);
+}
+
+// Generic Confirm-tap dispatcher. Routes by pendingResume.intentType so
+// future intents (Phase 2.3+) only need to add their resume function +
+// a case here.
+function coachResume(msgId) {
+  const msg = state.coachConversation.find(m => m.id === msgId);
+  if (!msg || !msg.pendingResume) return;
+  switch (msg.pendingResume.intentType) {
+    case 'ANCHOR_GOAL': return coachResumeAnchorGoal(msgId);
+    case 'ADD_RACE':    return coachResumeAddRace(msgId);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // CRAWLEY VALIDATOR (v1.06)
 // ─────────────────────────────────────────────────────────────────────
@@ -3177,6 +3521,8 @@ function planForIntent(parsed, currentWk) {
     case 'HOLD_FLAT':   result = planHoldFlat(parsed.params); break;
     case 'ANCHOR_GOAL': result = planAnchorGoal(parsed.params); break;
     case 'ANCHOR_GOAL_NEEDS_DATE': return { error: 'Got "marathon" but no date — try "move marathon to oct 18" or "marathon on 2026-10-18".' };
+    case 'ADD_RACE':    result = planAddRace(parsed.params); break;
+    case 'ADD_RACE_NEEDS_DATE': return { error: 'Got "' + (parsed.params && parsed.params.distance ? parsed.params.distance.toUpperCase() : 'race') + '" but no date — try "add a 10k on jul 12" or "schedule a 5k on 2026-06-07".' };
     case 'help':        return { message: COACH_HELP_TEXT };
     case 'empty':       return { error: '' };
     default:
@@ -3195,9 +3541,10 @@ const COACH_HELP_TEXT =
   "• Swap two sessions: \"swap Easy Run and Legs\"\n" +
   "• Deload next week: \"deload next week\" or \"deload week 9\"\n" +
   "• Hold a lift flat: \"hold bench flat for 2 weeks\"\n" +
-  "• Move marathon date: \"move marathon to oct 18\"\n\n" +
+  "• Move marathon date: \"move marathon to oct 18\"\n" +
+  "• Add a race: \"add a 10k on jul 12\" / \"schedule a HM on aug 10\" / \"add an ultra on sep 20\"\n\n" +
   "Every change is checked against Crawley's hybrid principles — if a change breaks consolidate-stressors, polarised-cardio spacing, deload spacing, or race spacing, you'll see a warning and (where possible) a one-tap fix. Apply with or without the fix; warning is informational, never blocking.\n\n" +
-  "Coming next: add a race (5K/10K/HM/marathon/ultra), free-form sparring online.";
+  "Coming next: discipline focus (\"strength primary for 4 weeks\"), free-form sparring online.";
 
 
     // ── Persistence ────────────────────────────────────────────────
@@ -3488,7 +3835,7 @@ const COACH_HELP_TEXT =
       document.querySelectorAll('.coach-clarify .ccx-confirm').forEach(btn => {
         btn.addEventListener('click', () => {
           if (btn.disabled) return;
-          coachResumeAnchorGoal(btn.dataset.mid);
+          coachResume(btn.dataset.mid);  // v1.07: dispatches by intentType
         });
       });
     }
