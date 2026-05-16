@@ -1062,6 +1062,194 @@
     .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
     .sync-dot.error { background: var(--tag-red); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    /* ── Coach (Phase 2.1) ── */
+    .coach-home-card {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      transition: background 0.15s;
+    }
+    .coach-home-card:active { background: var(--bg-card-alt); }
+    .coach-home-card .coach-icon { font-size: 22px; }
+    .coach-home-card .coach-title {
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      font-family: 'DM Mono', monospace;
+    }
+    .coach-home-card .coach-sub {
+      font-size: 10px; color: var(--text-muted); margin-top: 2px;
+      font-family: 'DM Mono', monospace;
+    }
+    .coach-home-card .coach-chevron {
+      font-size: 20px; color: var(--text-muted); margin-left: auto;
+    }
+
+    .coach-screen {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--bg);
+      display: none;
+      flex-direction: column;
+    }
+    .coach-screen.open { display: flex; }
+    .coach-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg);
+    }
+    .coach-header .coach-back {
+      background: none; border: none; font-size: 22px;
+      color: var(--text-sub); cursor: pointer; padding: 4px 8px;
+      font-family: inherit;
+    }
+    .coach-header .coach-title-block { flex: 1; }
+    .coach-header .coach-h-title {
+      font-size: 14px; font-weight: 600;
+      font-family: 'DM Mono', monospace;
+    }
+    .coach-header .coach-h-sub {
+      font-size: 10px; color: var(--text-muted);
+      font-family: 'DM Mono', monospace; margin-top: 1px;
+    }
+    .coach-header .coach-clear {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 10px; font-size: 10px; color: var(--text-sub);
+      font-family: 'DM Mono', monospace; cursor: pointer;
+    }
+
+    .coach-messages {
+      flex: 1; overflow-y: auto;
+      padding: 16px 14px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .coach-empty {
+      text-align: center; padding: 40px 24px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      line-height: 1.7;
+    }
+    .coach-empty .coach-empty-emoji { font-size: 36px; margin-bottom: 12px; display: block; }
+    .coach-empty .coach-empty-h { font-size: 14px; color: var(--text); margin-bottom: 14px; font-weight: 600; }
+    .coach-empty .coach-empty-list {
+      text-align: left; max-width: 320px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .coach-empty .coach-empty-list .ex {
+      padding: 10px 12px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer;
+      font-size: 11px; line-height: 1.4;
+    }
+    .coach-empty .coach-empty-list .ex:active { background: var(--bg-card-alt); }
+    .coach-empty .coach-empty-list .ex .ex-label {
+      color: var(--accent); font-weight: 600; display: block; margin-bottom: 2px;
+    }
+
+    .coach-msg { margin-bottom: 14px; }
+    .coach-msg-user {
+      display: flex; justify-content: flex-end;
+    }
+    .coach-msg-user .bubble {
+      max-width: 80%;
+      background: var(--accent); color: #fff;
+      padding: 10px 14px;
+      border-radius: 14px 14px 4px 14px;
+      font-size: 13px; line-height: 1.45;
+      word-wrap: break-word;
+    }
+    .coach-msg-coach .meta {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+    }
+    .coach-msg-coach .meta-emoji { font-size: 16px; }
+    .coach-msg-coach .meta-label {
+      font-size: 10px; color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+    }
+    .coach-msg-coach .bubble {
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 4px 14px 14px 14px;
+      font-size: 13px; line-height: 1.55;
+      white-space: pre-wrap;
+    }
+    .coach-msg-coach .bubble.error {
+      background: var(--bg-card-alt);
+      border-color: var(--tag-red);
+      color: var(--tag-red);
+    }
+
+    .coach-change-card {
+      margin-top: 10px; padding: 10px 12px;
+      background: var(--bg-card-alt); border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .coach-change-card .cc-head {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+    }
+    .coach-change-card .cc-kind {
+      font-size: 14px;
+    }
+    .coach-change-card .cc-label {
+      font-size: 11px; font-weight: 600;
+      font-family: 'DM Mono', monospace; color: var(--text);
+    }
+    .coach-change-card .cc-rationale {
+      font-size: 10px; color: var(--text-muted);
+      font-family: 'DM Mono', monospace; margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .coach-change-card .cc-diff {
+      font-size: 10px; font-family: 'DM Mono', monospace;
+      background: var(--bg); padding: 6px 8px; border-radius: 4px;
+      margin-bottom: 8px; line-height: 1.5;
+      max-height: 120px; overflow-y: auto;
+    }
+    .coach-change-card .cc-diff .old { color: var(--tag-red); text-decoration: line-through; opacity: 0.7; }
+    .coach-change-card .cc-diff .new { color: var(--success); }
+    .coach-change-card .cc-actions {
+      display: flex; gap: 6px;
+    }
+    .coach-change-card .cc-apply {
+      flex: 1; padding: 7px 8px; border: none; border-radius: 6px;
+      background: var(--success); color: #fff;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      font-weight: 600; cursor: pointer;
+    }
+    .coach-change-card .cc-skip {
+      padding: 7px 14px; border: 1px solid var(--border); border-radius: 6px;
+      background: transparent; color: var(--text-sub);
+      font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer;
+    }
+    .coach-change-card .cc-badge {
+      flex: 1; padding: 7px 8px; text-align: center;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      font-weight: 600;
+    }
+    .coach-change-card .cc-badge.applied { color: var(--success); }
+    .coach-change-card .cc-badge.skipped { color: var(--text-muted); }
+
+    .coach-input-bar {
+      display: flex; gap: 8px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .coach-input-bar input {
+      flex: 1; padding: 10px 14px;
+      border: 1px solid var(--border); border-radius: 22px;
+      background: var(--bg-card); color: var(--text);
+      font-family: inherit; font-size: 14px;
+      outline: none;
+    }
+    .coach-input-bar input:focus { border-color: var(--accent); }
+    .coach-input-bar .coach-send {
+      width: 64px; border: none; border-radius: 22px;
+      background: var(--accent); color: #fff;
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600;
+      cursor: pointer;
+    }
+    .coach-input-bar .coach-send:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -1084,7 +1272,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.02 · built 16 May 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.03 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1119,6 +1307,23 @@
     <div class="tab-content" id="prs-tab"></div>
     <div class="tab-content" id="settings-tab"></div>
   </div>
+  <!-- AI Coach (Phase 2.1) — offline-only chat overlay -->
+  <div class="coach-screen" id="coachScreen">
+    <div class="coach-header">
+      <button class="coach-back" id="coachBack" aria-label="Close coach">←</button>
+      <div class="coach-title-block">
+        <div class="coach-h-title">🧠 AI Coach</div>
+        <div class="coach-h-sub" id="coachStatusLine">Offline mode</div>
+      </div>
+      <button class="coach-clear" id="coachClear">Clear</button>
+    </div>
+    <div class="coach-messages" id="coachMessages"></div>
+    <div class="coach-input-bar">
+      <input type="text" id="coachInput" placeholder='Try "move thursday quality to friday"' autocomplete="off" autocapitalize="off">
+      <button class="coach-send" id="coachSend">Send</button>
+    </div>
+  </div>
+
 
   <script>
     // ═══════════════════════════════════════════════════════════════
@@ -1776,7 +1981,15 @@
       })(),
       // Editor view flags (transient; not persisted)
       editingHRZones: false,
-      editingMilestones: false
+      editingMilestones: false,
+      // ── Coach (Phase 2.1) ──────────────────────────────────────────
+      // Persisted chat history; capped at 50 messages in addCoachMessage().
+      coachConversation: (() => {
+        try {
+          const stored = JSON.parse(localStorage.getItem('coachConversation') || '[]');
+          return Array.isArray(stored) ? stored.slice(-50) : [];
+        } catch { return []; }
+      })()
     };
 
     // v1.02 cold-start migration: ensure any overrides loaded from
@@ -1995,6 +2208,605 @@
       localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides));
       saveState();
       return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COACH MODULE (Phase 2.1 — offline rule engine)
+    // ═══════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────
+// COACH MODULE (Phase 2.1) — offline-only rule engine
+// ─────────────────────────────────────────────────────────────────────
+// Architecture:
+//   - parseCoachIntent(text)  → { intent, params } | { intent:'unknown' }
+//   - plan{ShiftDay, SwapDay, DeloadNext, HoldFlat}(params)
+//                              → { message, changes:ProposedChange[] }
+//                              | { error }
+//   - addCoachMessage(role, text, changes?) → persists & re-renders
+//   - applyCoachChange / skipCoachChange handle individual cards
+//
+// All planners produce v2 ProposedChange records (Phase 2.0 schema), so
+// apply goes through applyProgramUpdate unchanged. The LLM tier (Phase 2.4)
+// will plug into the same plan-output shape.
+
+// Vocabulary maps used by the parser. Order matters in arrays (longest first
+// so 'upper a' is found before a hypothetical 'upper' alone, and 'tuesday'
+// before 'tue').
+const COACH_SESSION_PATTERNS = [
+  { key: 'longRun', alias: 'long run' },
+  { key: 'longRun', alias: 'longrun' },
+  { key: 'upperA',  alias: 'upper a' },
+  { key: 'upperA',  alias: 'uppera' },
+  { key: 'upperA',  alias: 'upper-a' },
+  { key: 'upperB',  alias: 'upper b' },
+  { key: 'upperB',  alias: 'upperb' },
+  { key: 'upperB',  alias: 'upper-b' },
+  { key: 'quality', alias: 'quality run' },
+  { key: 'quality', alias: 'quality' },
+  { key: 'quality', alias: 'intervals' },
+  { key: 'quality', alias: 'tempo' },
+  { key: 'easy',    alias: 'easy run' },
+  { key: 'easy',    alias: 'easy' },
+  { key: 'lower',   alias: 'leg day' },
+  { key: 'lower',   alias: 'legs' },
+  { key: 'lower',   alias: 'lower body' },
+  { key: 'lower',   alias: 'lower' },
+  { key: 'lower',   alias: 'squat day' }
+];
+const COACH_DAY_PATTERNS = [
+  ['sunday', 0], ['monday', 1], ['tuesday', 2], ['wednesday', 3],
+  ['thursday', 4], ['friday', 5], ['saturday', 6],
+  ['sun', 0], ['mon', 1], ['tues', 2], ['tue', 2],
+  ['wed', 3], ['thurs', 4], ['thur', 4], ['thu', 4],
+  ['fri', 5], ['sat', 6]
+];
+
+const SESSION_KEY_LABEL = {
+  upperA: 'Upper A', upperB: 'Upper B', easy: 'Easy Run',
+  lower:  'Legs',    quality: 'Quality Run', longRun: 'Long Run'
+};
+const DOW_LABEL_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// Hold-flat exercise lookup. Only main lifts in scope for Phase 2.1.
+const COACH_HOLD_EXERCISES = {
+  bench:    { sessions: ['upperA', 'upperB'], pattern: /\b(?:flat\s+)?(?:bp|bench(?:\s+press)?)\b/i, label: 'Bench' },
+  squat:    { sessions: ['lower'],            pattern: /\bsquat\b/i,                                  label: 'Squat' },
+  deadlift: { sessions: ['lower'],            pattern: /\b(?:deadlift|\bdl\b|sumo)\b/i,               label: 'Deadlift' }
+};
+
+function findSessionsInText(t) {
+  const positions = [];
+  const seen = new Set();
+  for (const p of COACH_SESSION_PATTERNS) {
+    if (seen.has(p.key)) continue;
+    const aliasEsc = p.alias.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
+    const re = new RegExp('\\b' + aliasEsc + '\\b', 'i');
+    const m = t.match(re);
+    if (m) { positions.push({ key: p.key, pos: m.index }); seen.add(p.key); }
+  }
+  positions.sort((a, b) => a.pos - b.pos);
+  return positions.map(p => p.key);
+}
+
+function findDaysInText(t) {
+  const positions = [];
+  const seen = new Set();
+  // Sort by alias length descending so 'tuesday' is preferred over 'tue'.
+  const sorted = [...COACH_DAY_PATTERNS].sort((a, b) => b[0].length - a[0].length);
+  for (const [name, dow] of sorted) {
+    if (seen.has(dow)) continue;
+    const re = new RegExp('\\b' + name + '\\b', 'i');
+    const m = t.match(re);
+    if (m) { positions.push({ dow, pos: m.index }); seen.add(dow); }
+  }
+  positions.sort((a, b) => a.pos - b.pos);
+  return positions.map(p => p.dow);
+}
+
+function parseWeekFromText(t, currentWk) {
+  const wkMatch = t.match(/(?:in\s+)?(?:wk\.?\s*|week\s+)(\d+)/i);
+  if (wkMatch) return parseInt(wkMatch[1], 10);
+  if (/next\s+week/i.test(t)) return currentWk + 1;
+  if (/this\s+week/i.test(t)) return currentWk;
+  return currentWk;
+}
+
+// Returns { intent, params } or { intent: 'unknown' } or { intent: 'help' }
+function parseCoachIntent(text, currentWk) {
+  const t = (text || '').toLowerCase().trim();
+  if (!t) return { intent: 'empty' };
+  if (/^(?:help|what can you do|examples?)\b/i.test(t)) return { intent: 'help' };
+
+  const wk = parseWeekFromText(t, currentWk);
+
+  // SWAP: explicit verb + two sessions
+  if (/\b(?:swap|switch)\b/i.test(t)) {
+    const sessions = findSessionsInText(t);
+    if (sessions.length >= 2) {
+      return { intent: 'SWAP_DAY', params: { sessionA: sessions[0], sessionB: sessions[1], week: wk } };
+    }
+  }
+
+  // DELOAD: explicit verb. Week extraction: 'week N' wins, else 'next week', else current+1.
+  if (/\bdeload\b/i.test(t)) {
+    const wkMatch = t.match(/week\s+(\d+)/i);
+    if (wkMatch) return { intent: 'DELOAD_NEXT', params: { week: parseInt(wkMatch[1], 10) } };
+    if (/this\s+week/i.test(t)) return { intent: 'DELOAD_NEXT', params: { week: currentWk } };
+    return { intent: 'DELOAD_NEXT', params: { week: currentWk + 1 } };
+  }
+
+  // HOLD_FLAT: 'hold/keep/maintain <exercise> flat [for N weeks]'
+  // Also: 'keep X the same', 'no progression on X'.
+  // The trailing-state group eats 'the same' / 'where it is' as a phrase so
+  // the exercise group doesn't accidentally include those words.
+  const holdMatch = t.match(/(?:hold|keep|maintain)\s+([a-z\s]+?)\s+(?:flat|(?:the\s+)?same|where\s+it\s+is|steady)(?:\s+for\s+(\d+)\s*weeks?)?/i)
+                  || t.match(/no\s+progression\s+(?:on\s+)?([a-z\s]+?)(?:\s+for\s+(\d+)\s*weeks?)?$/i);
+  if (holdMatch) {
+    // Safety net: strip leftover stop-words from the exercise name.
+    const cleaned = (holdMatch[1] || '').trim().replace(/\s+(?:the|my|a|an|on)$/i, '').trim();
+    return {
+      intent: 'HOLD_FLAT',
+      params: {
+        exercise: cleaned,
+        weeks: holdMatch[2] ? parseInt(holdMatch[2], 10) : 1
+      }
+    };
+  }
+
+  // SHIFT: 'move/shift <session> to <day>' (with optional 'from <day>')
+  if (/\b(?:move|shift)\b/i.test(t)) {
+    const sessions = findSessionsInText(t);
+    const days = findDaysInText(t);
+    if (sessions.length >= 1 && days.length >= 1) {
+      // If two days mentioned, second is the target; first is source (validation only).
+      const toDow = days[days.length - 1];
+      return {
+        intent: 'SHIFT_DAY',
+        params: { session: sessions[0], toDow, week: wk }
+      };
+    }
+    if (sessions.length >= 2 && days.length === 0) {
+      // 'move X and Y' with no day → treat as swap
+      return { intent: 'SWAP_DAY', params: { sessionA: sessions[0], sessionB: sessions[1], week: wk } };
+    }
+  }
+
+  return { intent: 'unknown' };
+}
+
+function newChangeIdForCoach() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+function planShiftDay({ session, toDow, week }) {
+  if (!session) return { error: 'I need a session name (e.g. Quality, Upper A, Legs).' };
+  if (!Number.isInteger(toDow) || toDow < 0 || toDow > 6) return { error: 'I need a target day of the week.' };
+  if (toDow === 0) return { error: "Sunday is your rest day — I won't schedule training on it. Pick Mon–Sat." };
+  if (!WEEKS[week]) return { error: `Week ${week} isn't in the program.` };
+
+  const schedule = getWeeklySchedule(week);
+  const fromDow = schedule.indexOf(session);
+  if (fromDow < 0) return { error: `${SESSION_KEY_LABEL[session]} isn't currently scheduled in Wk ${week}.` };
+  if (fromDow === toDow) return { error: `${SESSION_KEY_LABEL[session]} is already on ${DOW_LABEL_FULL[toDow]} in Wk ${week}.` };
+
+  const displaced = schedule[toDow];
+  const change = {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,                     // filled in by addCoachMessage
+    kind: 'session_day_shift',
+    week, sessionKey: session,
+    payload: { fromDow, toDow },
+    label: `${SESSION_KEY_LABEL[session]}: ${DOW_LABEL_FULL[fromDow]} → ${DOW_LABEL_FULL[toDow]}`,
+    principleRefs: [],
+    rationale: displaced
+      ? `${SESSION_KEY_LABEL[displaced]} swaps back to ${DOW_LABEL_FULL[fromDow]}.`
+      : `${DOW_LABEL_FULL[fromDow]} becomes a rest day.`
+  };
+
+  let msg = `Shifting ${SESSION_KEY_LABEL[session]} from ${DOW_LABEL_FULL[fromDow]} to ${DOW_LABEL_FULL[toDow]} in Wk ${week}.`;
+  if (displaced) msg += ` ${SESSION_KEY_LABEL[displaced]} moves back to ${DOW_LABEL_FULL[fromDow]} so the week stays balanced.`;
+  return { message: msg, changes: [change] };
+}
+
+function planSwapDay({ sessionA, sessionB, week }) {
+  if (!WEEKS[week]) return { error: `Week ${week} isn't in the program.` };
+  if (sessionA === sessionB) return { error: 'Those are the same session.' };
+  const schedule = getWeeklySchedule(week);
+  const ia = schedule.indexOf(sessionA);
+  const ib = schedule.indexOf(sessionB);
+  if (ia < 0) return { error: `${SESSION_KEY_LABEL[sessionA]} isn't in Wk ${week}.` };
+  if (ib < 0) return { error: `${SESSION_KEY_LABEL[sessionB]} isn't in Wk ${week}.` };
+
+  const change = {
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'session_swap',
+    week,
+    payload: { sessionA, sessionB },
+    label: `Swap ${SESSION_KEY_LABEL[sessionA]} (${DOW_LABEL_FULL[ia]}) ↔ ${SESSION_KEY_LABEL[sessionB]} (${DOW_LABEL_FULL[ib]})`,
+    principleRefs: [],
+    rationale: `${SESSION_KEY_LABEL[sessionA]} moves to ${DOW_LABEL_FULL[ib]}, ${SESSION_KEY_LABEL[sessionB]} moves to ${DOW_LABEL_FULL[ia]}.`
+  };
+  return {
+    message: `Swapping ${SESSION_KEY_LABEL[sessionA]} (${DOW_LABEL_FULL[ia]}) and ${SESSION_KEY_LABEL[sessionB]} (${DOW_LABEL_FULL[ib]}) in Wk ${week}.`,
+    changes: [change]
+  };
+}
+
+function planDeloadNext({ week }) {
+  if (!WEEKS[week]) return { error: `Week ${week} isn't in the program.` };
+  const STRENGTH = ['upperA', 'upperB', 'lower'];
+  const changes = [];
+  for (const sessionKey of STRENGTH) {
+    const planned = getPlanned(week, sessionKey);
+    if (!planned) continue;
+    const newValue = planned.replace(/@(\d+(?:\.\d+)?)\s*kg/g, (_, w) => {
+      const reduced = Math.round((parseFloat(w) * 0.9) / 2.5) * 2.5;
+      return `@${reduced} kg`;
+    });
+    if (newValue === planned) continue;
+    changes.push({
+      changeId: newChangeIdForCoach(),
+      ts: new Date().toISOString(),
+      sourceMsgId: null,
+      kind: 'text_replace',
+      week, sessionKey,
+      payload: { oldValue: planned, newValue },
+      label: `Deload ${SESSION_KEY_LABEL[sessionKey]} (Wk ${week})`,
+      principleRefs: [],
+      rationale: 'All kg-based weights reduced by 10%, rounded to nearest 2.5 kg.'
+    });
+  }
+  if (changes.length === 0) return { error: `Wk ${week} has no @kg loads to reduce — looks like a run-only or bodyweight week.` };
+  return {
+    message: `Deload plan for Wk ${week}: cutting all strength loads by 10% (rounded to nearest 2.5 kg). Run sessions stay as planned — volume there is already low enough that you'll get more recovery from the strength cut.`,
+    changes
+  };
+}
+
+function planHoldFlat({ exercise, weeks }) {
+  if (!exercise) return { error: 'I need an exercise: bench, squat, or deadlift.' };
+  const normEx = exercise.toLowerCase().trim();
+  let matched = null, matchedName = null;
+  for (const [key, val] of Object.entries(COACH_HOLD_EXERCISES)) {
+    if (normEx === key || normEx.includes(key) || key.includes(normEx)) {
+      matched = val; matchedName = key; break;
+    }
+  }
+  if (!matched) return { error: `I only know how to hold bench, squat, or deadlift flat right now.` };
+
+  const currentWk = getCurrentWeek();
+  const n = Math.max(1, Math.min(8, weeks || 1));
+
+  // Read current week's prescribed weight from planned text.
+  let currentWeight = null;
+  for (const sk of matched.sessions) {
+    const planned = getPlanned(currentWk, sk);
+    if (!planned) continue;
+    const line = planned.split('\n').find(l => matched.pattern.test(l));
+    if (!line) continue;
+    const wm = line.match(/@(\d+(?:\.\d+)?)\s*kg/);
+    if (wm) { currentWeight = parseFloat(wm[1]); break; }
+  }
+  if (currentWeight === null) return { error: `Couldn't find a current @kg load for ${matchedName} in Wk ${currentWk}.` };
+
+  const changes = [];
+  for (let i = 1; i <= n; i++) {
+    const tw = currentWk + i;
+    if (!WEEKS[tw]) break;
+    for (const sk of matched.sessions) {
+      const planned = getPlanned(tw, sk);
+      if (!planned) continue;
+      const lines = planned.split('\n');
+      const idx = lines.findIndex(l => matched.pattern.test(l));
+      if (idx < 0) continue;
+      const wm = lines[idx].match(/@(\d+(?:\.\d+)?)\s*kg/);
+      if (!wm) continue;
+      const pw = parseFloat(wm[1]);
+      if (pw <= currentWeight) continue;
+      const newLine = lines[idx].replace(`@${wm[1]} kg`, `@${currentWeight} kg`);
+      const newValue = lines.map((l, j) => j === idx ? newLine : l).join('\n');
+      changes.push({
+        changeId: newChangeIdForCoach(),
+        ts: new Date().toISOString(),
+        sourceMsgId: null,
+        kind: 'text_replace',
+        week: tw, sessionKey: sk,
+        payload: { oldValue: planned, newValue },
+        label: `Hold ${matchedName} @${currentWeight} kg (Wk ${tw} ${SESSION_KEY_LABEL[sk]})`,
+        principleRefs: [],
+        rationale: `Was @${pw} kg → held at @${currentWeight} kg.`
+      });
+    }
+  }
+  if (changes.length === 0) return { error: `${matchedName} is already at or below ${currentWeight} kg in the next ${n} week(s).` };
+  return {
+    message: `Holding ${matchedName} flat at ${currentWeight} kg for the next ${n} week${n>1?'s':''}. Nothing else in those sessions changes.`,
+    changes
+  };
+}
+
+function planForIntent(parsed, currentWk) {
+  switch (parsed.intent) {
+    case 'SHIFT_DAY':   return planShiftDay(parsed.params);
+    case 'SWAP_DAY':    return planSwapDay(parsed.params);
+    case 'DELOAD_NEXT': return planDeloadNext(parsed.params);
+    case 'HOLD_FLAT':   return planHoldFlat(parsed.params);
+    case 'help':        return { message: COACH_HELP_TEXT };
+    case 'empty':       return { error: '' };
+    default:
+      return {
+        message: "I didn't catch that. I can handle these offline:\n" + COACH_HELP_TEXT
+      };
+  }
+}
+
+const COACH_HELP_TEXT =
+  "• Move a session: \"move Thursday Quality to Friday\"\n" +
+  "• Swap two sessions: \"swap Easy Run and Legs\"\n" +
+  "• Deload next week: \"deload next week\" or \"deload week 9\"\n" +
+  "• Hold a lift flat: \"hold bench flat for 2 weeks\"\n\n" +
+  "More (open online): adjust season goals, fit a marathon to a date, add a race, free-form sparring. (Online coach lands in a later update.)";
+
+
+    // ── Persistence ────────────────────────────────────────────────
+    function persistCoachConversation() {
+      try {
+        localStorage.setItem('coachConversation', JSON.stringify(state.coachConversation));
+      } catch (e) { console.warn('coach persistence failed:', e); }
+    }
+
+    function addCoachMessage(role, text, changes) {
+      const msgId = 'm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+      const msg = { id: msgId, ts: new Date().toISOString(), role, text: text || '' };
+      if (Array.isArray(changes) && changes.length > 0) {
+        // Stamp sourceMsgId on each change so apply/undo can group later.
+        msg.changes = changes.map(c => ({ ...c, sourceMsgId: msgId }));
+        msg.statuses = {}; // changeId → 'pending' | 'applied' | 'skipped'
+        msg.changes.forEach(c => { msg.statuses[c.changeId] = 'pending'; });
+      }
+      state.coachConversation.push(msg);
+      // Cap to last 50 messages so localStorage doesn't grow unbounded.
+      if (state.coachConversation.length > 50) {
+        state.coachConversation = state.coachConversation.slice(-50);
+      }
+      persistCoachConversation();
+      renderCoachChat();
+      return msg;
+    }
+
+    function clearCoachConversation() {
+      state.coachConversation = [];
+      persistCoachConversation();
+      renderCoachChat();
+    }
+
+    // ── Render ─────────────────────────────────────────────────────
+    function renderCoachChat() {
+      const container = document.getElementById('coachMessages');
+      if (!container) return;
+      if (state.coachConversation.length === 0) {
+        container.innerHTML = renderCoachEmptyState();
+        bindCoachEmptyExamples();
+        return;
+      }
+      container.innerHTML = state.coachConversation.map(renderCoachMessage).join('');
+      bindCoachChangeCardEvents();
+      // Auto-scroll to bottom on render
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderCoachEmptyState() {
+      const examples = [
+        { label: 'Shift a session', text: 'move thursday quality to friday' },
+        { label: 'Swap two sessions', text: 'swap easy run and legs' },
+        { label: 'Deload next week', text: 'deload next week' },
+        { label: 'Hold a lift flat', text: 'hold bench flat for 2 weeks' }
+      ];
+      return `
+        <div class="coach-empty">
+          <span class="coach-empty-emoji">🧠</span>
+          <div class="coach-empty-h">Spar with your hybrid coach</div>
+          <div style="margin-bottom:18px;">Built on Fergus Crawley's hybrid methodology. Works fully offline.</div>
+          <div class="coach-empty-list">
+            ${examples.map((e, i) => `
+              <div class="ex" data-example-i="${i}">
+                <span class="ex-label">${escapeHtml(e.label)}</span>
+                <span style="color:var(--text-sub);">"${escapeHtml(e.text)}"</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function bindCoachEmptyExamples() {
+      const examples = [
+        'move thursday quality to friday',
+        'swap easy run and legs',
+        'deload next week',
+        'hold bench flat for 2 weeks'
+      ];
+      document.querySelectorAll('.coach-empty .ex').forEach((el) => {
+        el.addEventListener('click', () => {
+          const i = parseInt(el.dataset.exampleI, 10);
+          const inp = document.getElementById('coachInput');
+          if (inp) { inp.value = examples[i]; inp.focus(); }
+        });
+      });
+    }
+
+    function renderCoachMessage(msg) {
+      if (msg.role === 'user') {
+        return `
+          <div class="coach-msg coach-msg-user">
+            <div class="bubble">${escapeHtml(msg.text)}</div>
+          </div>
+        `;
+      }
+      // coach
+      const isError = msg.isError;
+      const changesHtml = (msg.changes && msg.changes.length > 0)
+        ? msg.changes.map(c => renderChangeCard(c, msg)).join('')
+        : '';
+      return `
+        <div class="coach-msg coach-msg-coach">
+          <div class="meta">
+            <span class="meta-emoji">🧠</span>
+            <span class="meta-label">Coach</span>
+          </div>
+          <div class="bubble ${isError ? 'error' : ''}">${escapeHtml(msg.text)}</div>
+          ${changesHtml}
+        </div>
+      `;
+    }
+
+    function renderChangeCard(change, msg) {
+      const status = msg.statuses?.[change.changeId] || 'pending';
+      const kindEmoji = {
+        text_replace:       '🏋',
+        session_day_shift:  '📅',
+        session_swap:       '🔁',
+        session_scale:      '📊',
+        block_scale:        '📊',
+        week_replace:       '📝',
+        goal_set:           '🎯',
+        discipline_focus:   '🎯'
+      }[change.kind] || '·';
+      let diffHtml = '';
+      if (change.kind === 'text_replace' && change.payload) {
+        const o = (change.payload.oldValue || '').split('\n');
+        const n = (change.payload.newValue || '').split('\n');
+        const rows = [];
+        const max = Math.max(o.length, n.length);
+        for (let i = 0; i < max; i++) {
+          if (o[i] === n[i]) continue; // skip unchanged lines
+          if (o[i]) rows.push(`<div class="old">− ${escapeHtml(o[i])}</div>`);
+          if (n[i]) rows.push(`<div class="new">+ ${escapeHtml(n[i])}</div>`);
+        }
+        if (rows.length === 0 && change.payload.newValue) {
+          rows.push(`<div class="new">${escapeHtml(change.payload.newValue.split('\n')[0])}</div>`);
+        }
+        diffHtml = `<div class="cc-diff">${rows.join('')}</div>`;
+      } else if (change.kind === 'session_day_shift' && change.payload) {
+        const from = DOW_LABEL_FULL[change.payload.fromDow] || '?';
+        const to   = DOW_LABEL_FULL[change.payload.toDow]   || '?';
+        diffHtml = `<div class="cc-diff"><span class="old">− ${escapeHtml(from)}</span> <span class="new">+ ${escapeHtml(to)}</span></div>`;
+      } else if (change.kind === 'session_swap' && change.payload) {
+        diffHtml = `<div class="cc-diff"><span class="new">${escapeHtml(SESSION_KEY_LABEL[change.payload.sessionA])} ↔ ${escapeHtml(SESSION_KEY_LABEL[change.payload.sessionB])}</span></div>`;
+      }
+
+      const actions = (status === 'applied')
+        ? `<div class="cc-badge applied">✓ Applied</div>`
+        : (status === 'skipped')
+          ? `<div class="cc-badge skipped">Skipped</div>`
+          : `
+            <button class="cc-apply" data-mid="${msg.id}" data-cid="${change.changeId}">Apply</button>
+            <button class="cc-skip"  data-mid="${msg.id}" data-cid="${change.changeId}">Skip</button>
+          `;
+      return `
+        <div class="coach-change-card" data-cid="${change.changeId}">
+          <div class="cc-head">
+            <span class="cc-kind">${kindEmoji}</span>
+            <span class="cc-label">${escapeHtml(change.label || change.kind)}</span>
+          </div>
+          ${change.rationale ? `<div class="cc-rationale">${escapeHtml(change.rationale)}</div>` : ''}
+          ${diffHtml}
+          <div class="cc-actions">${actions}</div>
+        </div>
+      `;
+    }
+
+    // ── Apply / Skip ───────────────────────────────────────────────
+    function bindCoachChangeCardEvents() {
+      document.querySelectorAll('.coach-change-card .cc-apply').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await coachApplyChange(btn.dataset.mid, btn.dataset.cid);
+        });
+      });
+      document.querySelectorAll('.coach-change-card .cc-skip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          coachSkipChange(btn.dataset.mid, btn.dataset.cid);
+        });
+      });
+    }
+
+    async function coachApplyChange(msgId, changeId) {
+      const msg = state.coachConversation.find(m => m.id === msgId);
+      if (!msg || !msg.changes) return;
+      const change = msg.changes.find(c => c.changeId === changeId);
+      if (!change) return;
+      // Optimistic UI: disable + label "Saving…"
+      const btn = document.querySelector(`.cc-apply[data-mid="${msgId}"][data-cid="${changeId}"]`);
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+      await applyProgramUpdate(change);
+      msg.statuses[changeId] = 'applied';
+      persistCoachConversation();
+      renderCoachChat();
+      // Background: refresh underlying tab so program reflects the change.
+      try { if (typeof render === 'function') render(); } catch {}
+    }
+
+    function coachSkipChange(msgId, changeId) {
+      const msg = state.coachConversation.find(m => m.id === msgId);
+      if (!msg) return;
+      msg.statuses[changeId] = 'skipped';
+      persistCoachConversation();
+      renderCoachChat();
+    }
+
+    // ── Open / close / send ────────────────────────────────────────
+    function openCoachScreen() {
+      const screen = document.getElementById('coachScreen');
+      if (!screen) return;
+      screen.classList.add('open');
+      renderCoachChat();
+      // Defer focus to next frame so keyboard pops up reliably on mobile.
+      setTimeout(() => { document.getElementById('coachInput')?.focus(); }, 60);
+    }
+
+    function closeCoachScreen() {
+      document.getElementById('coachScreen')?.classList.remove('open');
+    }
+
+    function handleCoachSend() {
+      const inp = document.getElementById('coachInput');
+      if (!inp) return;
+      const text = inp.value.trim();
+      if (!text) return;
+      inp.value = '';
+      addCoachMessage('user', text);
+      const currentWk = getCurrentWeek();
+      const parsed = parseCoachIntent(text, currentWk);
+      const result = planForIntent(parsed, currentWk);
+      if (result.error) {
+        const errMsg = addCoachMessage('coach', result.error);
+        errMsg.isError = true;
+        persistCoachConversation();
+        renderCoachChat();
+        return;
+      }
+      addCoachMessage('coach', result.message || '', result.changes);
+    }
+
+    // One-time wiring for the coach overlay controls. Called from initApp().
+    let _coachWired = false;
+    function wireCoachControls() {
+      if (_coachWired) return;
+      _coachWired = true;
+      document.getElementById('coachBack')?.addEventListener('click', closeCoachScreen);
+      document.getElementById('coachClear')?.addEventListener('click', () => {
+        if (state.coachConversation.length === 0) return;
+        if (confirm('Clear the coach conversation? Applied program changes remain in your program — only the chat history is wiped.')) {
+          clearCoachConversation();
+        }
+      });
+      document.getElementById('coachSend')?.addEventListener('click', handleCoachSend);
+      document.getElementById('coachInput')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); handleCoachSend(); }
+      });
     }
 
     // ── Exercise PR helpers ──
@@ -2355,6 +3167,16 @@
           `}
         </div>
 
+        <!-- AI Coach (Phase 2.1) -->
+        <div class="card coach-home-card" id="coachHomeCard">
+          <span class="coach-icon">🧠</span>
+          <div>
+            <div class="coach-title">AI Coach</div>
+            <div class="coach-sub">Spar on program changes · works offline</div>
+          </div>
+          <span class="coach-chevron">›</span>
+        </div>
+
         <!-- Stats -->
         <div class="stats-grid">
           <div class="card stat-card">
@@ -2470,6 +3292,11 @@
         });
       }
       if (state.editingMilestones) bindMilestoneEditorEvents();
+
+      // AI Coach card tap → open chat overlay
+      document.getElementById('coachHomeCard')?.addEventListener('click', () => {
+        openCoachScreen();
+      });
 
       // Today-card tap → open session logger
       const todayCard = document.getElementById('today-card-widget');
@@ -4173,6 +5000,9 @@
     }
     // ═══════════════════════════════════════════════════════════════
     function initApp() {
+      // Wire the coach overlay (idempotent).
+      wireCoachControls();
+
       // Apply theme
       document.body.dataset.theme = state.theme;
       document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
