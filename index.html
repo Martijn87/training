@@ -1229,6 +1229,73 @@
     .coach-change-card .cc-badge.applied { color: var(--success); }
     .coach-change-card .cc-badge.skipped { color: var(--text-muted); }
 
+    /* v1.06 — Crawley violation banner */
+    .coach-change-card .cc-warning {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: var(--gold-soft);
+      border: 1px solid var(--gold);
+      border-radius: 6px;
+    }
+    .coach-change-card .cc-warning .cc-warn-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 3px;
+    }
+    .coach-change-card .cc-warning .cc-warn-msg {
+      font-family: inherit;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.45;
+      margin-bottom: 6px;
+    }
+    .coach-change-card .cc-warning .cc-warn-msg + .cc-warn-title {
+      margin-top: 6px;
+    }
+    .coach-change-card .cc-fix-toggle {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      background: none;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .coach-change-card .cc-fix-detail {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px dashed var(--gold);
+      border-radius: 4px;
+    }
+    .coach-change-card .cc-fix-desc {
+      font-family: inherit;
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+    .coach-change-card .cc-fix-row {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text);
+      padding: 2px 0;
+    }
+    .coach-change-card .cc-apply-with-fix {
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      color: #1a1a1a;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 4px;
+    }
+
     .coach-input-bar {
       display: flex; gap: 8px;
       padding: 10px 12px;
@@ -1323,7 +1390,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.05 · built 16 May 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.06 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -2838,24 +2905,289 @@ function coachResumeAnchorGoal(msgId) {
     const wks = Math.round(Math.abs(pr.params.deltaDays) / 7);
     txt += `\n\nNote: this leaves a ${wks}-week gap vs the original taper. The weekly training structure isn't auto-reshaped — you may want an extra taper week. I can help with that in a follow-up request (later phase).`;
   }
+  // v1.06: validate the cascade-produced changes against Crawley principles.
+  attachCrawleyValidations(changes);
   addCoachMessage('coach', txt, changes);
 }
 
+
+// ─────────────────────────────────────────────────────────────────────
+// CRAWLEY VALIDATOR (v1.06)
+// ─────────────────────────────────────────────────────────────────────
+// Every planner-produced change gets run through a set of validators
+// derived from Fergus Crawley's hybrid-training principles. A validator
+// returns either null (change is fine) or a CrawleyViolation object:
+//   { principleKey, principleName, severity:'warn', message, fix?, fixDescription? }
+// `fix` is an optional ProposedChange[] that addresses the violation.
+// The UI surfaces violations as a warning banner on the change card;
+// when fix is present, a "Show fix" button reveals the alternative.
+// User can: apply original + fix, apply original only, or skip entirely.
+// Warning is informational — never blocks the apply path.
+
+const CRAWLEY_PRINCIPLES = {
+  consolidate_stressors: {
+    key: 'consolidate_stressors',
+    name: 'Consolidate stressors',
+    summary: 'Heavy lower + quality run cluster together so easy days form real recovery blocks.'
+  },
+  polarised_cardio_adj: {
+    key: 'polarised_cardio_adj',
+    name: 'Polarised cardio spacing',
+    summary: 'Quality run and long run need 2+ days of separation so each gets full quality.'
+  },
+  deload_spacing: {
+    key: 'deload_spacing',
+    name: 'Deload spacing',
+    summary: 'Crawley\'s 4:1 wave wants 3–4 weeks of progressive load between deloads.'
+  },
+  race_spacing: {
+    key: 'race_spacing',
+    name: 'Race spacing',
+    summary: 'Key endurance races need 3+ weeks of separation for taper and recovery.'
+  }
+};
+
+// Helper: compute resulting weekly schedule after applying a set of changes.
+function crawleyComputeSchedule(allChanges, weekFilter) {
+  const sched = [null, 'upperA', 'easy', 'lower', 'quality', 'upperB', 'longRun'];
+  for (const c of allChanges) {
+    if (weekFilter != null && c.week !== weekFilter) continue;
+    if (c.kind === 'session_day_shift' && c.payload) {
+      const { fromDow, toDow } = c.payload;
+      if (Number.isInteger(fromDow) && Number.isInteger(toDow)) {
+        const tmp = sched[toDow]; sched[toDow] = sched[fromDow]; sched[fromDow] = tmp;
+      }
+    } else if (c.kind === 'session_swap' && c.payload) {
+      const { sessionA, sessionB } = c.payload;
+      const ia = sched.indexOf(sessionA), ib = sched.indexOf(sessionB);
+      if (ia >= 0 && ib >= 0) {
+        const tmp = sched[ia]; sched[ia] = sched[ib]; sched[ib] = tmp;
+      }
+    }
+  }
+  return sched;
+}
+
+// ── Validator: consolidate_stressors ─────────────────────────────────
+// Fires on schedule changes. Heavy lower and quality run should be
+// within 1 day of each other. Fix proposes a secondary shift to bring
+// quality back next to lower.
+function crawleyValidateConsolidateStressors(change, allChanges) {
+  if (change.kind !== 'session_day_shift' && change.kind !== 'session_swap') return null;
+  const sched = crawleyComputeSchedule(allChanges, change.week);
+  const lowerDay = sched.indexOf('lower');
+  const qualityDay = sched.indexOf('quality');
+  if (lowerDay < 0 || qualityDay < 0) return null;
+  const distance = Math.abs(lowerDay - qualityDay);
+  if (distance <= 1) return null;
+
+  // Fix: shift quality to lowerDay ± 1 (whichever is in-week and not Sunday).
+  let targetQualityDow = lowerDay + 1;
+  if (targetQualityDow > 6 || targetQualityDow === 0) targetQualityDow = lowerDay - 1;
+  if (targetQualityDow === qualityDay || targetQualityDow < 1 || targetQualityDow > 6) return null;
+
+  const fix = [{
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'session_day_shift',
+    week: change.week,
+    sessionKey: 'quality',
+    payload: { fromDow: qualityDay, toDow: targetQualityDow },
+    label: 'Re-align quality run to ' + DOW_LABEL_FULL[targetQualityDow],
+    principleRefs: ['consolidate_stressors'],
+    rationale: 'Brings quality run adjacent to lower so the high-stress block stays clustered.'
+  }];
+  return {
+    principleKey: 'consolidate_stressors',
+    principleName: CRAWLEY_PRINCIPLES.consolidate_stressors.name,
+    severity: 'warn',
+    message: 'Heavy lower (' + DOW_LABEL_FULL[lowerDay] + ') and quality run (' + DOW_LABEL_FULL[qualityDay] + ') end up ' + distance + ' days apart. Crawley\'s hybrid microcycle wants those high-stress days clustered so the rest of the week can be true recovery.',
+    fix,
+    fixDescription: 'Also shift quality run to ' + DOW_LABEL_FULL[targetQualityDow] + '.'
+  };
+}
+
+// ── Validator: polarised_cardio_adj ──────────────────────────────────
+// Fires when quality run and long run end up back-to-back. Fix moves
+// quality 2+ days from long run, ideally adjacent to lower.
+function crawleyValidatePolarisedCardioAdj(change, allChanges) {
+  if (change.kind !== 'session_day_shift' && change.kind !== 'session_swap') return null;
+  const sched = crawleyComputeSchedule(allChanges, change.week);
+  const qualityDay = sched.indexOf('quality');
+  const longRunDay = sched.indexOf('longRun');
+  if (qualityDay < 0 || longRunDay < 0) return null;
+  const distance = Math.abs(qualityDay - longRunDay);
+  if (distance >= 2) return null; // good
+
+  // Fix: move quality to a slot 2+ days from longRun, preferably next to lower
+  const lowerDay = sched.indexOf('lower');
+  let targetQualityDow = null;
+  // Try lower+1, lower-1, then any day 2+ from longRun
+  const candidates = lowerDay > 0 ? [lowerDay + 1, lowerDay - 1] : [];
+  for (let d = 1; d <= 6; d++) candidates.push(d);
+  for (const c of candidates) {
+    if (c < 1 || c > 6) continue;
+    if (c === qualityDay) continue;
+    if (Math.abs(c - longRunDay) < 2) continue;
+    targetQualityDow = c;
+    break;
+  }
+  if (targetQualityDow == null) return null;
+
+  const fix = [{
+    changeId: newChangeIdForCoach(),
+    ts: new Date().toISOString(),
+    sourceMsgId: null,
+    kind: 'session_day_shift',
+    week: change.week,
+    sessionKey: 'quality',
+    payload: { fromDow: qualityDay, toDow: targetQualityDow },
+    label: 'Move quality run to ' + DOW_LABEL_FULL[targetQualityDow] + ' (away from long run)',
+    principleRefs: ['polarised_cardio_adj'],
+    rationale: 'Spaces the two hard runs so neither is compromised by carryover fatigue.'
+  }];
+  return {
+    principleKey: 'polarised_cardio_adj',
+    principleName: CRAWLEY_PRINCIPLES.polarised_cardio_adj.name,
+    severity: 'warn',
+    message: 'Quality run (' + DOW_LABEL_FULL[qualityDay] + ') ends up back-to-back with long run (' + DOW_LABEL_FULL[longRunDay] + '). Polarised running wants those spaced so each gets its full quality.',
+    fix,
+    fixDescription: 'Move quality run to ' + DOW_LABEL_FULL[targetQualityDow] + ' instead.'
+  };
+}
+
+// ── Validator: deload_spacing ────────────────────────────────────────
+// Fires when a deload change is proposed within 3 weeks of a prior
+// deload override. No automated fix — the user has to pick timing.
+function crawleyValidateDeloadSpacing(change, allChanges) {
+  if (change.kind !== 'text_replace') return null;
+  const isDeload = /deload/i.test(change.label || '');
+  if (!isDeload) return null;
+  const priorDeloads = (state.programOverrides || []).filter(o =>
+    o && o.kind === 'text_replace' && /deload/i.test(o.label || '') && Number.isInteger(o.week)
+  );
+  if (priorDeloads.length === 0) return null;
+  // Each deload spans several sessions in one week; dedupe by week.
+  const priorWeeks = [...new Set(priorDeloads.map(o => o.week))].sort((a, b) => b - a);
+  const currentWeek = change.week;
+  if (!Number.isInteger(currentWeek)) return null;
+  // Find the most recent prior week that's BEFORE the current change's week.
+  const lastPrior = priorWeeks.find(w => w < currentWeek);
+  if (lastPrior == null) return null;
+  const weeksBetween = currentWeek - lastPrior;
+  if (weeksBetween >= 3) return null;
+
+  return {
+    principleKey: 'deload_spacing',
+    principleName: CRAWLEY_PRINCIPLES.deload_spacing.name,
+    severity: 'warn',
+    message: 'You deloaded Wk ' + lastPrior + ' only ' + weeksBetween + ' week' + (weeksBetween === 1 ? '' : 's') + ' ago. Crawley\'s wave-loading pattern is 3–4 weeks of progressive load before each deload — back-to-back deloads risk losing the training stimulus.',
+    fix: null,
+    fixDescription: null
+  };
+}
+
+// ── Validator: race_spacing ──────────────────────────────────────────
+// Fires on goal_set changes. Checks the new date against all OTHER
+// endurance race milestones (including any moves in the same change set,
+// so cascade shifts get evaluated against their final dates).
+function crawleyValidateRaceSpacing(change, allChanges) {
+  if (change.kind !== 'goal_set') return null;
+  if (!change.payload || !change.payload.newDate || !change.payload.milestoneLabel) return null;
+  const newDate = new Date(change.payload.newDate);
+  if (isNaN(newDate.getTime())) return null;
+
+  // Build the "post-apply" date map for endurance races: start with
+  // current milestones, then overlay any goal_set moves in this set.
+  const planMoves = {};
+  for (const c of allChanges) {
+    if (c.kind === 'goal_set' && c.payload && c.payload.milestoneLabel && c.payload.newDate) {
+      planMoves[c.payload.milestoneLabel] = c.payload.newDate;
+    }
+  }
+  const milestones = state.milestones || [];
+  const others = milestones.filter(m =>
+    m.label !== change.payload.milestoneLabel &&
+    /\b(?:half\s*marathon|hm|marathon)\b/i.test(m.label)
+  );
+  for (const other of others) {
+    const otherDate = new Date(planMoves[other.label] || other.date);
+    if (isNaN(otherDate.getTime())) continue;
+    const daysBetween = Math.round(Math.abs((newDate - otherDate) / 86400000));
+    if (daysBetween > 0 && daysBetween < 21) {
+      return {
+        principleKey: 'race_spacing',
+        principleName: CRAWLEY_PRINCIPLES.race_spacing.name,
+        severity: 'warn',
+        message: change.payload.milestoneLabel + ' (' + coachDateLabel(change.payload.newDate) + ') is only ' + daysBetween + ' day' + (daysBetween === 1 ? '' : 's') + ' from ' + other.label + ' (' + coachDateLabel(planMoves[other.label] || other.date) + '). Crawley recommends 3+ weeks between key endurance races so each gets proper taper and recovery.',
+        fix: null,
+        fixDescription: null
+      };
+    }
+  }
+  return null;
+}
+
+const CRAWLEY_VALIDATORS = [
+  crawleyValidateConsolidateStressors,
+  crawleyValidatePolarisedCardioAdj,
+  crawleyValidateDeloadSpacing,
+  crawleyValidateRaceSpacing
+];
+
+function validateChangeAgainstCrawley(change, allChanges) {
+  const violations = [];
+  for (const v of CRAWLEY_VALIDATORS) {
+    try {
+      const result = v(change, allChanges);
+      if (result) violations.push(result);
+    } catch (e) {
+      console.warn('Crawley validator error:', e);
+    }
+  }
+  return violations;
+}
+
+// Mutates each change to add `violations` and `principleRefs` derived from
+// the validator output. Idempotent: re-running yields the same violations.
+function attachCrawleyValidations(changes) {
+  if (!Array.isArray(changes) || changes.length === 0) return changes;
+  for (const change of changes) {
+    const violations = validateChangeAgainstCrawley(change, changes);
+    if (violations.length > 0) {
+      change.violations = violations;
+      const refs = new Set(change.principleRefs || []);
+      violations.forEach(v => refs.add(v.principleKey));
+      change.principleRefs = Array.from(refs);
+    } else {
+      // Clear any stale violations from a previous run.
+      if (change.violations) delete change.violations;
+    }
+  }
+  return changes;
+}
+
 function planForIntent(parsed, currentWk) {
+  let result;
   switch (parsed.intent) {
-    case 'SHIFT_DAY':   return planShiftDay(parsed.params);
-    case 'SWAP_DAY':    return planSwapDay(parsed.params);
-    case 'DELOAD_NEXT': return planDeloadNext(parsed.params);
-    case 'HOLD_FLAT':   return planHoldFlat(parsed.params);
-    case 'ANCHOR_GOAL': return planAnchorGoal(parsed.params);
+    case 'SHIFT_DAY':   result = planShiftDay(parsed.params); break;
+    case 'SWAP_DAY':    result = planSwapDay(parsed.params); break;
+    case 'DELOAD_NEXT': result = planDeloadNext(parsed.params); break;
+    case 'HOLD_FLAT':   result = planHoldFlat(parsed.params); break;
+    case 'ANCHOR_GOAL': result = planAnchorGoal(parsed.params); break;
     case 'ANCHOR_GOAL_NEEDS_DATE': return { error: 'Got "marathon" but no date — try "move marathon to oct 18" or "marathon on 2026-10-18".' };
     case 'help':        return { message: COACH_HELP_TEXT };
     case 'empty':       return { error: '' };
     default:
-      return {
-        message: "I didn't catch that. I can handle these offline:\n" + COACH_HELP_TEXT
-      };
+      return { message: "I didn't catch that. I can handle these offline:\n" + COACH_HELP_TEXT };
   }
+  // v1.06: every planner-produced change set runs through Crawley validators.
+  // Violations are attached to individual changes for the card UI to surface.
+  if (result && Array.isArray(result.changes) && result.changes.length > 0) {
+    attachCrawleyValidations(result.changes);
+  }
+  return result;
 }
 
 const COACH_HELP_TEXT =
@@ -2864,7 +3196,8 @@ const COACH_HELP_TEXT =
   "• Deload next week: \"deload next week\" or \"deload week 9\"\n" +
   "• Hold a lift flat: \"hold bench flat for 2 weeks\"\n" +
   "• Move marathon date: \"move marathon to oct 18\"\n\n" +
-  "Coming next: add a race (5K/10K/HM/marathon/ultra), Crawley principle warnings on every change, free-form sparring online.";
+  "Every change is checked against Crawley's hybrid principles — if a change breaks consolidate-stressors, polarised-cardio spacing, deload spacing, or race spacing, you'll see a warning and (where possible) a one-tap fix. Apply with or without the fix; warning is informational, never blocking.\n\n" +
+  "Coming next: add a race (5K/10K/HM/marathon/ultra), free-form sparring online.";
 
 
     // ── Persistence ────────────────────────────────────────────────
@@ -3056,14 +3389,47 @@ const COACH_HELP_TEXT =
         diffHtml = `<div class="cc-diff"><span class="new">${escapeHtml(SESSION_KEY_LABEL[change.payload.sessionA])} ↔ ${escapeHtml(SESSION_KEY_LABEL[change.payload.sessionB])}</span></div>`;
       }
 
-      const actions = (status === 'applied')
-        ? `<div class="cc-badge applied">✓ Applied</div>`
-        : (status === 'skipped')
-          ? `<div class="cc-badge skipped">Skipped</div>`
-          : `
-            <button class="cc-apply" data-mid="${msg.id}" data-cid="${change.changeId}">Apply</button>
-            <button class="cc-skip"  data-mid="${msg.id}" data-cid="${change.changeId}">Skip</button>
-          `;
+      // v1.06 — Crawley violation surface (warning banner + optional fix).
+      const violations = Array.isArray(change.violations) ? change.violations : [];
+      const firstWithFix = violations.find(v => Array.isArray(v.fix) && v.fix.length > 0);
+      const fixExpanded  = change.fixExpanded === true;
+      let warningHtml = '';
+      if (violations.length > 0 && status !== 'applied' && status !== 'skipped') {
+        const msgsHtml = violations.map(v =>
+          `<div class="cc-warn-title">⚠ ${escapeHtml(v.principleName)}</div>
+           <div class="cc-warn-msg">${escapeHtml(v.message)}</div>`
+        ).join('');
+        const toggleBtn = firstWithFix
+          ? `<button class="cc-fix-toggle" data-mid="${msg.id}" data-cid="${change.changeId}" data-action="${fixExpanded ? 'hide' : 'show'}">${fixExpanded ? '× Hide fix' : '✓ Show fix'}</button>`
+          : '';
+        const fixDetailHtml = (fixExpanded && firstWithFix)
+          ? `<div class="cc-fix-detail">
+               <div class="cc-fix-desc">${escapeHtml(firstWithFix.fixDescription || 'Proposed fix:')}</div>
+               ${firstWithFix.fix.map(fc =>
+                 `<div class="cc-fix-row"><span class="cc-fix-label">${escapeHtml(fc.label || fc.kind)}</span></div>`
+               ).join('')}
+             </div>`
+          : '';
+        warningHtml = `<div class="cc-warning">${msgsHtml}${toggleBtn}${fixDetailHtml}</div>`;
+      }
+
+      // Action buttons depend on state. When fix is revealed, the user gets
+      // two apply paths (with fix vs original only). Otherwise a plain Apply.
+      let actions;
+      if (status === 'applied') {
+        actions = `<div class="cc-badge applied">✓ Applied</div>`;
+      } else if (status === 'skipped') {
+        actions = `<div class="cc-badge skipped">Skipped</div>`;
+      } else if (fixExpanded && firstWithFix) {
+        actions = `
+          <button class="cc-apply-with-fix" data-mid="${msg.id}" data-cid="${change.changeId}">Apply with fix</button>
+          <button class="cc-apply" data-mid="${msg.id}" data-cid="${change.changeId}">Apply original only</button>
+          <button class="cc-skip"  data-mid="${msg.id}" data-cid="${change.changeId}">Skip</button>`;
+      } else {
+        actions = `
+          <button class="cc-apply" data-mid="${msg.id}" data-cid="${change.changeId}">Apply</button>
+          <button class="cc-skip"  data-mid="${msg.id}" data-cid="${change.changeId}">Skip</button>`;
+      }
       return `
         <div class="coach-change-card" data-cid="${change.changeId}">
           <div class="cc-head">
@@ -3072,6 +3438,7 @@ const COACH_HELP_TEXT =
           </div>
           ${change.rationale ? `<div class="cc-rationale">${escapeHtml(change.rationale)}</div>` : ''}
           ${diffHtml}
+          ${warningHtml}
           <div class="cc-actions">${actions}</div>
         </div>
       `;
@@ -3087,6 +3454,23 @@ const COACH_HELP_TEXT =
       document.querySelectorAll('.coach-change-card .cc-skip').forEach(btn => {
         btn.addEventListener('click', () => {
           coachSkipChange(btn.dataset.mid, btn.dataset.cid);
+        });
+      });
+      // v1.06 — Crawley violation surface: fix toggle + apply-with-fix.
+      document.querySelectorAll('.coach-change-card .cc-fix-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const msg = state.coachConversation.find(m => m.id === btn.dataset.mid);
+          if (!msg || !msg.changes) return;
+          const change = msg.changes.find(c => c.changeId === btn.dataset.cid);
+          if (!change) return;
+          change.fixExpanded = btn.dataset.action === 'show';
+          persistCoachConversation();
+          renderCoachChat();
+        });
+      });
+      document.querySelectorAll('.coach-change-card .cc-apply-with-fix').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await coachApplyChangeWithFix(btn.dataset.mid, btn.dataset.cid);
         });
       });
       // v1.05: clarification option buttons + Confirm
@@ -3107,6 +3491,29 @@ const COACH_HELP_TEXT =
           coachResumeAnchorGoal(btn.dataset.mid);
         });
       });
+    }
+
+    // v1.06 — apply original + all fix changes from the first violation that
+    // has a fix. Each apply is its own override on the stack (so undo pops them
+    // one at a time — acceptable cost for v1.06; could group-undo in 2.3).
+    async function coachApplyChangeWithFix(msgId, changeId) {
+      const msg = state.coachConversation.find(m => m.id === msgId);
+      if (!msg || !msg.changes) return;
+      const change = msg.changes.find(c => c.changeId === changeId);
+      if (!change) return;
+      const btn = document.querySelector(`.cc-apply-with-fix[data-mid="${msgId}"][data-cid="${changeId}"]`);
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+      await applyProgramUpdate(change);
+      const firstWithFix = (change.violations || []).find(v => Array.isArray(v.fix) && v.fix.length > 0);
+      if (firstWithFix) {
+        for (const fc of firstWithFix.fix) {
+          await applyProgramUpdate(fc);
+        }
+      }
+      msg.statuses[changeId] = 'applied';
+      persistCoachConversation();
+      renderCoachChat();
+      try { if (typeof render === 'function') render(); } catch {}
     }
 
     async function coachApplyChange(msgId, changeId) {
