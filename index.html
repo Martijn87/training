@@ -1084,7 +1084,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v26 · built 23 Apr 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.01 · built 16 May 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1527,9 +1527,32 @@
       if (data.custom_exercises) {
         localStorage.setItem('customExercises', JSON.stringify(data.custom_exercises));
       }
+      // ── Merge program_overrides: remote ∪ local-only-by-ts ─────────────
+      // Pre-v1.01, an apply that failed to reach Supabase could be silently
+      // overwritten here. Now we keep any local-only entries and push the
+      // union back to remote, so a failed sync recovers on next login.
       if (data.program_overrides && Array.isArray(data.program_overrides)) {
-        state.programOverrides = data.program_overrides;
-        localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides));
+        const local = Array.isArray(state.programOverrides) ? state.programOverrides : [];
+        const remoteTs = new Set(data.program_overrides.map(o => o && o.ts).filter(Boolean));
+        const localOnly = local.filter(o => o && o.ts && !remoteTs.has(o.ts));
+        const merged = [...data.program_overrides, ...localOnly];
+        state.programOverrides = merged;
+        localStorage.setItem('programOverrides', JSON.stringify(merged));
+        if (localOnly.length > 0) {
+          // Push the reconciled set back so future logins see it as remote.
+          saveState().catch(e => console.warn('override reconcile push failed (non-fatal):', e));
+        }
+      }
+      // ── Optional cross-device sync for HR config + milestones ──────────
+      // These columns may not exist on every install. If they do, prefer
+      // them over localStorage; if not, stay with the local copy.
+      if (data.hr_config && typeof data.hr_config === 'object') {
+        state.hrConfig = { maxHR: 183, zoneBoundaries: null, ...data.hr_config };
+        localStorage.setItem('hrConfig', JSON.stringify(state.hrConfig));
+      }
+      if (data.milestones && Array.isArray(data.milestones)) {
+        state.milestones = data.milestones;
+        localStorage.setItem('milestones', JSON.stringify(state.milestones));
       }
       if (data.exercise_prs && typeof data.exercise_prs === 'object') {
         state.exercisePRs = data.exercise_prs;
@@ -1724,7 +1747,27 @@
       completedSessions: {},
       editingPRs: false,
       programOverrides: (() => { try { return JSON.parse(localStorage.getItem('programOverrides') || '[]'); } catch { return []; } })(),
-      exercisePRs: (() => { try { return JSON.parse(localStorage.getItem('exercisePRs') || '{}'); } catch { return {}; } })()
+      exercisePRs: (() => { try { return JSON.parse(localStorage.getItem('exercisePRs') || '{}'); } catch { return {}; } })(),
+      // HR config: maxHR drives %-derived zones; zoneBoundaries overrides them
+      // explicitly when present (e.g. lactate-threshold calibration).
+      hrConfig: (() => {
+        const DEFAULT = { maxHR: 183, zoneBoundaries: null };
+        try {
+          const stored = JSON.parse(localStorage.getItem('hrConfig') || 'null');
+          return stored && typeof stored === 'object' ? { ...DEFAULT, ...stored } : DEFAULT;
+        } catch { return DEFAULT; }
+      })(),
+      // Season milestones: persisted user copy of the default MILESTONES list.
+      // Initialised from the constant on first run (see initMilestonesIfEmpty).
+      milestones: (() => {
+        try {
+          const stored = JSON.parse(localStorage.getItem('milestones') || 'null');
+          return Array.isArray(stored) ? stored : null;
+        } catch { return null; }
+      })(),
+      // Editor view flags (transient; not persisted)
+      editingHRZones: false,
+      editingMilestones: false
     };
 
     // ═══════════════════════════════════════════════════════════════
@@ -1736,11 +1779,15 @@
       return relevant.length === 0 ? (WEEKS[wk]?.[key] ?? null) : relevant[relevant.length - 1].newValue;
     }
 
-    function applyProgramUpdate(override) {
+    async function applyProgramUpdate(override) {
       if (!state.programOverrides) state.programOverrides = [];
+      // Stamp a ts if missing — used by the load-time merge to dedupe.
+      if (!override.ts) override.ts = new Date().toISOString();
       state.programOverrides.push(override);
+      // localStorage is canonical: the merge on next load recovers anything
+      // that didn't reach Supabase here.
       localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides));
-      saveState();
+      try { await saveState(); } catch (e) { console.warn('saveState failed (override stored locally):', e); }
     }
 
     function undoLastProgramUpdate() {
@@ -1767,6 +1814,109 @@
       const raw = e1rm / (1 + targetReps / 30);
       return Math.round(raw / 2.5) * 2.5;
     }
+
+    // ── Plan-target parsing ──────────────────────────────────────────────
+    // Convert a plan's targetWeight string ("100 kg", "65%", "25–30 kg", "BW+5")
+    // into a single concrete number ONLY when unambiguous. Returns null for
+    // ranges, percentages, bodyweight notations, or anything we can't safely
+    // commit to a log. Conservative on purpose: preloading the wrong number
+    // is worse than not preloading.
+    function parseWeightTarget(str) {
+      if (str == null) return null;
+      const s = String(str).trim();
+      if (!s) return null;
+      if (/%/.test(s)) return null;                 // 65% → needs e1rm calc
+      if (/bw/i.test(s)) return null;               // BW, BW+5 → bodyweight
+      if (/[–—]/.test(s)) return null;              // en/em-dash ranges
+      // hyphen range like "25-30 kg" but not a leading minus
+      if (/\d\s*-\s*\d/.test(s)) return null;
+      const m = s.match(/^(\d+(?:\.\d+)?)\s*(?:kg)?$/i);
+      return m ? parseFloat(m[1]) : null;
+    }
+
+    // Convert a plan's targetReps ("8", "6-8", "6–8") into a single number
+    // ONLY when unambiguous. Returns null for ranges.
+    function parseRepsTarget(str) {
+      if (str == null) return null;
+      const s = String(str).trim();
+      if (!s) return null;
+      if (/[–—]/.test(s)) return null;
+      if (/\d\s*-\s*\d/.test(s)) return null;
+      const m = s.match(/^(\d+)$/);
+      return m ? parseInt(m[1], 10) : null;
+    }
+
+    // ── HR zones (configurable, derived from state.hrConfig) ────────────
+    // Default %-anchors come from the standard 5-zone polarised model the
+    // app shipped with. zoneBoundaries lets the user pin specific bpm
+    // ceilings (e.g. after a lactate-threshold or critical-power test).
+    function getHRZones() {
+      const cfg = state.hrConfig || { maxHR: 183, zoneBoundaries: null };
+      const m = Math.max(120, Math.min(230, parseInt(cfg.maxHR, 10) || 183));
+      const def = {
+        z1Low:  Math.round(m * 0.55),
+        z1High: Math.round(m * 0.65),
+        z2High: Math.round(m * 0.75),
+        z3High: Math.round(m * 0.85),
+        z4High: Math.round(m * 0.92),
+        z5High: m
+      };
+      const ov = cfg.zoneBoundaries || {};
+      const eff = {
+        z1Low:  Number.isFinite(ov.z1Low)  ? ov.z1Low  : def.z1Low,
+        z1High: Number.isFinite(ov.z1High) ? ov.z1High : def.z1High,
+        z2High: Number.isFinite(ov.z2High) ? ov.z2High : def.z2High,
+        z3High: Number.isFinite(ov.z3High) ? ov.z3High : def.z3High,
+        z4High: Number.isFinite(ov.z4High) ? ov.z4High : def.z4High,
+        z5High: Number.isFinite(ov.z5High) ? ov.z5High : def.z5High
+      };
+      return [
+        { zone: 'Z1', name: 'Recovery',  low: eff.z1Low,  high: eff.z1High, pct: '55–65%',  bar: 55,  color: '#3cb87a', use: 'Warm-up / cool-down / shake-out' },
+        { zone: 'Z2', name: 'Aerobic',   low: eff.z1High, high: eff.z2High, pct: '65–75%',  bar: 70,  color: '#4a7fd4', use: 'Easy + Long runs ← TARGET' },
+        { zone: 'Z3', name: 'Tempo',     low: eff.z2High, high: eff.z3High, pct: '75–85%',  bar: 82,  color: '#f0c040', use: 'Marathon pace / LR finishers' },
+        { zone: 'Z4', name: 'Threshold', low: eff.z3High, high: eff.z4High, pct: '85–92%',  bar: 91,  color: '#e67e22', use: 'Tempo / HM pace / quality' },
+        { zone: 'Z5', name: 'VO2max',    low: eff.z4High, high: eff.z5High, pct: '92–100%', bar: 100, color: '#c0392b', use: 'Hard reps / TT / race' }
+      ];
+    }
+    function getMaxHR() { return getHRZones()[4].high; }
+    function getZ2Range() { const z = getHRZones()[1]; return { low: z.low, high: z.high }; }
+
+    function persistHRConfig() {
+      localStorage.setItem('hrConfig', JSON.stringify(state.hrConfig));
+      // Best-effort cloud sync; tolerant of column-not-exist.
+      syncExtrasSilent();
+    }
+
+    // ── Milestones (configurable, default seeded from MILESTONES constant) ──
+    function getMilestones() {
+      if (!Array.isArray(state.milestones)) {
+        // Seed once from the bundled default if nothing user-defined yet.
+        state.milestones = MILESTONES.slice();
+        localStorage.setItem('milestones', JSON.stringify(state.milestones));
+      }
+      return state.milestones;
+    }
+    function persistMilestones() {
+      localStorage.setItem('milestones', JSON.stringify(state.milestones));
+      syncExtrasSilent();
+    }
+
+    // Best-effort cloud sync for fields whose columns may not exist yet on
+    // the profiles table. Failures are non-fatal (localStorage is canonical).
+    async function syncExtrasSilent() {
+      if (!currentUser) return;
+      try {
+        await sb.from('profiles').update({
+          hr_config: state.hrConfig,
+          milestones: state.milestones,
+          updated_at: new Date().toISOString()
+        }).eq('id', currentUser.id);
+      } catch (e) {
+        // Most likely PGRST204 (column not found) until the user adds the
+        // columns. Safe to ignore — local copy is authoritative.
+      }
+    }
+
 
     function getBestE1RM(exName) {
       const key = exPRKey(exName);
@@ -1941,12 +2091,14 @@
       const wk = getCurrentWeek();
       const phase = getPhase(wk);
       const { done, total } = getWeekCompletion(wk);
-      const upcoming = MILESTONES.filter(m => daysUntil(m.date) > 0).slice(0, 4);
+      const allMilestones = getMilestones();
+      const upcoming = allMilestones.filter(m => daysUntil(m.date) > 0).slice(0, 4);
 
       // Find next session
       const DOW_SESSION = [null, "upperA", "easy", "lower", "quality", "upperB", "longRun"];
       const DOW_LABEL = ["Rest Day", "Upper A", "Easy Run", "Legs", "Quality Run", "Upper B", "Long Run"];
-      const DOW_SUB = ["Recovery — no training", "Bench · Triceps · Rear Delts · Biceps", "HR Zone 2 (119–137 bpm)", "Squat / DL · TGU · Posterior", "Intervals · Tempo · TT", "Back · Incline · Lateral · Core", "HR Zone 2 endurance"];
+      const _z2 = getZ2Range();
+      const DOW_SUB = ["Recovery — no training", "Bench · Triceps · Rear Delts · Biceps", `HR Zone 2 (${_z2.low}–${_z2.high} bpm)`, "Squat / DL · TGU · Posterior", "Intervals · Tempo · TT", "Back · Incline · Lateral · Core", "HR Zone 2 endurance"];
       const DOW_ICON = ["😴", "💪", "🏃", "🦵", "⚡", "🏋", "🛤"];
       const DOW_COLOR = ["#888", "#4a7fd4", "#3cb87a", "#9b59b6", "#e67e22", "#2980b9", "#c0392b"];
 
@@ -2027,12 +2179,17 @@
         </div>
 
         <!-- Milestones -->
-        <div class="section-header">Upcoming Milestones</div>
-        ${upcoming.map(m => `
+        <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Upcoming Milestones</span>
+          <button class="edit-btn ${state.editingMilestones ? 'active' : ''}" id="toggleMilestoneEdit">
+            ${state.editingMilestones ? 'Done' : 'Edit'}
+          </button>
+        </div>
+        ${state.editingMilestones ? renderMilestoneEditor() : upcoming.map(m => `
           <div class="card milestone-card">
             <div class="milestone-left">
-              <span class="milestone-emoji">${m.emoji}</span>
-              <span class="milestone-label">${m.label}</span>
+              <span class="milestone-emoji">${escapeHtml(m.emoji)}</span>
+              <span class="milestone-label">${escapeHtml(m.label)}</span>
             </div>
             <div class="milestone-right">
               <div class="milestone-days">${daysUntil(m.date)}</div>
@@ -2056,37 +2213,64 @@
 
         <!-- HR Zones -->
         <div class="mt-20">
-          <div class="section-header">HR Zones — Max 183 bpm</div>
+          <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>HR Zones — Max ${getMaxHR()} bpm</span>
+            <button class="edit-btn ${state.editingHRZones ? 'active' : ''}" id="toggleHRZoneEdit">
+              ${state.editingHRZones ? 'Done' : 'Edit'}
+            </button>
+          </div>
           <div class="card zones-card">
-            ${HR_ZONES.map(z => `
-              <div class="zone-row">
-                <div class="zone-label" style="color:${z.color}">${z.zone}</div>
-                <div>
-                  <div class="zone-bar-outer">
-                    <div class="zone-bar-inner" style="width:${z.bar}%;background:${z.color}">
-                      <span class="zone-bar-name">${z.name}</span>
+            ${state.editingHRZones ? renderHRZoneEditor() : `
+              ${getHRZones().map(z => `
+                <div class="zone-row">
+                  <div class="zone-label" style="color:${z.color}">${z.zone}</div>
+                  <div>
+                    <div class="zone-bar-outer">
+                      <div class="zone-bar-inner" style="width:${z.bar}%;background:${z.color}">
+                        <span class="zone-bar-name">${z.name}</span>
+                      </div>
                     </div>
+                    <div class="zone-use">${z.use}</div>
                   </div>
-                  <div class="zone-use">${z.use}</div>
+                  <div class="zone-bpm">
+                    <div class="zone-bpm-value">${z.low}–${z.high}</div>
+                    <div class="zone-bpm-pct">${z.pct}</div>
+                  </div>
                 </div>
-                <div class="zone-bpm">
-                  <div class="zone-bpm-value">${z.bpm}</div>
-                  <div class="zone-bpm-pct">${z.pct}</div>
+              `).join('')}
+              <div class="zone-rule">
+                <div class="zone-rule-title">⚠️ Zone 2 Rule</div>
+                <div class="zone-rule-text">
+                  Easy + Long runs = <strong>HR ${_z2.low}–${_z2.high} bpm</strong>. Walk uphills if needed. Pace doesn't matter — only HR does.<br>
+                  Quality runs = pace matters. Push the HR up.
                 </div>
               </div>
-            `).join('')}
-            <div class="zone-rule">
-              <div class="zone-rule-title">⚠️ Zone 2 Rule</div>
-              <div class="zone-rule-text">
-                Easy + Long runs = <strong>HR 119–137 bpm</strong>. Walk uphills if needed. Pace doesn't matter — only HR does.<br>
-                Quality runs = pace matters. Push the HR up.
-              </div>
-            </div>
+            `}
           </div>
         </div>
       `;
 
       document.getElementById('home-tab').innerHTML = html;
+
+      // ── HR zone editor wiring ─────────────────────────────────────────
+      const toggleHR = document.getElementById('toggleHRZoneEdit');
+      if (toggleHR) {
+        toggleHR.addEventListener('click', () => {
+          state.editingHRZones = !state.editingHRZones;
+          renderHome();
+        });
+      }
+      if (state.editingHRZones) bindHRZoneEditorEvents();
+
+      // ── Milestone editor wiring ───────────────────────────────────────
+      const toggleMS = document.getElementById('toggleMilestoneEdit');
+      if (toggleMS) {
+        toggleMS.addEventListener('click', () => {
+          state.editingMilestones = !state.editingMilestones;
+          renderHome();
+        });
+      }
+      if (state.editingMilestones) bindMilestoneEditorEvents();
 
       // Today-card tap → open session logger
       const todayCard = document.getElementById('today-card-widget');
@@ -2107,6 +2291,167 @@
           renderProgram();
         });
       }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // HR ZONE EDITOR
+    // ─────────────────────────────────────────────────────────────────────
+    function renderHRZoneEditor() {
+      const z = getHRZones(); // currently effective (with any overrides applied)
+      const cfg = state.hrConfig || {};
+      const ov = cfg.zoneBoundaries || {};
+      const hasOverrides = !!cfg.zoneBoundaries && Object.values(ov).some(v => Number.isFinite(v));
+      const row = (label, id, val, hint) => `
+        <div style="display:grid;grid-template-columns:1fr 84px;gap:10px;align-items:center;margin-bottom:10px;">
+          <div>
+            <div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text);">${label}</div>
+            ${hint ? `<div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:2px;">${hint}</div>` : ''}
+          </div>
+          <input type="number" class="form-input hr-edit-input" id="${id}" inputmode="numeric" min="40" max="230" value="${val}" style="text-align:center;font-family:'DM Mono',monospace;">
+        </div>`;
+      return `
+        <div style="padding:4px 2px;">
+          <div style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.5;">
+            Set your max HR; the five zones are computed from standard %s. Override any boundary below if you have a lactate-threshold or critical-power test result.
+          </div>
+          ${row('Max HR', 'hr-max', getMaxHR(), 'measured peak (Z5 ceiling)')}
+          <div style="border-top:1px solid var(--border);margin:6px 0 12px;"></div>
+          ${row('Z1 ceiling', 'hr-z1', z[0].high, 'top of Recovery (default 65%)')}
+          ${row('Z2 ceiling', 'hr-z2', z[1].high, 'top of Aerobic — Z2 cap (default 75%)')}
+          ${row('Z3 ceiling', 'hr-z3', z[2].high, 'top of Tempo (default 85%)')}
+          ${row('Z4 ceiling', 'hr-z4', z[3].high, 'top of Threshold (default 92%)')}
+          <div id="hr-edit-err" style="display:none;font-size:11px;color:var(--tag-red);font-family:'DM Mono',monospace;margin:8px 0;line-height:1.5;"></div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-primary" id="hr-save" style="flex:1;min-width:120px;">Save zones</button>
+            <button class="edit-btn" id="hr-reset" style="flex:1;min-width:120px;" ${hasOverrides ? '' : 'disabled style="flex:1;min-width:120px;opacity:0.5;"'}>Reset to %-derived</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindHRZoneEditorEvents() {
+      const errEl = document.getElementById('hr-edit-err');
+      const showErr = (msg) => {
+        if (!errEl) return;
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      };
+      const clearErr = () => { if (errEl) errEl.style.display = 'none'; };
+
+      const readInt = (id) => {
+        const v = parseInt(document.getElementById(id)?.value, 10);
+        return Number.isFinite(v) ? v : null;
+      };
+
+      document.getElementById('hr-save')?.addEventListener('click', () => {
+        clearErr();
+        const max = readInt('hr-max');
+        const z1  = readInt('hr-z1');
+        const z2  = readInt('hr-z2');
+        const z3  = readInt('hr-z3');
+        const z4  = readInt('hr-z4');
+        if ([max, z1, z2, z3, z4].some(v => v === null)) return showErr('All five fields are required.');
+        if (max < 120 || max > 230) return showErr('Max HR must be between 120 and 230 bpm.');
+        if (!(z1 < z2 && z2 < z3 && z3 < z4 && z4 < max)) {
+          return showErr('Zone ceilings must strictly ascend and stay below max HR.');
+        }
+        // Z1 floor stays %-derived to keep the form short — it's rarely
+        // calibrated explicitly and not used in any threshold check.
+        state.hrConfig = {
+          maxHR: max,
+          zoneBoundaries: { z1High: z1, z2High: z2, z3High: z3, z4High: z4, z5High: max }
+        };
+        persistHRConfig();
+        state.editingHRZones = false;
+        renderHome();
+      });
+
+      document.getElementById('hr-reset')?.addEventListener('click', () => {
+        clearErr();
+        // Keep maxHR; drop explicit boundaries so zones revert to %-derived.
+        const max = readInt('hr-max') || (state.hrConfig?.maxHR || 183);
+        state.hrConfig = { maxHR: max, zoneBoundaries: null };
+        persistHRConfig();
+        renderHome(); // stay in editor with the reset values shown
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // MILESTONE EDITOR
+    // ─────────────────────────────────────────────────────────────────────
+    function renderMilestoneEditor() {
+      const list = getMilestones();
+      const today = new Date().toISOString().slice(0,10);
+      const rows = list.map((m, i) => `
+        <div class="ms-edit-row" data-msi="${i}" style="display:grid;grid-template-columns:38px 1fr 130px 28px;gap:6px;align-items:center;margin-bottom:8px;">
+          <input type="text" class="form-input ms-emoji" data-msi="${i}" value="${escapeHtml(m.emoji || '')}" maxlength="4" style="text-align:center;padding:6px 4px;font-size:14px;">
+          <input type="text" class="form-input ms-label" data-msi="${i}" value="${escapeHtml(m.label || '')}" placeholder="e.g. Sub-2:00 HM" style="font-size:12px;padding:6px 8px;">
+          <input type="date" class="form-input ms-date" data-msi="${i}" value="${escapeHtml(m.date || '')}" style="font-size:12px;padding:6px 8px;font-family:'DM Mono',monospace;">
+          <button class="remove-btn ms-del" data-msi="${i}" title="Delete" style="font-size:16px;">×</button>
+        </div>
+      `).join('');
+      return `
+        <div style="padding:4px 2px;">
+          <div style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:12px;line-height:1.5;">
+            Add races, time-trial targets, or strength-attempt dates. The Home view shows the next four upcoming.
+          </div>
+          <div id="ms-rows">${rows || '<div style="font-size:11px;color:var(--text-muted);font-family:DM Mono,monospace;margin:8px 0;">No milestones yet.</div>'}</div>
+          <div id="ms-edit-err" style="display:none;font-size:11px;color:var(--tag-red);font-family:'DM Mono',monospace;margin:8px 0;line-height:1.5;"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+            <button class="edit-btn" id="ms-add" style="flex:1;min-width:120px;">+ Add milestone</button>
+            <button class="btn-primary" id="ms-save" style="flex:1;min-width:120px;">Save</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindMilestoneEditorEvents() {
+      const errEl = () => document.getElementById('ms-edit-err');
+      const showErr = (msg) => { const e = errEl(); if (e) { e.textContent = msg; e.style.display = 'block'; } };
+      const clearErr = () => { const e = errEl(); if (e) e.style.display = 'none'; };
+
+      // Read-back: pull current input values into state.milestones (working copy).
+      const readBack = () => {
+        const list = state.milestones || [];
+        document.querySelectorAll('.ms-edit-row').forEach(row => {
+          const i = parseInt(row.dataset.msi, 10);
+          if (!list[i]) return;
+          list[i].emoji = (document.querySelector(`.ms-emoji[data-msi="${i}"]`)?.value || '').trim();
+          list[i].label = (document.querySelector(`.ms-label[data-msi="${i}"]`)?.value || '').trim();
+          list[i].date  = (document.querySelector(`.ms-date[data-msi="${i}"]`)?.value || '').trim();
+        });
+      };
+
+      document.querySelectorAll('.ms-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          readBack();
+          const i = parseInt(btn.dataset.msi, 10);
+          state.milestones.splice(i, 1);
+          renderHome();
+        });
+      });
+
+      document.getElementById('ms-add')?.addEventListener('click', () => {
+        readBack();
+        if (!Array.isArray(state.milestones)) state.milestones = [];
+        state.milestones.push({ label: '', date: '', emoji: '🎯' });
+        renderHome();
+      });
+
+      document.getElementById('ms-save')?.addEventListener('click', () => {
+        clearErr();
+        readBack();
+        // Validate: label + valid yyyy-mm-dd date required.
+        const bad = (state.milestones || []).findIndex(m =>
+          !m.label || !m.date || !/^\d{4}-\d{2}-\d{2}$/.test(m.date)
+        );
+        if (bad >= 0) return showErr(`Row ${bad + 1}: label and date are required.`);
+        // Sort by date ascending.
+        state.milestones.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+        persistMilestones();
+        state.editingMilestones = false;
+        renderHome();
+      });
     }
 
     async function renderProgram() {
@@ -2438,10 +2783,12 @@
           if (isZone2 && avgHRInput.value) {
             const hr = parseInt(avgHRInput.value);
             const compDiv = document.getElementById('zoneCompliance');
-            if (hr <= 137) {
-              compDiv.innerHTML = `<div class="zone-compliance good">✓ Zone 2 compliance: ${hr} bpm is within 119–137</div>`;
+            // Read dynamic Z2 ceiling from configured zones (was hardcoded 137 pre-v1.01).
+            const z2 = getZ2Range();
+            if (hr <= z2.high) {
+              compDiv.innerHTML = `<div class="zone-compliance good">✓ Zone 2 compliance: ${hr} bpm is within ${z2.low}–${z2.high}</div>`;
             } else {
-              compDiv.innerHTML = `<div class="zone-compliance bad">⚠️ HR too high: ${hr} bpm is above Zone 2 (max 137). Slow down or walk uphills.</div>`;
+              compDiv.innerHTML = `<div class="zone-compliance bad">⚠️ HR too high: ${hr} bpm is above Zone 2 (max ${z2.high}). Slow down or walk uphills.</div>`;
             }
           }
         });
@@ -2487,9 +2834,13 @@
               }
             } catch {}
           }
+          // Build name→last-logged maps for both weight and reps.
+          // Reps preload is new in v1.0: previously only weight was preloaded,
+          // which forced the user to re-type reps every session even when
+          // the prescription didn't change.
+          const prevWeightMap = {};
+          const prevRepsMap = {};
           if (prevSessionData) {
-            // Build a name→last logged weight map from the previous session
-            const prevWeightMap = {};
             prevSessionData.exercises.forEach(ex => {
               if (!ex.name) return;
               const normName = ex.name.toLowerCase().trim();
@@ -2497,18 +2848,48 @@
               if (setsWithWeight.length > 0) {
                 prevWeightMap[normName] = setsWithWeight[setsWithWeight.length - 1].weight;
               }
-            });
-            exercises = parsedExercises.map(ex => {
-              const normName = ex.name.toLowerCase().trim();
-              const prevWeight = prevWeightMap[normName];
-              if (prevWeight) {
-                return { ...ex, sets: ex.sets.map(s => ({ ...s, weight: prevWeight })) };
+              const setsWithReps = (ex.sets || []).filter(s => parseInt(s.reps, 10) > 0);
+              if (setsWithReps.length > 0) {
+                prevRepsMap[normName] = setsWithReps[setsWithReps.length - 1].reps;
               }
-              return ex;
             });
-          } else {
-            exercises = parsedExercises;
           }
+          // Apply preload to each set:
+          //   1. previous-session value wins,
+          //   2. else fall back to plan target if it parses to a clean number,
+          //   3. else leave blank (user enters manually).
+          // Critically these are written into the set as *values*, so the
+          // save handler picks them up even if the user never touches the
+          // input. (Pre-v1.0 they lived only in placeholders and were lost.)
+          exercises = parsedExercises.map(ex => {
+            const normName = ex.name.toLowerCase().trim();
+            const prevW = prevWeightMap[normName];
+            const prevR = prevRepsMap[normName];
+            return {
+              ...ex,
+              sets: ex.sets.map(s => {
+                let weight = s.weight;
+                let reps = s.reps;
+                if (!weight) {
+                  if (prevW) {
+                    weight = String(prevW);
+                  } else {
+                    const planW = parseWeightTarget(s.targetWeight);
+                    if (planW != null) weight = String(planW);
+                  }
+                }
+                if (!reps) {
+                  if (prevR) {
+                    reps = String(prevR);
+                  } else {
+                    const planR = parseRepsTarget(s.targetReps);
+                    if (planR != null) reps = String(planR);
+                  }
+                }
+                return { ...s, weight, reps };
+              })
+            };
+          });
         } else {
           exercises = [{ name: 'Exercise', notes: '', sets: [{ targetReps: '', targetWeight: '', reps: '', weight: '', rpe: '' }] }];
         }
@@ -3324,12 +3705,19 @@
         `;
 
         // Apply button handlers
+        // Two-phase UX: optimistically show 'Saving…', await the override
+        // commit, then mark applied. localStorage write is synchronous inside
+        // applyProgramUpdate so the override is durable even if Supabase
+        // fails — the load-time merge will reconcile it on next session.
         document.querySelectorAll('.ai-apply-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             const sid = parseInt(btn.dataset.sid);
             const s = window._pendingSuggestions[sid];
             if (!s) return;
-            applyProgramUpdate(s);
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+            await applyProgramUpdate(s);
             const card = document.getElementById(`suggest-${sid}`);
             if (card) {
               btn.style.display = 'none';
@@ -3338,6 +3726,10 @@
               badge.textContent = '✓ Applied to Wk ' + s.week;
               card.appendChild(badge);
             }
+            // Refresh whichever tab is currently displayed so the updated
+            // plan (getPlanned reads the new override) is visible without
+            // the user having to navigate away and back.
+            try { render(); } catch (e) { console.warn('post-apply render skipped:', e); }
           });
         });
       });
