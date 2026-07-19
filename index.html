@@ -1371,6 +1371,7 @@
   </style>
 </head>
 <body>
+  <!-- v1.11 (19 Jul 2026): program pivot to fast-5K (22:30) + 1x120 bench. 3 gym (Upper A chest+tri, Legs squat/DL alt, Upper B back+paused bench+pull-ups) + 3 runs. Rolling 5-week blocks wk20-44, deload every 5th week. Mon rest, first Upper A Tue 21 Jul. Weeks 1-19 kept as history. -->
   <!-- Login Screen -->
   <div class="login-screen" id="loginScreen">
     <div class="login-box">
@@ -1390,7 +1391,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.10 · built 7 Jun 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.11 · built 19 Jul 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1453,37 +1454,38 @@
       { label: "Phase 1 — Base Build", weeks: [1,2,3,4,5], color: "phase1" },
       { label: "Phase 2 — Full Hybrid", weeks: [6,7,8,9,10,11], color: "phase2" },
       { label: "Phase 3 — HM Block", weeks: [12,13], color: "phase3" },
-      { label: "Marathon Build", weeks: [14,15,16,17,18,19,20,21,22,23,24], color: "phaseMarathon" },
-      { label: "Marathon Taper & Race", weeks: [25,26,27], color: "phaseTaper" },
-      { label: "5K Sharpen & Bench Peak", weeks: [28,29,30,31,32,33], color: "phase2" },
+      { label: "Marathon Build (history)", weeks: [14,15,16,17,18,19], color: "phaseMarathon" },
+      { label: "5K + Bench · Block 1", weeks: [20,21,22,23,24], color: "phaseTaper" },
+      { label: "5K + Bench · Block 2", weeks: [25,26,27,28,29], color: "phase2" },
+      { label: "5K + Bench · Block 3", weeks: [30,31,32,33,34], color: "phase3" },
+      { label: "5K + Bench · Block 4", weeks: [35,36,37,38,39], color: "phaseMarathon" },
+      { label: "5K + Bench · Block 5", weeks: [40,41,42,43,44], color: "phase1" },
     ];
 
     const SESSION_DAYS = [
-      { key: "upperA", label: "Upper A", sub: "Heavy bench + pull (push)", icon: "💪", color: "#4a7fd4" },
-      { key: "quality", label: "Quality Run", sub: "Intervals · Tempo · TT (pace focus)", icon: "⚡", color: "#e67e22" },
+      { key: "upperA", label: "Upper A", sub: "Chest · Back · Triceps · Bench→120", icon: "💪", color: "#4a7fd4" },
+      { key: "quality", label: "Quality Run", sub: "Tempo · Intervals · 5K TT", icon: "⚡", color: "#e67e22" },
+      { key: "lower", label: "Legs", sub: "Squat / Deadlift · Hypertrophy", icon: "🦵", color: "#9b59b6" },
+      { key: "upperB", label: "Upper B", sub: "Back · Paused Bench · Pull-ups", icon: "🏋", color: "#2980b9" },
       { key: "easy", label: "Recovery Run", sub: "HR Zone 1–2 easy", icon: "🏃", color: "#3cb87a" },
-      { key: "lower", label: "Legs", sub: "Squat / DL maintenance · core", icon: "🦵", color: "#9b59b6" },
-      { key: "recovery2", label: "Recovery Run 2", sub: "HR Zone 1 easy (short)", icon: "🏃", color: "#16a085" },
-      { key: "upperB", label: "Upper B", sub: "Hypertrophy · chest+back · delts · arms", icon: "🏋", color: "#2980b9" },
-      { key: "longRun", label: "Long Run", sub: "HR Zone 2 endurance", icon: "🛤", color: "#c0392b" },
+      { key: "longRun", label: "Long Run", sub: "HR Zone 2 · 12–16 km", icon: "🛤", color: "#c0392b" },
     ];
 
     const MILESTONES = [
       { label: "5K Time Trial", date: "2026-05-03", emoji: "🏃" },
       { label: "Mile TT", date: "2026-05-24", emoji: "⚡" },
       { label: "Slow HM (training run)", date: "2026-05-31", emoji: "🏃" },
-      { label: "115 kg Bench", date: "2026-07-26", emoji: "🏋" },
-      { label: "Marathon sub-4:00", date: "2026-09-13", emoji: "🏅" },
-      { label: "117.5 kg Bench", date: "2026-10-08", emoji: "🏋" },
-      { label: "5K sub-22:30", date: "2026-10-17", emoji: "⚡" },
-      { label: "120 kg Bench", date: "2026-10-22", emoji: "🏋" },
+      { label: "5K TT — sub 23:30", date: "2026-08-12", emoji: "🏃" },
+      { label: "🏋 120 kg Bench attempt", date: "2026-09-15", emoji: "🏋" },
+      { label: "5K TT — sub 22:40", date: "2026-10-21", emoji: "🏃" },
+      { label: "5K goal — sub 22:30", date: "2026-11-25", emoji: "🎯" },
     ];
 
     const GOALS = [
-      { label: "Bench 130 kg", icon: "🏋" },
-      { label: "Sub-2:00 HM", icon: "🏅" },
-      { label: "Sub-4:00 Marathon", icon: "🏅" },
-      { label: "+5 kg Lean Mass", icon: "💪" },
+      { label: "Bench 1×120 kg", icon: "🏋" },
+      { label: "5K sub-22:30", icon: "🏃" },
+      { label: "Hypertrophy — muscle growth", icon: "💪" },
+      { label: "+ lean mass", icon: "💪" },
     ];
 
     const HR_ZONES = [
@@ -1694,158 +1696,255 @@
       },
       20: {
         dates: "19–25 Jul",
-        upperA: "Flat BP  3×3 @97.5 kg (RPE 8 — build to 115)\nback-off  2×4 @90 kg\nOHP  3×6–8\nIncline DB Press  3×10–12\nWeighted Pull-Ups  4×6–8\nLateral Raise  4×12–15\nTriceps (rope + OH)  4×12–15\nFace Pulls  3×20",
-        easy: "Recovery run — 5 km\n❤️ Zone 1–2 (≤130 bpm)\nconversational, flush the hard day",
-        lower: "⬆ SUMO DL (maintain — TRIMMED for long run)\nSumo DL  2×3 @145 kg (light)\nHip Thrust  3×10\nDead Bug  3×12 each",
-        quality: "[MARATHON PACE] 8 km @ 5:40–5:45/km\nwithin an easy run",
-        upperB: "Paused Bench  4×6–8 @80 kg (2s pause)\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "30 km\n❤️ Zone 2: 119–137 bpm\nlegs trimmed this week",
-        recovery2: "Recovery run — 4 km optional\npeak long-run week — protect the legs\ndrop if tired",
-        notes: "30 km • legs trimmed • bench 3×3 (RPE8) • SUMO focus",
+        upperA: "Flat Bench  3×5 @105 kg (RPE 7–8)\nBack-off  2×6 @95 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  4×6 @105 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[TEMPO] 3×8 min @ 5:05/km (threshold, LTHR)\n90s jog recovery between",
+        upperB: "Pull-Ups  5×MAX reps (add +5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @85 kg (2s pause on chest)\nBarbell Row  4×8 @65 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "12 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 1 W1/5 — build • lower = SQUAT focus"
       },
       21: {
         dates: "26 Jul – 1 Aug",
-        upperA: "🎯 115 kg BENCH ATTEMPT\nFlat BP  warm-up ramp → 1×115 kg (PR)\nopeners: 95×2, 102.5×1, 110×1, then 115\nthen 3×3 @95 kg back-off\nLateral Raise  3×15 (pump)\nFace Pulls  2×20",
-        easy: "Recovery run — 4 km\n❤️ Zone 1 easy\nkeep it gentle",
-        lower: "⬆ SQUAT (maintain — TRIMMED for long run)\nBack Squat  2×3 @100 kg (light, crisp)\nHip Thrust  3×10\nDead Bug  3×12 each",
-        quality: "easy 5 km shake-out\nbench is the focus this week",
-        upperB: "Paused Bench  2×5 @70 kg (light)\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "🔽 deload — 18 km easy\n❤️ Zone 2",
-        recovery2: "Recovery run — 4 km easy\nZ1, stay fresh",
-        notes: "🔽 Running deload 18 km • 🎯 115 kg bench attempt • SQUAT focus",
+        upperA: "Flat Bench  4×3 @110 kg (RPE 8)\nBack-off  2×5 @95 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  4×5 @142.5 kg\nFront Squat  3×6 @86 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "[INTERVALS] 6×800 m @ 4:30/km (VO2 / 5K pace)\n90s jog recovery",
+        upperB: "Pull-Ups  5×MAX reps (add +5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @85 kg (2s pause on chest)\nBarbell Row  4×8 @65 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "13 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 1 W2/5 — build • lower = DEADLIFT focus"
       },
       22: {
         dates: "2–8 Aug",
-        upperA: "Flat BP  4×5 @90 kg (volume, RPE 7)\nback-off  2×8 @80 kg\nOHP  3×6–8\nIncline DB Press  3×10–12\nBB Row  3×8 @65 kg\nLateral Raise  4×12–15\nTriceps (rope + OH)  4×12–15\nFace Pulls  3×20",
-        easy: "Recovery run — 5 km\n❤️ Zone 1–2 (≤130 bpm)\nconversational, flush the hard day",
-        lower: "⬆ SUMO DL FOCUS (maintain)\nSumo DL  3×3 @150 kg\nFront Squat  2×5 @90 kg (light)\nWalking Lunges  3×10 each\nHip Thrust  3×12\nDead Bug  3×12 each",
-        quality: "[TEMPO] 2×4 km @ 5:15/km\n3 min jog between",
-        upperB: "Paused Bench  4×6–8 @80 kg (2s pause)\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "30 km\n❤️ Zone 2: 119–137 bpm\nLast 6 km @ MP (5:40/km)",
-        recovery2: "Recovery run — 5 km easy\nshort — day before long run\nZ1; drop if legs are flat",
-        notes: "30 km + MP finish • bench 4×5 volume • SUMO focus",
+        upperA: "Flat Bench  work to heavy double @112.5 kg (RPE 8)\nBack-off  3×4 @97.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  5×4 @117 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[TEMPO] 2×12 min @ 5:00/km (cruise)\n2 min jog between",
+        upperB: "Pull-Ups  5×MAX reps (add +5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @87.5 kg (2s pause on chest)\nBarbell Row  4×8 @65 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "14 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 1 W3/5 — build • lower = SQUAT focus"
       },
       23: {
         dates: "9–15 Aug",
-        upperA: "Flat BP  4×4 @95 kg (RPE 7.5)\nback-off  2×6 @85 kg\nOHP  3×6–8\nIncline DB Press  3×10–12\nWeighted Pull-Ups  4×6–8\nLateral Raise  4×12–15\nTriceps (rope + OH)  4×12–15\nFace Pulls  3×20",
-        easy: "Recovery run — 5 km\n❤️ Zone 1–2 (≤130 bpm)\nconversational, flush the hard day",
-        lower: "⬆ SQUAT (maintain — TRIMMED for long run)\nBack Squat  2×3 @117.5 kg\nHip Thrust  3×10\nDead Bug  3×12 each",
-        quality: "[MARATHON PACE] 10 km @ 5:40/km\nrace-pace volume",
-        upperB: "Close-Grip Bench  4×6 @75 kg\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "32 km\n❤️ Zone 2: 119–137 bpm\nlegs trimmed this week",
-        recovery2: "Recovery run — 4 km optional\npeak long-run week — protect the legs\ndrop if tired",
-        notes: "32 km • legs trimmed • bench 4×4 • SQUAT focus",
+        upperA: "🏋️ Heavy single — work to top single @117.5 kg (RPE 8)\nWarm-up singles: 60% · 75% · 85% · then go\nBack-off  3×3 @102.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  3×3 @156 kg\nFront Squat  3×6 @93.5 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "🏃 5K TIME TRIAL — target 23:30\nFull warm-up + 4×20s strides first, then all-out",
+        upperB: "Pull-Ups  5×MAX reps (add +5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @87.5 kg (2s pause on chest)\nBarbell Row  4×8 @65 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "10 km easy @ Zone 2 (5:50–6:10/km)\nKeep legs fresh for the TT",
+        notes: "Block 1 W4/5 — 🏃 5K TT (23:30) • bench single @117.5 kg"
       },
       24: {
         dates: "16–22 Aug",
-        upperA: "Flat BP  3×3 @85 kg (light, RPE 6 — 35 km this week)\nDB Shoulder Press  2×10 @25 kg\nCable Fly  2×15\nLateral Raise  3×15\nFace Pulls  2×20",
-        easy: "Recovery run — 4 km\n❤️ Zone 1 easy\nkeep it gentle",
-        lower: "⬆ SUMO DL (MINIMAL — 35 km peak week)\nSumo DL  2×3 @140 kg (light)\nDead Bug  3×12 each",
-        quality: "easy 5 km only\nsave the legs for the 35 km",
-        upperB: "Paused Bench  2×5 @72.5 kg (light)\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "🏔 35 km PEAK LONG RUN\n❤️ Zone 2: 119–137 bpm\nfuel well • pure Z2 — do not race it",
-        recovery2: "Recovery run — 4 km optional\npeak long-run week — protect the legs\ndrop if tired",
-        notes: "🏔 PEAK 35 km • lifting minimal • SUMO focus",
+        upperA: "Flat Bench  3×3 @90 kg (RPE 6 — crisp technique)\nIncline DB Press  2×10\nCable Fly  2×12\nChest-Supported Row  2×10 (back)\nRope Pushdown  2×15\nFace Pulls  2×15",
+        easy: "4 km very easy @ 6:40/km\n❤️ Zone 1 recovery",
+        lower: "⬆ SQUAT focus (deload)\nBack Squat  3×3 @93 kg (light)\nRDL  2×8 (light)\nLeg Press  2×12\nStanding Calf Raise  3×15",
+        quality: "[EASY + STRIDES] 4 km easy @ 6:30/km + 6×20s strides\n(deload — stay sharp, not tired)",
+        upperB: "Pull-Ups  3×max reps (bodyweight, leave 2 in tank)\nPaused Bench  2×4 @75 kg (2s pause, light)\nBarbell Row  3×8 @60 kg\nPush-Ups  2×max\nRear Delt Fly  2×15\nHammer Curl  2×12",
+        longRun: "9 km easy @ Zone 2 (deload volume)",
+        notes: "Block 1 W5/5 — DELOAD (every 5th week). Recover, then reload."
       },
       25: {
         dates: "23–29 Aug",
-        upperA: "Flat BP  3×4 @92.5 kg (maintain sharp, RPE 7)\nOHP  3×6–8\nIncline DB Press  3×10–12\nWeighted Pull-Ups  4×6–8\nLateral Raise  4×12–15\nTriceps (rope + OH)  4×12–15\nFace Pulls  3×20",
-        easy: "Recovery run — 5 km\n❤️ Zone 1–2 (≤130 bpm)\nconversational, flush the hard day",
-        lower: "⬆ SQUAT FOCUS (maintain)\nBack Squat  3×3 @117.5 kg\nRDL  2×5 @120 kg (light)\nBulgarian Split Squat  3×8 each\nHip Thrust  3×12\nDead Bug  3×12 each",
-        quality: "[TEMPO] 2×3 km @ 5:15/km (sharpen)\n3 min jog between",
-        upperB: "Close-Grip Bench  3×6 @72.5 kg\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "26 km easy\n❤️ Taper Wk 1 — Zone 2",
-        recovery2: "Recovery run — 4 km easy\nZ1, stay fresh",
-        notes: "Marathon Taper Wk 1 • 26 km • bench maintain • SQUAT focus",
+        upperA: "Flat Bench  3×5 @107.5 kg (RPE 7–8)\nBack-off  2×6 @97.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  4×6 @133 kg\nFront Squat  3×6 @80.5 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "[TEMPO] 3×8 min @ 5:05/km (threshold, LTHR)\n90s jog recovery between",
+        upperB: "Pull-Ups  5×MAX reps (add +7.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @87.5 kg (2s pause on chest)\nBarbell Row  4×8 @67.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "12 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 2 W1/5 — build • lower = DEADLIFT focus"
       },
       26: {
         dates: "30 Aug – 5 Sep",
-        upperA: "Flat BP  3×3 @90 kg (light, RPE 6)\nOHP  2×8 @light\nLateral Raise  3×15\nTriceps  3×15\nFace Pulls  2×20",
-        easy: "Recovery run — 4 km easy\nZ1, stay fresh",
-        lower: "⬆ SUMO DL (maintain — TRIMMED for long run)\nSumo DL  2×3 @140 kg (light)\nHip Thrust  3×10\nDead Bug  3×12 each",
-        quality: "[MARATHON PACE] 5 km @ 5:40/km\nrace-pace rehearsal",
-        upperB: "Paused Bench  2×5 @70 kg (light)\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "18 km easy\n❤️ Taper Wk 2 — Zone 2\nLast 4 km @ MP",
-        recovery2: "Recovery run — 4 km easy\nZ1, stay fresh",
-        notes: "Marathon Taper Wk 2 • 18 km • lifting light • SUMO focus",
+        upperA: "Flat Bench  4×3 @112.5 kg (RPE 8)\nBack-off  2×5 @97.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  4×5 @112.5 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[INTERVALS] 7×800 m @ 4:28/km (VO2 / 5K pace)\n90s jog recovery",
+        upperB: "Pull-Ups  5×MAX reps (add +7.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @87.5 kg (2s pause on chest)\nBarbell Row  4×8 @67.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "13 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 2 W2/5 — build • lower = SQUAT focus"
       },
       27: {
         dates: "6–12 Sep",
-        upperA: "Flat BP  2×3 @80 kg (race week — stay loose)\nLateral Raise  2×15\nFace Pulls  2×20",
-        easy: "easy 4 km + 4×100m strides\nkeep turnover, stay fresh",
-        lower: "Legs — race week (very light)\nBack Squat  2×3 @90 kg\nDead Bug  3×12 each",
-        quality: "2 km shake-out + 4×100m strides\n2 days pre-race",
-        upperB: "REST or light pump only\nPush-Ups  2×15\nRear Delt Fly  2×15",
-        longRun: "🏅 MARATHON (Sun 13 Sep)\nTarget Sub 4:00 · ~5:41/km\nfuel + pace discipline — you've earned this",
-        recovery2: "3 km shake-out (early week)\nthen rest into race day",
-        notes: "🎯 RACE WEEK — Marathon Sub 4:00 (Sun 13 Sep)",
+        upperA: "Flat Bench  work to heavy double @115 kg (RPE 8)\nBack-off  3×4 @100 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  5×4 @148 kg\nFront Squat  3×6 @89 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "[TEMPO] 2×12 min @ 5:00/km (cruise)\n2 min jog between",
+        upperB: "Pull-Ups  5×MAX reps (add +7.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @90 kg (2s pause on chest)\nBarbell Row  4×8 @67.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "14 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 2 W3/5 — build • lower = DEADLIFT focus"
       },
       28: {
         dates: "13–19 Sep",
-        upperA: "REST — post-marathon recovery\n(optional light pump later in week)\nCable Fly  2×15\nLateral Raise  2×15",
-        easy: "REST → gentle walks only\nlet the marathon settle",
-        lower: "REST — recover the legs\ngentle mobility / walking only\nDead Bug  3×12 each (optional)",
-        quality: "REST\nno running this week",
-        upperB: "REST — recovery\noptional easy pump 4–5 days post-race",
-        longRun: "REST — post-marathon recovery\ngentle walks, optional easy spin",
-        recovery2: "REST\nwalk only",
-        notes: "Post-marathon recovery — full rest week",
+        upperA: "🏋️ 120 kg ATTEMPT — work to top single @120 kg (RPE 8)\nWarm-up singles: 60% · 75% · 85% · then go\nBack-off  3×3 @105 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  3×3 @123 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "🏃 5K TIME TRIAL — target 23:00\nFull warm-up + 4×20s strides first, then all-out",
+        upperB: "Pull-Ups  5×MAX reps (add +7.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @90 kg (2s pause on chest)\nBarbell Row  4×8 @67.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "10 km easy @ Zone 2 (5:50–6:10/km)\nKeep legs fresh for the TT",
+        notes: "Block 2 W4/5 — 🏃 5K TT (23:00) • 🏋 120 kg attempt"
       },
       29: {
         dates: "20–26 Sep",
-        upperA: "Flat BP  4×6 @85 kg (rebuild, RPE 6–7)\nback-off  2×8 @75 kg\nOHP  3×6–8\nIncline DB Press  3×10–12\nLat Pulldown  3×12\nLateral Raise  4×12–15\nTriceps (rope + OH)  4×12–15\nFace Pulls  3×20",
-        easy: "Recovery run — 5 km easy\ngentle return to running\nZ1–2",
-        lower: "⬆ SQUAT (light return)\nBack Squat  3×5 @100 kg (easy)\nHip Thrust  3×12\nDead Bug  3×12 each",
-        quality: "easy 6–8 km + 4×100m strides\nbase rebuild",
-        upperB: "Incline DB Press  4×8–10\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "10–12 km easy\n❤️ Zone 2 (rebuild base)",
-        recovery2: "Recovery run — 5 km easy\nshort — day before long run\nZ1; drop if legs are flat",
-        notes: "Base rebuild • bench peak block begins (rebuild) • SQUAT focus",
+        upperA: "Flat Bench  3×3 @92.5 kg (RPE 6 — crisp technique)\nIncline DB Press  2×10\nCable Fly  2×12\nChest-Supported Row  2×10 (back)\nRope Pushdown  2×15\nFace Pulls  2×15",
+        easy: "4 km very easy @ 6:40/km\n❤️ Zone 1 recovery",
+        lower: "⬆ DEADLIFT focus (deload)\nSumo Deadlift  3×3 @118 kg (light)\nFront Squat  2×6 (light)\nLeg Press  2×12\nStanding Calf Raise  3×15",
+        quality: "[EASY + STRIDES] 4 km easy @ 6:30/km + 6×20s strides\n(deload — stay sharp, not tired)",
+        upperB: "Pull-Ups  3×max reps (bodyweight, leave 2 in tank)\nPaused Bench  2×4 @77.5 kg (2s pause, light)\nBarbell Row  3×8 @62.5 kg\nPush-Ups  2×max\nRear Delt Fly  2×15\nHammer Curl  2×12",
+        longRun: "9 km easy @ Zone 2 (deload volume)",
+        notes: "Block 2 W5/5 — DELOAD (every 5th week). Recover, then reload."
       },
       30: {
         dates: "27 Sep – 3 Oct",
-        upperA: "Flat BP  4×4 @95 kg (RPE 8)\nthen heavy single ~115 kg (touch, RPE 8)\nback-off  2×4 @90 kg\nOHP  3×6–8\nIncline DB Press  3×10–12\nWeighted Pull-Ups  4×6–8\nLateral Raise  4×12–15\nTriceps (rope + OH)  4×12–15\nFace Pulls  3×20",
-        easy: "Recovery run — 5 km\n❤️ Zone 1–2 (≤130 bpm)\nconversational, flush the hard day",
-        lower: "⬆ SUMO DL FOCUS (maintain)\nSumo DL  3×3 @147.5 kg\nFront Squat  2×5 @90 kg (light)\nWalking Lunges  3×10 each\nHip Thrust  3×12\nDead Bug  3×12 each",
-        quality: "[INTERVALS] 5×800m @ 4:30/km (VO2 — 5K pace)\n90s jog rest",
-        upperB: "Close-Grip Bench  4×6 @77.5 kg\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "12 km easy + 4×100m strides\n❤️ Zone 2",
-        recovery2: "Recovery run — 5 km easy\nshort — day before long run\nZ1; drop if legs are flat",
-        notes: "5K sharpening intro (VO2) • bench heavy single ~115 • SUMO focus",
+        upperA: "Flat Bench  3×5 @110 kg (RPE 7–8)\nBack-off  2×6 @100 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  4×6 @105 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[TEMPO] 3×8 min @ 5:05/km (threshold, LTHR)\n90s jog recovery between",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @90 kg (2s pause on chest)\nBarbell Row  4×8 @70 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "12 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 3 W1/5 — build • lower = SQUAT focus"
       },
       31: {
         dates: "4–10 Oct",
-        upperA: "🎯 117.5 kg BENCH (top single)\nFlat BP  warm-up ramp → 1×117.5 kg (RPE 8–9)\nopeners: 100×2, 107.5×1, 112.5×1, then 117.5\nback-off  3×3 @100 kg\nLateral Raise  3×15\nFace Pulls  2×20",
-        easy: "Recovery run — 5 km\n❤️ Zone 1–2 (≤130 bpm)\nconversational, flush the hard day",
-        lower: "⬆ SQUAT FOCUS (maintain)\nBack Squat  3×3 @120 kg\nRDL  2×5 @120 kg (light)\nBulgarian Split Squat  3×8 each\nHip Thrust  3×12\nDead Bug  3×12 each",
-        quality: "[INTERVALS] 3×1000m @ 4:30/km (5K pace)\n2.5 min jog rest",
-        upperB: "Paused Bench  3×4 @82.5 kg\nWeighted Pull-Ups  4×6–8\nIncline DB Press  3×10–12\nChest-Supported Row  3×10–12\nCable Fly  3×12–15\nLateral Raise  4×15–20\nRear Delt Fly  3×15–20\nEZ-Bar Curl  3×12–15\nOH Triceps Ext  3×12–15",
-        longRun: "10 km easy\n❤️ Zone 2",
-        recovery2: "Recovery run — 5 km easy\nshort — day before long run\nZ1; drop if legs are flat",
-        notes: "5K sharpening • 🎯 117.5 kg top single • SQUAT focus",
+        upperA: "Flat Bench  4×3 @115 kg (RPE 8)\nBack-off  2×5 @100 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  4×5 @142.5 kg\nFront Squat  3×6 @86 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "[INTERVALS] 8×800 m @ 4:26/km (VO2 / 5K pace)\n90s jog recovery",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @90 kg (2s pause on chest)\nBarbell Row  4×8 @70 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "14 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 3 W2/5 — build • lower = DEADLIFT focus"
       },
       32: {
         dates: "11–17 Oct",
-        upperA: "🔽 Bench DELOAD (prime 120 + 5K week)\nFlat BP  3×3 @90 kg (light, crisp)\nLateral Raise  3×12\nFace Pulls  2×20",
-        easy: "easy 4 km shake-out\nstay fresh for the TT",
-        lower: "Legs light (5K week)\nBack Squat  2×3 @100 kg\nDead Bug  3×12 each",
-        quality: "easy 3 km + 3×400m @ 4:25/km\nTT primer (Tue) — fresh for Sat",
-        upperB: "Light pump only\nPush-Ups  3×15\nCable Row  3×12\nRear Delt Fly  3×15\nCurl  3×12",
-        longRun: "🏃 5K TIME TRIAL — target 22:30 (4:30/km)\nSat 17 Oct · fresh legs\ngo for the PR",
-        recovery2: "easy 3 km or rest\npre-TT — stay loose",
-        notes: "🎯 5K TT (sub-22:30) Sat 17 Oct • bench deload (prime 120) • SQUAT focus",
+        upperA: "Flat Bench  work to heavy double @117.5 kg (RPE 8)\nBack-off  3×4 @102.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  5×4 @117 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[TEMPO] 2×12 min @ 5:00/km (cruise)\n2 min jog between",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @92.5 kg (2s pause on chest)\nBarbell Row  4×8 @70 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "15 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 3 W3/5 — build • lower = SQUAT focus"
       },
       33: {
         dates: "18–24 Oct",
-        upperA: "🎯 120 kg BENCH ATTEMPT\nFlat BP  warm-up ramp → 1×120 kg (PR)\nopeners: 100×2, 110×1, 115×1, then 120\nthen optional 2×3 @100 kg\nCelebrate. 🎉",
-        easy: "Recovery run — 5 km easy\n❤️ Zone 1–2",
-        lower: "Legs light\nSumo DL  2×3 @140 kg\nHip Thrust  3×10\nDead Bug  3×12 each",
-        quality: "easy 6–8 km optional\nrunning stays relaxed (bench is the focus)",
-        upperB: "Light pump (2 days after attempt)\nIncline DB Press  3×10\nChest-Supported Row  3×12\nLateral Raise  3×15\nCurl  3×12",
-        longRun: "easy 6–8 km optional\n❤️ Zone 2",
-        recovery2: "Recovery run — 5 km easy\nshort — day before long run\nZ1; drop if legs are flat",
-        notes: "🎯 120 kg BENCH ATTEMPT — strength capstone • SUMO focus",
+        upperA: "🏋️ Heavy single — work to top single @122.5 kg (RPE 8)\nWarm-up singles: 60% · 75% · 85% · then go\nBack-off  3×3 @107.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  3×3 @156 kg\nFront Squat  3×6 @93.5 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "🏃 5K TIME TRIAL — target 22:40\nFull warm-up + 4×20s strides first, then all-out",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @92.5 kg (2s pause on chest)\nBarbell Row  4×8 @70 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "10 km easy @ Zone 2 (5:50–6:10/km)\nKeep legs fresh for the TT",
+        notes: "Block 3 W4/5 — 🏃 5K TT (22:40) • bench single @122.5 kg"
       },
+      34: {
+        dates: "25–31 Oct",
+        upperA: "Flat Bench  3×3 @95 kg (RPE 6 — crisp technique)\nIncline DB Press  2×10\nCable Fly  2×12\nChest-Supported Row  2×10 (back)\nRope Pushdown  2×15\nFace Pulls  2×15",
+        easy: "4 km very easy @ 6:40/km\n❤️ Zone 1 recovery",
+        lower: "⬆ SQUAT focus (deload)\nBack Squat  3×3 @93 kg (light)\nRDL  2×8 (light)\nLeg Press  2×12\nStanding Calf Raise  3×15",
+        quality: "[EASY + STRIDES] 4 km easy @ 6:30/km + 6×20s strides\n(deload — stay sharp, not tired)",
+        upperB: "Pull-Ups  3×max reps (bodyweight, leave 2 in tank)\nPaused Bench  2×4 @80 kg (2s pause, light)\nBarbell Row  3×8 @65 kg\nPush-Ups  2×max\nRear Delt Fly  2×15\nHammer Curl  2×12",
+        longRun: "9 km easy @ Zone 2 (deload volume)",
+        notes: "Block 3 W5/5 — DELOAD (every 5th week). Recover, then reload."
+      },
+      35: {
+        dates: "1–7 Nov",
+        upperA: "Flat Bench  3×5 @112.5 kg (RPE 7–8)\nBack-off  2×6 @102.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  4×6 @133 kg\nFront Squat  3×6 @80.5 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "[TEMPO] 3×8 min @ 5:05/km (threshold, LTHR)\n90s jog recovery between",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @92.5 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "12 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 4 W1/5 — build • lower = DEADLIFT focus"
+      },
+      36: {
+        dates: "8–14 Nov",
+        upperA: "Flat Bench  4×3 @117.5 kg (RPE 8)\nBack-off  2×5 @102.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  4×5 @112.5 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[INTERVALS] 9×800 m @ 4:25/km (VO2 / 5K pace)\n90s jog recovery",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @92.5 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "14 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 4 W2/5 — build • lower = SQUAT focus"
+      },
+      37: {
+        dates: "15–21 Nov",
+        upperA: "Flat Bench  work to heavy double @120 kg (RPE 8)\nBack-off  3×4 @105 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  5×4 @148 kg\nFront Squat  3×6 @89 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "[TEMPO] 2×12 min @ 5:00/km (cruise)\n2 min jog between",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @95 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "15 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 4 W3/5 — build • lower = DEADLIFT focus"
+      },
+      38: {
+        dates: "22–28 Nov",
+        upperA: "🏋️ Heavy single — work to top single @122.5 kg (RPE 8)\nWarm-up singles: 60% · 75% · 85% · then go\nBack-off  3×3 @107.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  3×3 @123 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "🏃 5K TIME TRIAL — target 22:30\nFull warm-up + 4×20s strides first, then all-out",
+        upperB: "Pull-Ups  5×MAX reps (add +10 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @95 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "10 km easy @ Zone 2 (5:50–6:10/km)\nKeep legs fresh for the TT",
+        notes: "Block 4 W4/5 — 🏃 5K TT (22:30) • bench single @122.5 kg"
+      },
+      39: {
+        dates: "29 Nov – 5 Dec",
+        upperA: "Flat Bench  3×3 @97.5 kg (RPE 6 — crisp technique)\nIncline DB Press  2×10\nCable Fly  2×12\nChest-Supported Row  2×10 (back)\nRope Pushdown  2×15\nFace Pulls  2×15",
+        easy: "4 km very easy @ 6:40/km\n❤️ Zone 1 recovery",
+        lower: "⬆ DEADLIFT focus (deload)\nSumo Deadlift  3×3 @118 kg (light)\nFront Squat  2×6 (light)\nLeg Press  2×12\nStanding Calf Raise  3×15",
+        quality: "[EASY + STRIDES] 4 km easy @ 6:30/km + 6×20s strides\n(deload — stay sharp, not tired)",
+        upperB: "Pull-Ups  3×max reps (bodyweight, leave 2 in tank)\nPaused Bench  2×4 @82.5 kg (2s pause, light)\nBarbell Row  3×8 @67.5 kg\nPush-Ups  2×max\nRear Delt Fly  2×15\nHammer Curl  2×12",
+        longRun: "9 km easy @ Zone 2 (deload volume)",
+        notes: "Block 4 W5/5 — DELOAD (every 5th week). Recover, then reload."
+      },
+      40: {
+        dates: "6–12 Dec",
+        upperA: "Flat Bench  3×5 @115 kg (RPE 7–8)\nBack-off  2×6 @105 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  4×6 @105 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[TEMPO] 3×8 min @ 5:05/km (threshold, LTHR)\n90s jog recovery between",
+        upperB: "Pull-Ups  5×MAX reps (add +12.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @92.5 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "12 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 5 W1/5 — build • lower = SQUAT focus"
+      },
+      41: {
+        dates: "13–19 Dec",
+        upperA: "Flat Bench  4×3 @120 kg (RPE 8)\nBack-off  2×5 @105 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  4×5 @142.5 kg\nFront Squat  3×6 @86 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "[INTERVALS] 10×800 m @ 4:23/km (VO2 / 5K pace)\n90s jog recovery",
+        upperB: "Pull-Ups  5×MAX reps (add +12.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @92.5 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "14 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 5 W2/5 — build • lower = DEADLIFT focus"
+      },
+      42: {
+        dates: "20–26 Dec",
+        upperA: "Flat Bench  work to heavy double @122.5 kg (RPE 8)\nBack-off  3×4 @107.5 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ SQUAT focus (both lifts trained)\nBack Squat  5×4 @117 kg\nRDL  3×8 @moderate (posterior chain)\nLeg Press  3×12\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nHanging Leg Raise  3×12",
+        quality: "[TEMPO] 2×12 min @ 5:00/km (cruise)\n2 min jog between",
+        upperB: "Pull-Ups  5×MAX reps (add +12.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @95 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "15 km @ Zone 2 (5:50–6:10/km)\n❤️ Aerobic base — min 10 km / max 120 min",
+        notes: "Block 5 W3/5 — build • lower = SQUAT focus"
+      },
+      43: {
+        dates: "27 Dec – 2 Jan",
+        upperA: "🏋️ Heavy single — work to top single @125 kg (RPE 8)\nWarm-up singles: 60% · 75% · 85% · then go\nBack-off  3×3 @110 kg\nIncline DB Press  3×8–10\nCable Fly  3×12–15\nChest-Supported Row  3×10 (back exercise)\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nLateral Raise  3×15\nFace Pulls  3×15",
+        easy: "5 km recovery @ 6:15–6:40/km\n❤️ Zone 1–2 (easy — keep it relaxed)",
+        lower: "⬆ DEADLIFT focus (both lifts trained)\nSumo Deadlift  3×3 @156 kg\nFront Squat  3×6 @93.5 kg (quad / combine lift)\nHack Squat  3×10\nHip Thrust  3×12\nSeated Leg Curl  3×15\nStanding Calf Raise  4×15\nPallof Press  3×12 each",
+        quality: "🏃 5K TIME TRIAL — target sub-22:30\nFull warm-up + 4×20s strides first, then all-out",
+        upperB: "Pull-Ups  5×MAX reps (add +12.5 kg once you hit 8+ clean bodyweight)\nPaused Bench  4×4 @95 kg (2s pause on chest)\nBarbell Row  4×8 @72.5 kg\nSeated Cable Row  3×12\nPush-Ups  3×MAX reps\nRear Delt Fly  3×15\nFace Pulls  3×15\nHammer Curl  3×12",
+        longRun: "10 km easy @ Zone 2 (5:50–6:10/km)\nKeep legs fresh for the TT",
+        notes: "Block 5 W4/5 — 🏃 5K TT (sub-22:30) • bench single @125 kg"
+      },
+      44: {
+        dates: "3–9 Jan",
+        upperA: "Flat Bench  3×3 @100 kg (RPE 6 — crisp technique)\nIncline DB Press  2×10\nCable Fly  2×12\nChest-Supported Row  2×10 (back)\nRope Pushdown  2×15\nFace Pulls  2×15",
+        easy: "4 km very easy @ 6:40/km\n❤️ Zone 1 recovery",
+        lower: "⬆ SQUAT focus (deload)\nBack Squat  3×3 @93 kg (light)\nRDL  2×8 (light)\nLeg Press  2×12\nStanding Calf Raise  3×15",
+        quality: "[EASY + STRIDES] 4 km easy @ 6:30/km + 6×20s strides\n(deload — stay sharp, not tired)",
+        upperB: "Pull-Ups  3×max reps (bodyweight, leave 2 in tank)\nPaused Bench  2×4 @82.5 kg (2s pause, light)\nBarbell Row  3×8 @67.5 kg\nPush-Ups  2×max\nRear Delt Fly  2×15\nHammer Curl  2×12",
+        longRun: "9 km easy @ Zone 2 (deload volume)",
+        notes: "Block 5 W5/5 — DELOAD (every 5th week). Recover, then reload."
+      },
+
     };
 
     // ═══════════════════════════════════════════════════════════════
@@ -2311,7 +2410,7 @@
     // function honours those shifts per-week (no rippling — see the
     // design doc). For v1.02 it always returns the default since no
     // shift overrides exist yet.
-    const DEFAULT_DOW_SESSION = [null, 'upperA', 'quality', 'easy', 'lower', 'upperB', 'longRun'];
+    const DEFAULT_DOW_SESSION = ['longRun', null, 'upperA', 'quality', 'lower', 'upperB', 'easy'];
 
     function getWeeklySchedule(wk) {
       const base = DEFAULT_DOW_SESSION.slice();
@@ -4617,7 +4716,7 @@ const COACH_HELP_TEXT =
     function getCurrentWeek() {
       const now = new Date(); now.setHours(0,0,0,0);
       const diff = Math.floor((now - PLAN_START) / 86400000);
-      return Math.max(1, Math.min(33, Math.floor(diff / 7) + 1));
+      return Math.max(1, Math.min(44, Math.floor(diff / 7) + 1));
     }
 
     function getPhase(wk) {
@@ -4720,12 +4819,12 @@ const COACH_HELP_TEXT =
       const upcoming = allMilestones.filter(m => daysUntil(m.date) > 0).slice(0, 4);
 
       // Find next session
-      const DOW_SESSION = [null, "upperA", "quality", "easy", "lower", "upperB", "longRun"];
-      const DOW_LABEL = ["Rest Day", "Upper A", "Quality Run", "Recovery Run", "Legs", "Upper B", "Long Run"];
+      const DOW_SESSION = ["longRun", null, "upperA", "quality", "lower", "upperB", "easy"];
+      const DOW_LABEL = ["Long Run", "Rest Day", "Upper A", "Quality Run", "Legs", "Upper B", "Recovery Run"];
       const _z2 = getZ2Range();
-      const DOW_SUB = ["Recovery — no training", "Heavy bench + pull (push)", "Intervals · Tempo · TT", `HR Zone 1–2 easy (${_z2.low}–${_z2.high} bpm)`, "Squat / DL maintenance · core", "Hypertrophy · chest+back · delts · arms", "HR Zone 2 endurance"];
-      const DOW_ICON = ["😴", "💪", "⚡", "🏃", "🦵", "🏋", "🛤"];
-      const DOW_COLOR = ["#888", "#4a7fd4", "#e67e22", "#3cb87a", "#9b59b6", "#2980b9", "#c0392b"];
+      const DOW_SUB = ["HR Zone 2 endurance", "Recovery — no training", "Chest · Back · Triceps", "Tempo · Intervals · 5K pace", "Squat / DL · Hypertrophy", "Back · Paused Bench · Pull-ups", `HR Zone 1–2 easy (${_z2.low}–${_z2.high} bpm)`];
+      const DOW_ICON = ["🛤", "😴", "💪", "⚡", "🦵", "🏋", "🏃"];
+      const DOW_COLOR = ["#c0392b", "#888", "#4a7fd4", "#e67e22", "#9b59b6", "#2980b9", "#3cb87a"];
 
       const todayDow = new Date().getDay();
       let nextIdx = todayDow, daysAhead = 0, foundNext = false;
@@ -5873,8 +5972,8 @@ const COACH_HELP_TEXT =
       let _suggestionCounter = 0;
       function buildCoachSuggestions({ wk, dayKey, km, avgHR, rpe, planned, exs, sleep }) {
         const suggestions = [];
-        const deloadWeeks = [17,24,32];
-        const attemptWeeks = [21,31,33];
+        const deloadWeeks = [24,29,34,39,44];
+        const attemptWeeks = [23,28,33,38,43];
         const targetWk = wk + 1;
         if (!WEEKS[targetWk]) return suggestions;
         if (deloadWeeks.includes(targetWk) || attemptWeeks.includes(targetWk)) return suggestions;
@@ -6152,7 +6251,7 @@ const COACH_HELP_TEXT =
         const feedback = [];
 
         // ── MILESTONE targets per week (bench)
-        const benchMilestones = {21:115, 31:117.5, 33:120};
+        const benchMilestones = {23:117.5, 28:120, 33:122.5, 38:122.5};
         const nextMilestone = Object.entries(benchMilestones).find(([w]) => parseInt(w) >= wk);
 
         if (isRun) {
