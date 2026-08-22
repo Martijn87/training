@@ -1391,7 +1391,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.4 · built 22 Aug 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.5 · built 22 Aug 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1448,8 +1448,11 @@
     // ═══════════════════════════════════════════════════════════════
     // DATA
     // ═══════════════════════════════════════════════════════════════
-    const PLAN_START = new Date("2026-08-23");   // v1.4 program epoch 3
-    const LEGACY_PLAN_START = new Date("2026-03-08"); // epoch 1 (weeks 1–20, archived)
+    const PLAN_START = new Date(2026, 7, 24);   // v1.5 — Mon 24 Aug 2026, weeks run Mon–Sun.
+    // Built from local date parts on purpose: new Date("2026-08-24") is UTC
+    // midnight, and getCurrentWeek() compares it against local midnight.
+    // East of UTC that shortfall pushed every Monday into the previous week.
+    const LEGACY_PLAN_START = new Date(2026, 2, 8); // epoch 1 (archived) — local for the same reason
     const EPOCH1_LAST_WEEK = 20;                      // last week of the old grid
     
     const PHASE_INFO = [
@@ -1501,227 +1504,227 @@
     // Full 32-week program data
     const WEEKS = {
       1: {
-        dates: "23–29 Aug",
+        dates: "24–30 Aug",
         upperA: "Flat Bench  4×6 @82.5 kg (RPE 7.5 — volume)\nBack-off  2×8 @72.5 kg\nMilitary Press  4×6 @47.5 kg\nPec Deck  4×15\nBB Row  4×10 @60 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
         recovery2: "5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 8×500 m @ 4:30/km\n90s jog recovery\n≈ 4 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @100 kg\nSumo Deadlift  5×5 @95 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @55 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "10 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "10 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 1 W1/4 — bench 4×6 @82.5 • legs: SQUAT heavier • run 10 + 5 + 5 + 4 quality",
       },
       2: {
-        dates: "30 Aug – 5 Sep",
+        dates: "31 Aug – 6 Sep",
         upperA: "Flat Bench  4×3 @95 kg (RPE 8)\nBack-off  2×5 @85 kg\nMilitary Press  4×6 @47.5 kg\nPec Deck  4×15\nBB Row  4×10 @62.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
         recovery2: "5.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×700 m @ 4:35/km\n2 min jog recovery\n≈ 4.2 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @120 kg\nBack Squat  5×5 @80 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "5.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @57.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "11 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "11 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 1 W2/4 — bench 4×3 @95 • legs: SUMO heavier • run 11 + 5.5 + 5.5 + 4.2 quality",
       },
       3: {
-        dates: "6–12 Sep",
+        dates: "7–13 Sep",
         upperA: "Unload week — attempt day\n🎯 115 kg BENCH ATTEMPT\nFlat Bench  1×1 @115 kg (PR attempt)\nramp: 82.5×3 · 95×1 · 107.5×1 → 115\nBack-off  3×3 @75 kg\nMilitary Press  4×6 @45 kg\nPec Deck  4×15\nBB Row  4×10 @57.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
         recovery2: "6 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 8×500 m @ 4:30/km\n90s jog · attempt week, keep it sharp not deep\n≈ 4 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @105 kg\nSumo Deadlift  5×5 @97.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "6 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @52.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "12 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "12 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 1 W3/4 — 🎯 115 kg attempt Tue 8 Sep • legs: SQUAT heavier • run 12 + 6 + 6 + 4 quality",
       },
       4: {
-        dates: "13–19 Sep",
+        dates: "14–20 Sep",
         upperA: "🔽 DELOAD\nFlat Bench  3×3 @80 kg (RPE 6 — crisp, fast bar)\nMilitary Press  4×6 @42.5 kg\nPec Deck  4×15\nBB Row  4×10 @55 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
         recovery2: "6.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🔽 [INTERVALS] 6×500 m @ 4:30/km\n90s jog · deload\n≈ 3 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter — DELOAD\nSumo Deadlift  4×5 @105 kg\nBack Squat  4×5 @82.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "6.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @50 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "13 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "13 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 1 W4/4 — 🔽 DELOAD • legs: SUMO heavier • run 13 + 6.5 + 6.5 + 3 quality",
       },
       5: {
-        dates: "20–26 Sep",
+        dates: "21–27 Sep",
         upperA: "Flat Bench  4×6 @85 kg (RPE 7.5 — volume)\nBack-off  2×8 @75 kg\nMilitary Press  4×6 @50 kg\nPec Deck  4×15\nBB Row  4×10 @62.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
         recovery2: "7 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[TEMPO] 3×1500 m @ 4:55/km\n2 min jog between\n≈ 4.5 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @122.5 kg\nBack Squat  5×5 @82.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "7 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @57.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "14 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "14 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 2 W1/4 — bench 4×6 @85 • legs: SUMO heavier • run 14 + 7 + 7 + 4.5 quality",
       },
       6: {
-        dates: "27 Sep – 3 Oct",
+        dates: "28 Sep – 4 Oct",
         upperA: "Flat Bench  4×3 @97.5 kg (RPE 8)\nBack-off  2×5 @87.5 kg\nMilitary Press  4×6 @50 kg\nPec Deck  4×15\nBB Row  4×10 @65 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
         recovery2: "7.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×800 m @ 4:32/km\n2 min jog recovery\n≈ 4.8 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @107.5 kg\nSumo Deadlift  5×5 @100 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "7.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @60 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 2 W2/4 — bench 4×3 @97.5 • legs: SQUAT heavier • run 15 + 7.5 + 7.5 + 4.8 quality",
       },
       7: {
-        dates: "4–10 Oct",
+        dates: "5–11 Oct",
         upperA: "Unload week — attempt day\n🎯 117.5 kg BENCH ATTEMPT\nFlat Bench  1×1 @117.5 kg (PR attempt)\nramp: 85×3 · 97.5×1 · 110.0×1 → 117.5\nBack-off  3×3 @77.5 kg\nMilitary Press  4×6 @47.5 kg\nPec Deck  4×15\nBB Row  4×10 @60 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
         recovery2: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[TEMPO] 3×1500 m @ 4:55/km\n2 min jog · attempt week\n≈ 4.5 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @125 kg\nBack Squat  5×5 @85 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @55 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 2 W3/4 — 🎯 117.5 kg attempt Tue 6 Oct • legs: SUMO heavier • run 15 + 8 + 8 + 4.5 quality",
       },
       8: {
-        dates: "11–17 Oct",
+        dates: "12–18 Oct",
         upperA: "🔽 DELOAD\nFlat Bench  3×3 @82.5 kg (RPE 6 — crisp, fast bar)\nMilitary Press  4×6 @45 kg\nPec Deck  4×15\nBB Row  4×10 @57.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
         recovery2: "8.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🏃 5K TIME TRIAL — target 23:15\nWednesday 14 Oct · this replaces the speed session\nw-up 2 km + 4×20s strides, then all-out\nc-down 1.5 km easy",
         lower: "⬆ SQUAT heavier · sumo lighter — DELOAD\nBack Squat  4×5 @90 kg\nSumo Deadlift  4×5 @102.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "8.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @52.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 2 W4/4 — 🔽 DELOAD • legs: SQUAT heavier • run 15 + 8.5 + 8.5 + 5 quality • 🏃 5K TT Wed 14 Oct",
       },
       9: {
-        dates: "18–24 Oct",
+        dates: "19–25 Oct",
         upperA: "Flat Bench  4×6 @87.5 kg (RPE 7.5 — volume)\nBack-off  2×8 @77.5 kg\nMilitary Press  4×6 @50 kg\nPec Deck  4×15\nBB Row  4×10 @65 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
         recovery2: "9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 5×1000 m @ 4:35/km\n2:30 jog recovery\n≈ 5 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @110 kg\nSumo Deadlift  5×5 @105 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @60 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 3 W1/4 — bench 4×6 @87.5 • legs: SQUAT heavier • run 15 + 9 + 9 + 5 quality",
       },
       10: {
-        dates: "25–31 Oct",
+        dates: "26 Oct – 1 Nov",
         upperA: "Flat Bench  4×3 @100 kg (RPE 8)\nBack-off  2×5 @90 kg\nMilitary Press  4×6 @52.5 kg\nPec Deck  4×15\nBB Row  4×10 @67.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
         recovery2: "9.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×900 m @ 4:33/km\n2:15 jog recovery\n≈ 5.4 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @127.5 kg\nBack Squat  5×5 @87.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "9.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @62.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 3 W2/4 — bench 4×3 @100 • legs: SUMO heavier • run 15 + 9.5 + 9.5 + 5.4 quality",
       },
       11: {
-        dates: "1–7 Nov",
+        dates: "2–8 Nov",
         upperA: "Unload week — attempt day\n🎯 120 kg BENCH ATTEMPT\nFlat Bench  1×1 @120 kg (PR attempt)\nramp: 87.5×3 · 100×1 · 112.5×1 → 120\nBack-off  3×3 @80 kg\nMilitary Press  4×6 @47.5 kg\nPec Deck  4×15\nBB Row  4×10 @62.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 5×1000 m @ 4:35/km\n2:30 jog · attempt week\n≈ 5 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @112.5 kg\nSumo Deadlift  5×5 @107.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @57.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 3 W3/4 — 🎯 120 kg attempt Tue 3 Nov • legs: SQUAT heavier • run 15 + 10 + 10 + 5 quality",
       },
       12: {
-        dates: "8–14 Nov",
+        dates: "9–15 Nov",
         upperA: "🔽 DELOAD\nFlat Bench  3×3 @85 kg (RPE 6 — crisp, fast bar)\nMilitary Press  4×6 @45 kg\nPec Deck  4×15\nBB Row  4×10 @60 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🔽 [INTERVALS] 5×700 m @ 4:30/km\n90s jog · deload\n≈ 3.5 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter — DELOAD\nSumo Deadlift  4×5 @110 kg\nBack Squat  4×5 @90 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @55 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 3 W4/4 — 🔽 DELOAD • legs: SUMO heavier • run 15 + 10 + 10 + 3.5 quality",
       },
       13: {
-        dates: "15–21 Nov",
+        dates: "16–22 Nov",
         upperA: "Flat Bench  4×6 @90 kg (RPE 7.5 — volume)\nBack-off  2×8 @80 kg\nMilitary Press  4×6 @52.5 kg\nPec Deck  4×15\nBB Row  4×10 @67.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 7×800 m @ 4:30/km\n2 min jog recovery\n≈ 5.6 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @130 kg\nBack Squat  5×5 @92.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @62.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 4 W1/4 — bench 4×6 @90 • legs: SUMO heavier • run 15 + 10 + 10 + 5.6 quality",
       },
       14: {
-        dates: "22–28 Nov",
+        dates: "23–29 Nov",
         upperA: "Flat Bench  4×3 @102.5 kg (RPE 8)\nBack-off  2×5 @92.5 kg\nMilitary Press  4×6 @55 kg\nPec Deck  4×15\nBB Row  4×10 @70 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×1000 m @ 4:33/km\n2:30 jog recovery\n≈ 6 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @115 kg\nSumo Deadlift  5×5 @112.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @65 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 4 W2/4 — bench 4×3 @102.5 • legs: SQUAT heavier • run 15 + 10 + 10 + 6 quality",
       },
       15: {
-        dates: "29 Nov – 5 Dec",
+        dates: "30 Nov – 6 Dec",
         upperA: "Unload week — attempt day\n🎯 122.5 kg BENCH ATTEMPT\nFlat Bench  1×1 @122.5 kg (PR attempt)\nramp: 90×3 · 102.5×1 · 115.0×1 → 122.5\nBack-off  3×3 @82.5 kg\nMilitary Press  4×6 @50 kg\nPec Deck  4×15\nBB Row  4×10 @65 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 7×800 m @ 4:30/km\n2 min jog · attempt week\n≈ 5.6 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @132.5 kg\nBack Squat  5×5 @95 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @60 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 4 W3/4 — 🎯 122.5 kg attempt Tue 1 Dec • legs: SUMO heavier • run 15 + 10 + 10 + 5.6 quality",
       },
       16: {
-        dates: "6–12 Dec",
+        dates: "7–13 Dec",
         upperA: "🔽 DELOAD\nFlat Bench  3×3 @87.5 kg (RPE 6 — crisp, fast bar)\nMilitary Press  4×6 @47.5 kg\nPec Deck  4×15\nBB Row  4×10 @62.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🏃 5K TIME TRIAL — target 22:45\nWednesday 9 Dec · this replaces the speed session\nw-up 2 km + 4×20s strides, then all-out\nc-down 1.5 km easy",
         lower: "⬆ SQUAT heavier · sumo lighter — DELOAD\nBack Squat  4×5 @97.5 kg\nSumo Deadlift  4×5 @112.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @57.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 4 W4/4 — 🔽 DELOAD • legs: SQUAT heavier • run 15 + 10 + 10 + 5 quality • 🏃 5K TT Wed 9 Dec",
       },
       17: {
-        dates: "13–19 Dec",
+        dates: "14–20 Dec",
         upperA: "Flat Bench  4×6 @92.5 kg (RPE 7.5 — volume)\nBack-off  2×8 @82.5 kg\nMilitary Press  4×6 @55 kg\nPec Deck  4×15\nBB Row  4×10 @70 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×1000 m @ 4:30/km\n2:30 jog recovery\n≈ 6 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @117.5 kg\nSumo Deadlift  5×5 @115 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @65 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 5 W1/4 — bench 4×6 @92.5 • legs: SQUAT heavier • run 15 + 10 + 10 + 6 quality",
       },
       18: {
-        dates: "20–26 Dec",
+        dates: "21–27 Dec",
         upperA: "Flat Bench  4×3 @105 kg (RPE 8)\nBack-off  2×5 @95 kg\nMilitary Press  4×6 @55 kg\nPec Deck  4×15\nBB Row  4×10 @72.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 8×800 m @ 4:28/km\n2 min jog recovery\n≈ 6.4 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @135 kg\nBack Squat  5×5 @97.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @67.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 5 W2/4 — bench 4×3 @105 • legs: SUMO heavier • run 15 + 10 + 10 + 6.4 quality",
       },
       19: {
-        dates: "27 Dec – 2 Jan",
+        dates: "28 Dec – 3 Jan",
         upperA: "Unload week — attempt day\n🎯 125 kg BENCH ATTEMPT (stretch)\nFlat Bench  1×1 @125 kg (PR attempt)\nramp: 92.5×3 · 105×1 · 117.5×1 → 125\nBack-off  3×3 @85 kg\nMilitary Press  4×6 @52.5 kg\nPec Deck  4×15\nBB Row  4×10 @67.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×1000 m @ 4:30/km\n2:30 jog · attempt week\n≈ 6 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @120 kg\nSumo Deadlift  5×5 @117.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @62.5 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  4×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 5 W3/4 — 🎯 125 kg attempt Tue 29 Dec • legs: SQUAT heavier • run 15 + 10 + 10 + 6 quality",
       },
       20: {
-        dates: "3–9 Jan",
+        dates: "4–10 Jan",
         upperA: "🔽 DELOAD\nFlat Bench  3×3 @90 kg (RPE 6 — crisp, fast bar)\nMilitary Press  4×6 @50 kg\nPec Deck  4×15\nBB Row  4×10 @65 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
         recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🏃 10K TIME TRIAL — target sub-49:00\nWednesday 6 Jan · this replaces the speed session\nw-up 2 km + 4×20s strides, then all-out\nc-down 1.5 km easy",
         lower: "⬆ SUMO heavier · squat lighter — DELOAD\nSumo Deadlift  4×5 @117.5 kg\nBack Squat  4×5 @100 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
         upperB: "Pull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @60 kg\nPullover Machine  3×12\nIncline DB Press  3×15 (high reps, controlled)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nBand Dislocates  3×15 (shoulder health)\nHanging Leg Raise  3×15",
-        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — the week's long run",
+        longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
         notes: "Block 5 W4/4 — 🔽 DELOAD • legs: SUMO heavier • run 15 + 10 + 10 + 10 quality • 🏃 10K TT Wed 6 Jan",
       },
       21: {
-        dates: "10–16 Jan",
+        dates: "11–17 Jan",
         upperA: "Flat Bench  4×5 @95 kg (maintenance — running leads now)\nBack-off  2×8 @85 kg\nMilitary Press  4×6 @52.5 kg\nPec Deck  4×15\nBB Row  4×10 @67.5 kg\n— triceps superset —\nRope Pushdown  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
         recovery2: "[MR · MARATHON HR] 7 km — Tuesday\n❤️ marathon HR 140–150 bpm (low Zone 3) · ~5:35–5:50/km\nMR rule 3: two runs a week at marathon heart rate\n+ core: Dead Bug  2×12 each",
         quality: "[MR · INTENSIVE] 9 km — the one hard run of the week\n2 km w-up + 6×800 m @ 4:40/km (2 min jog) + 1.5 km c-down\nMR rule 4: train intensively once a week",
@@ -3057,7 +3060,7 @@ function planQueryWeek() {
   const phase = (typeof getPhase === 'function') ? getPhase(wk) : null;
   const phaseStr = phase && phase.label ? phase.label : '';
   // Days into the program
-  const start = new Date(2026, 7, 23);
+  const start = new Date(2026, 7, 24);
   const today = new Date(); today.setHours(0,0,0,0);
   const daysIn = Math.floor((today - start) / 86400000);
   return { message: 'Week ' + wk + (phaseStr ? ' — ' + phaseStr : '') + '.\nDay ' + (daysIn + 1) + ' of the 35-week program.' };
@@ -3299,8 +3302,8 @@ function planDeleteMilestone({ labelHint }) {
 
 function coachWeekFromDate(iso) {
   const d = new Date(iso); d.setHours(0,0,0,0);
-  const start = new Date(2026, 7, 23); // PLAN_START: 2026-08-23
-  const days = Math.floor((d - start) / 86400000);
+  const start = new Date(2026, 7, 24); // PLAN_START: 2026-08-24 (Monday)
+  const days = dayNumber(d) - dayNumber(start);   // DST-proof
   const wk = Math.floor(days / 7) + 1;
   return wk;
 }
@@ -4550,7 +4553,7 @@ const COACH_HELP_TEXT =
     const EPOCH_FLAG = 'programEpoch';
 
     function legacyWeekDate(wk) {
-      const d = new Date(LEGACY_PLAN_START.getTime());
+      const d = new Date(LEGACY_PLAN_START.getFullYear(), LEGACY_PLAN_START.getMonth(), LEGACY_PLAN_START.getDate());
       d.setDate(d.getDate() + 7 * (wk - 1) + 3);   // mid-week, good enough for a PR stamp
       return d.toISOString().slice(0, 10);
     }
@@ -4765,14 +4768,21 @@ const COACH_HELP_TEXT =
       return report;
     }
 
+    // Calendar-day difference, immune to timezone offset and to DST.
+    function dayNumber(d) {
+      return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    }
+
     function daysUntil(dateStr) {
-      const now = new Date(); now.setHours(0,0,0,0);
-      return Math.ceil((new Date(dateStr) - now) / 86400000);
+      const [y, m, d] = String(dateStr).split('-').map(Number);
+      const target = (y && m && d) ? new Date(y, m - 1, d) : new Date(dateStr);
+      return dayNumber(target) - dayNumber(new Date());
     }
 
     function getCurrentWeek() {
-      const now = new Date(); now.setHours(0,0,0,0);
-      const diff = Math.floor((now - PLAN_START) / 86400000);
+      // Whole days since Mon 24 Aug 2026, counted on the calendar so the
+      // 25 Oct clock change cannot shave an hour off and lose a week.
+      const diff = dayNumber(new Date()) - dayNumber(PLAN_START);
       const last = Math.max(...Object.keys(WEEKS).map(Number));
       return Math.max(1, Math.min(last, Math.floor(diff / 7) + 1));
     }
