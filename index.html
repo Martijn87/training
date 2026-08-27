@@ -12,6 +12,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Service worker: caches the app shell so launch two onwards works with no
+    // network. Registered before the main script so a failure here is inert.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(r => console.log('[sw] registered, scope', r.scope))
+          .catch(e => console.warn('[sw] registration failed (app still works):', e));
+      });
+    }
+  </script>
   <style>
     :root {
       --bg: #f7f4ef;
@@ -1391,7 +1402,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.5 · built 22 Aug 2026</div>
+        <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.9 · built 22 Aug 2026</div>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
       <div class="tabs">
@@ -1741,9 +1752,68 @@
     // ═══════════════════════════════════════════════════════════════
     const SUPABASE_URL = 'https://vyhbewnskumytsjmldhz.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5aGJld25za3VteXRzam1sZGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODQxMzksImV4cCI6MjA5MDM2MDEzOX0.hXvpexwfGL9ceg1Z5J9tovqgn2s8hZetlh2HUCmd9Zw';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    // ── Offline-safe client construction ────────────────────────────────
+    // `supabase` is a CDN global. With no network it is undefined, and this
+    // used to be top-level code that threw before a single line of the app
+    // ran — a white screen in exactly the place the app is designed for.
+    //
+    // The stub answers every call the app makes with the same shape the real
+    // client uses on failure: `{ data: null, error }`. Every call site already
+    // handles that (`if (error) return localFallback()`), so the app degrades
+    // to local-only instead of dying.
+    let OFFLINE_MODE = false;
+
+    function makeOfflineClient(reason) {
+      OFFLINE_MODE = true;
+      console.warn('Supabase unavailable — running local-only:', reason);
+      const err = { message: 'offline: ' + reason, offline: true };
+      const q = {
+        select() { return q; },
+        eq()     { return q; },
+        order()  { return q; },
+        limit()  { return q; },
+        single: async () => ({ data: null, error: err }),
+        upsert: async () => ({ error: err }),
+        update() { return q; },
+        delete() { return q; },
+        then(res) { res({ data: [], error: err }); },   // awaited without .single()
+      };
+      return {
+        __offline: true,
+        auth: {
+          getSession:          async () => ({ data: { session: null }, error: err }),
+          onAuthStateChange:   () => ({ data: { subscription: { unsubscribe() {} } } }),
+          signInWithPassword:  async () => ({ data: null, error: { message: 'No connection. Check your network and try again.' } }),
+          signUp:              async () => ({ data: null, error: { message: 'No connection. Check your network and try again.' } }),
+          signOut:             async () => ({ error: null }),
+        },
+        from: () => q,
+      };
+    }
+
+    const sb = (() => {
+      try {
+        if (typeof supabase === 'undefined' || !supabase || typeof supabase.createClient !== 'function') {
+          return makeOfflineClient('client script did not load');
+        }
+        return supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+      } catch (e) {
+        return makeOfflineClient(e.message || String(e));
+      }
+    })();
 
     let currentUser = null;
+
+    function offlineBannerHtml() {
+      if (!OFFLINE_MODE) return '';
+      return `<div class="card mb-12" style="border-left:3px solid var(--tag-orange);">
+        <div style="font-size:11px;font-weight:600;color:var(--tag-orange);font-family:'DM Mono',monospace;letter-spacing:0.5px;margin-bottom:4px;">⚡ LOCAL-ONLY MODE</div>
+        <div style="font-size:10px;color:var(--text-sub);font-family:'DM Mono',monospace;line-height:1.5;">
+          No connection to the server. Everything you log is saved on this device
+          and uploads automatically when you're back online.
+        </div>
+      </div>`;
+    }
 
     function setSyncDot(status) {
       const dot = document.getElementById('syncDot');
@@ -1761,12 +1831,21 @@
 
     async function loadProfile() {
       const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-      if (error || !data) return;
+      if (error || !data) {
+        // No profile row yet, or a transient read error. v1.5 returned here,
+        // which skipped completedSessions and the reconcile that repairs it.
+        // Local state is already seeded from localStorage, so carry on.
+        console.warn('profile read returned nothing — using local state:', error?.message || 'no row');
+        return;
+      }
       state.prs = data.prs || state.prs;
       state.runPRs = data.run_prs || state.runPRs;
       state.bodyWeight = data.body_weight || '';
       state.theme = data.theme || 'light';
-      state.completedSessions = data.completed_sessions || {};
+      // Union, not replacement: a completion that never reached Supabase must
+      // survive a login that reads an older profile snapshot.
+      state.completedSessions = { ...(state.completedSessions || {}), ...(data.completed_sessions || {}) };
+      persistCompletions();
       if (data.custom_exercises) {
         localStorage.setItem('customExercises', JSON.stringify(data.custom_exercises));
       }
@@ -1814,44 +1893,77 @@
       document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
       document.querySelector('meta[name="theme-color"]').content = state.theme === 'light' ? '#f7f4ef' : '#0f0d0a';
 
-      // ── Reconcile completedSessions against session_logs ──────────
-      // session_logs is the source of truth for actual saved workouts.
-      // If saveState() ever failed silently, completedSessions in profiles
-      // can lag behind. This brings them back in sync on every login.
-      try {
-        const { data: logs } = await sb.from('session_logs')
-          .select('week, session_key, saved_at, data')
-          .eq('user_id', currentUser.id);
-        if (logs && logs.length > 0) {
-          let changed = false;
-          // v1.3: only current-programme rows may mark a session complete.
-          // This loop is what pulled the retired programme back on top of the
-          // new one — epoch-1 "9_upperA" resolving onto epoch-2 week 9.
-          logs.filter(isEpoch2Row).forEach(({ week, session_key }) => {
-            const key = session_key; // session_key is already "${week}_${dayKey}" e.g. "5_upperA"
-            if (!state.completedSessions[key]) {
-              state.completedSessions[key] = true;
-              changed = true;
-            }
-          });
-          // Write reconciled state back to profiles so it stays in sync
-          if (changed) {
-            await sb.from('profiles').upsert({
-              id: currentUser.id,
-              completed_sessions: state.completedSessions,
-              updated_at: new Date().toISOString()
-            });
-          }
-        }
-      } catch (e) {
-        console.warn('completedSessions reconcile failed (non-fatal):', e);
+      // completedSessions reconciliation moved to reconcileCompletions(),
+      // which also reads localStorage and runs even when this function bails
+      // early. See v1.6 notes.
+    }
+
+    // v1.6: completions are mirrored locally the instant they change, so a
+    // failed profiles write can no longer lose them.
+    function persistCompletions() {
+      try { localStorage.setItem('completedSessions', JSON.stringify(state.completedSessions || {})); }
+      catch (e) { console.warn('completions local write failed:', e); }
+    }
+
+    function markSessionComplete(sessionKey) {
+      if (!sessionKey) return false;
+      if (state.completedSessions[sessionKey]) return false;
+      state.completedSessions[sessionKey] = true;
+      persistCompletions();
+      return true;
+    }
+
+    // A session that has a stored payload is complete by definition. This
+    // rebuilds the completion map from the sessions themselves — locally first
+    // so it works offline and even when the profile read fails, then from
+    // Supabase so other devices are picked up.
+    async function reconcileCompletions() {
+      let changed = false;
+      const prefix = `session_e${PROGRAM_EPOCH}:`;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith(prefix)) continue;
+        let payload = null;
+        try { payload = JSON.parse(localStorage.getItem(k) || 'null'); } catch {}
+        if (!payload || !payload.savedAt) continue;      // never actually saved
+        if (markSessionComplete(k.slice('session_'.length))) changed = true;
       }
+      if (currentUser) {
+        try {
+          const { data: logs, error } = await sb.from('session_logs')
+            .select('week, session_key, saved_at, data').eq('user_id', currentUser.id);
+          if (error) throw error;
+          (logs || []).filter(isCurrentEpochRow).forEach(r => {
+            if (markSessionComplete(r.session_key)) changed = true;
+          });
+        } catch (e) {
+          console.warn('completion reconcile (remote) failed — local marks stand:', e);
+        }
+      }
+      if (changed) {
+        try { await saveState(); } catch (e) { console.warn('completion push failed:', e); }
+      }
+      return changed;
+    }
+
+    // Mirror of everything saveState() pushes remotely. Written on every save
+    // so local-only mode is lossless, and so a failed upsert costs nothing.
+    function persistStateLocally() {
+      try {
+        localStorage.setItem('theme', state.theme);
+        localStorage.setItem('prs', JSON.stringify(state.prs || {}));
+        localStorage.setItem('runPRs', JSON.stringify(state.runPRs || {}));
+        localStorage.setItem('bodyWeight', state.bodyWeight || '');
+        localStorage.setItem('exercisePRs', JSON.stringify(state.exercisePRs || {}));
+        localStorage.setItem('programOverrides', JSON.stringify(state.programOverrides || []));
+        persistCompletions();
+      } catch (e) { console.warn('local state mirror failed:', e); }
     }
 
     async function saveState() {
+      persistStateLocally();
       if (!currentUser) {
-        // fallback to localStorage if somehow not logged in
-        localStorage.setItem('theme', state.theme);
+        // Local-only: nothing to sync to, but everything is already on disk.
         return;
       }
       setSyncDot('syncing');
@@ -1867,6 +1979,11 @@
         exercise_prs: state.exercisePRs || {},
         updated_at: new Date().toISOString()
       });
+      if (error) {
+        // Previously the only trace was a tinted dot. An eleven-column upsert
+        // fails as a unit, so one bad column silently dropped completions.
+        console.warn('saveState failed — state is safe locally, will retry next save:', error.message || error);
+      }
       setSyncDot(error ? 'error' : 'synced');
     }
 
@@ -2002,10 +2119,10 @@
       programView: 'weeks',
       selectedWeek: getCurrentWeek(),
       selectedDayIndex: 0,
-      prs: {"bench":"112.5 kg","squat":"160 kg","deadlift":"200 kg"},
-      runPRs: {"km1":"3:45 ⚑","mile":"6:22 ⚑","5k":"19:30 ⚑","10k":"— ⚑","hm":"1:45:00 ⚑","marathon":"4:36:00 ⚑"},
-      bodyWeight: '',
-      completedSessions: {},
+      prs: (() => { try { const v = JSON.parse(localStorage.getItem('prs') || 'null'); if (v) return v; } catch {} return {"bench":"112.5 kg","squat":"160 kg","deadlift":"200 kg"}; })(),
+      runPRs: (() => { try { const v = JSON.parse(localStorage.getItem('runPRs') || 'null'); if (v) return v; } catch {} return {"km1":"3:45 ⚑","mile":"6:22 ⚑","5k":"19:30 ⚑","10k":"— ⚑","hm":"1:45:00 ⚑","marathon":"4:36:00 ⚑"}; })(),
+      bodyWeight: localStorage.getItem('bodyWeight') || '',
+      completedSessions: (() => { try { return JSON.parse(localStorage.getItem('completedSessions') || '{}'); } catch { return {}; } })(),
       editingPRs: false,
       programOverrides: (() => { try { return JSON.parse(localStorage.getItem('programOverrides') || '[]'); } catch { return []; } })(),
       exercisePRs: (() => { try { return JSON.parse(localStorage.getItem('exercisePRs') || '{}'); } catch { return {}; } })(),
@@ -4660,6 +4777,7 @@ const COACH_HELP_TEXT =
         } catch {}
       }
       state.completedSessions = survivors;
+      persistCompletions();
       state.programOverrides = [];
       localStorage.setItem('programOverrides', '[]');
 
@@ -4927,6 +5045,7 @@ const COACH_HELP_TEXT =
       const nextLabel = !foundNext ? "Week complete 🎉" : daysAhead === 0 ? "Today" : daysAhead === 1 ? "Tomorrow" : ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][nextIdx];
 
       let html = `
+        ${offlineBannerHtml()}
         <!-- Progress -->
         <div class="card progress-card">
           <div class="progress-header">
@@ -6097,7 +6216,7 @@ const COACH_HELP_TEXT =
         }
 
         await saveSession(wk, sessionKey, payload);
-        state.completedSessions[sessionKey] = true;
+        markSessionComplete(sessionKey);   // writes through to localStorage
 
         // Refresh home widget so completion count updates immediately
         renderHome();
@@ -7057,10 +7176,11 @@ const COACH_HELP_TEXT =
 
       async function startApp(user) {
         if (appStarted) return;
-        currentUser = user;
+        currentUser = user;   // null => local-only mode
         try { await loadProfile(); } catch(e) { console.warn('loadProfile error (non-fatal):', e); }
         try { await migrateProgramEpoch2(); } catch(e) { console.warn('epoch migration error (non-fatal):', e); }
         try { await runDataResetIfNeeded(); } catch(e) { console.warn('data reset error (non-fatal):', e); }
+        try { await reconcileCompletions(); } catch(e) { console.warn('completion reconcile error (non-fatal):', e); }
         try {
           document.getElementById('loginScreen').style.display = 'none';
           initApp();
@@ -7078,6 +7198,18 @@ const COACH_HELP_TEXT =
         if (session?.user) await startApp(session.user);
       } catch(e) {
         console.warn('getSession failed:', e);
+      }
+
+      // No connection: don't strand the user on a login screen they cannot
+      // use. If this device has trained before, open the app local-only —
+      // every read falls back to localStorage and writes queue for later.
+      if (!appStarted && OFFLINE_MODE) {
+        const usedBefore = !!(localStorage.getItem('completedSessions')
+          || localStorage.getItem('exercisePRs') || localStorage.getItem('theme'));
+        if (usedBefore) {
+          console.warn('Starting in local-only mode.');
+          await startApp(null);
+        }
       }
 
       // Timeout fallback: if nothing happened in 6 s, show login cleanly
