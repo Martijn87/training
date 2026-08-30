@@ -20,7 +20,7 @@
  */
 // MUST mirror window.APP_VERSION in index.html, zero-padded (v1.09, v1.10).
 // Bumping this evicts the old shell cache on activate.
-const CACHE_VERSION = 'v1.11';
+const CACHE_VERSION = 'v1.12';
 const CACHE = `training-${CACHE_VERSION}`;
 
 // Fetched on install. Anything that fails is skipped rather than aborting the
