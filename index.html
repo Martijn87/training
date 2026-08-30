@@ -33,7 +33,7 @@
        was previously mislabelled "v1.11", which is what caused the build
        number and the programme number to be confused with each other. -->
   <script>
-    window.APP_VERSION = 'v1.11';
+    window.APP_VERSION = 'v1.12';
     window.APP_BUILT   = '30 Aug 2026';
     window.PROGRAM_REV = '2026-08-30-bench120-nov';
   </script>
@@ -149,8 +149,15 @@
     .theme-toggle {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px 12px;
+      border-radius: 22px;
+      /* v1.11: 21px tall was a miss-tap generator on chalked hands. 44px is the
+         iOS/WCAG floor; the pill is padded out rather than the glyph enlarged,
+         so the header keeps its proportions. */
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 14px;
       cursor: pointer;
       font-size: 10px;
       color: var(--text-sub);
@@ -165,6 +172,8 @@
       flex: 1;
       background: none;
       border: none;
+      /* v1.11: 37px -> 44px. Primary navigation, tapped mid-session. */
+      min-height: 44px;
       padding: 8px 0 12px;
       cursor: pointer;
       display: flex;
@@ -1074,6 +1083,7 @@
     .login-input:focus { border-color: var(--accent); }
     .login-btn {
       width: 100%; padding: 13px;
+      min-height: 44px;   /* v1.11: 41px -> 44px */
       background: var(--accent); color: #fff;
       border: none; border-radius: 8px;
       font-family: 'DM Mono', monospace; font-size: 13px;
@@ -1428,7 +1438,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.11 · built 30 Aug 2026</div>
+        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.12 · built 30 Aug 2026</div>
         <script>(function(){try{var e=document.getElementById('versionBadge');if(e&&window.APP_VERSION){e.textContent=window.APP_VERSION+' \u00b7 built '+window.APP_BUILT;}}catch(_){}})();</script>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
@@ -1916,9 +1926,11 @@
         state.exercisePRs = data.exercise_prs;
         localStorage.setItem('exercisePRs', JSON.stringify(state.exercisePRs));
       }
-      document.body.dataset.theme = state.theme;
-      document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
-      document.querySelector('meta[name="theme-color"]').content = state.theme === 'light' ? '#f7f4ef' : '#0f0d0a';
+      // v1.11: mirror the remote theme locally so the next offline boot can
+      // restore it, and repaint through the single applyTheme() path.
+      try { localStorage.setItem('theme', state.theme); }
+      catch (e) { console.warn('theme local mirror failed:', e); }
+      applyTheme();
 
       // completedSessions reconciliation moved to reconcileCompletions(),
       // which also reads localStorage and runs even when this function bails
@@ -2141,7 +2153,18 @@
     // STATE
     // ═══════════════════════════════════════════════════════════════
     let state = {
-      theme: 'light',
+      // v1.11: hydrated from localStorage. Previously hardcoded 'light':
+      // persistStateLocally() wrote the 'theme' key on every save and NOTHING
+      // ever read it back, so the only restore path was the Supabase profile.
+      // Offline — the normal case in a gym — the app booted light every time
+      // and then overwrote the stored preference with that default on the
+      // first save. Preference destruction, not merely preference loss.
+      theme: (() => {
+        try {
+          const t = localStorage.getItem('theme');
+          return (t === 'dark' || t === 'light') ? t : 'light';
+        } catch { return 'light'; }
+      })(),
       tab: 'home',
       programView: 'weeks',
       selectedWeek: getCurrentWeek(),
@@ -2315,9 +2338,22 @@
     // by getWeeklySchedule().
     function resolvePlanned(wk, sessionKey) {
       const base = WEEKS[wk]?.[sessionKey] ?? null;
-      const relevant = (state.programOverrides || []).filter(o =>
-        o && o.week === wk && o.sessionKey === sessionKey
-      );
+      // v1.11: resolve in TIMESTAMP order, not array order. The block comment
+      // above has always claimed "chronological", but the loop below is
+      // last-writer-wins on array POSITION — and loadProfile() merges as
+      // [...remote, ...localOnly], so an OLDER local-only change that failed to
+      // sync is appended after a NEWER remote one and silently wins. ts is the
+      // documented merge key; order by it. Decorated sort so entries with equal
+      // or missing ts keep their relative order on every engine.
+      const relevant = (state.programOverrides || [])
+        .filter(o => o && o.week === wk && o.sessionKey === sessionKey)
+        .map((o, i) => [o, i])
+        .sort((a, b) => {
+          const ta = (a[0].ts || ''), tb = (b[0].ts || '');
+          if (ta === tb) return a[1] - b[1];
+          return ta < tb ? -1 : 1;
+        })
+        .map(pair => pair[0]);
       if (relevant.length === 0) return base;
       let value = base;
       for (const raw of relevant) {
@@ -3257,12 +3293,16 @@ function planQueryMilestones() {
 function planQueryPR({ lift }) {
   const prs = state.prs || {};
   const liftMap = { bench: 'bench', squat: 'squat', deadlift: 'deadlift', ohp: 'ohp' };
+  // v1.11: PR values are free text and normally already carry their unit
+  // ("112.5 kg"), so the unconditional suffix rendered "Bench PR: 112.5 kg kg".
+  // Add the unit only when the stored value doesn't have one.
+  const withUnit = (v) => /[a-z]/i.test(String(v)) ? String(v) : String(v) + ' kg';
   if (lift && liftMap[lift]) {
     const v = prs[liftMap[lift]];
-    return { message: (lift.charAt(0).toUpperCase() + lift.slice(1)) + ' PR: ' + (v ? v + ' kg' : 'not set') + '.' };
+    return { message: (lift.charAt(0).toUpperCase() + lift.slice(1)) + ' PR: ' + (v ? withUnit(v) : 'not set') + '.' };
   }
   const order = ['bench', 'squat', 'deadlift', 'ohp'];
-  const lines = order.filter(k => prs[k]).map(k => k.charAt(0).toUpperCase() + k.slice(1) + ': ' + prs[k] + ' kg');
+  const lines = order.filter(k => prs[k]).map(k => k.charAt(0).toUpperCase() + k.slice(1) + ': ' + withUnit(prs[k]));
   if (lines.length === 0) return { message: 'No PRs recorded yet. Log a session and they\'ll auto-populate.' };
   return { message: 'Strength PRs:\n' + lines.join('\n') };
 }
@@ -7097,23 +7137,46 @@ const COACH_HELP_TEXT =
 
     }
     // ═══════════════════════════════════════════════════════════════
+    // v1.11: theme is pure presentation and needs no user, so it lives outside
+    // initApp() (which runs only after auth). One function paints every surface
+    // that has to agree — body attribute, toggle label, and the PWA status-bar
+    // colour, which initApp() previously never set at all, so on the offline
+    // path a dark boot left an iOS status bar painted for the light theme.
+    function applyTheme() {
+      document.body.dataset.theme = state.theme;
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.content = state.theme === 'light' ? '#f7f4ef' : '#0f0d0a';
+    }
+
+    // Idempotent: safe to call from DOM-ready and again from initApp().
+    let _themeToggleBound = false;
+    function bindThemeToggle() {
+      if (_themeToggleBound) return;
+      const btn = document.getElementById('themeToggle');
+      if (!btn) return;
+      _themeToggleBound = true;
+      btn.addEventListener('click', async () => {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        applyTheme();
+        // Written here as well as in persistStateLocally() so the preference
+        // survives even if the wider save throws.
+        try { localStorage.setItem('theme', state.theme); }
+        catch (e) { console.warn('theme local write failed:', e); }
+        await saveState();
+      });
+    }
+
     function initApp() {
       // Wire the coach overlay (idempotent).
       wireCoachControls();
 
-      // Apply theme
-      document.body.dataset.theme = state.theme;
-      document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
+      // Theme: applied and wired at DOM-ready. Both calls are idempotent, so
+      // repeating them here is free and covers a re-entrant initApp().
+      applyTheme();
+      bindThemeToggle();
       setSyncDot('synced');
-
-      // Theme toggle
-      document.getElementById('themeToggle').addEventListener('click', async () => {
-        state.theme = state.theme === 'light' ? 'dark' : 'light';
-        document.body.dataset.theme = state.theme;
-        document.getElementById('themeToggle').textContent = state.theme === 'light' ? '☽ Dark' : '☀ Light';
-        document.querySelector('meta[name="theme-color"]').content = state.theme === 'light' ? '#f7f4ef' : '#0f0d0a';
-        await saveState();
-      });
 
       // Tab navigation
       document.querySelectorAll('.tab').forEach(tab => {
@@ -7197,6 +7260,11 @@ const COACH_HELP_TEXT =
 
     // ── Auth entry point ──
     document.addEventListener('DOMContentLoaded', async () => {
+      // v1.11: theme before auth. The toggle used to render on the login screen
+      // and do nothing, and a saved dark theme was ignored until a profile fetch
+      // that never completes on a dead signal.
+      applyTheme();
+      bindThemeToggle();
       showLoginScreen();
 
       let appStarted = false;
