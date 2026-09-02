@@ -33,8 +33,8 @@
        was previously mislabelled "v1.11", which is what caused the build
        number and the programme number to be confused with each other. -->
   <script>
-    window.APP_VERSION = 'v1.14';
-    window.APP_BUILT   = '30 Aug 2026';
+    window.APP_VERSION = 'v1.16';
+    window.APP_BUILT   = '2 Sep 2026';
     window.PROGRAM_REV = '2026-08-30-bench120-vol50-q4to6';
   </script>
 
@@ -1438,7 +1438,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.14 · built 30 Aug 2026</div>
+        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.16 · built 2 Sep 2026</div>
         <script>(function(){try{var e=document.getElementById('versionBadge');if(e&&window.APP_VERSION){e.textContent=window.APP_VERSION+' \u00b7 built '+window.APP_BUILT;}}catch(_){}})();</script>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
@@ -4692,6 +4692,86 @@ const COACH_HELP_TEXT =
       return newPRs;
     }
 
+    // ── Per-exercise save — v1.16 ──────────────────────────────────────
+    //
+    // "Save exercise" used to build its payload from the WHOLE exercise list
+    // and write the entire session, so pressing save under Flat Bench also
+    // committed the rows, the curls and the leg raises — and ran PR detection
+    // across all of them, inventing PRs out of pre-filled plan targets the
+    // user had not actually lifted yet. One button, every exercise. That is
+    // the bug this replaces.
+    //
+    // The record stays shaped like the workout on purpose. The reload path in
+    // renderSessionLogger reconciles saved exercises BY NAME against the plan,
+    // and a record that is missing entries makes it report them as newly
+    // "added" in the plan-changed banner. So every position is written; only
+    // the target exercise carries live values. Any other position keeps what
+    // was already stored, and if nothing was stored it is written blank rather
+    // than with numbers the user did not choose to save.
+    //
+    // Top-level session fields — sleep, session RPE, notes — belong to the
+    // workout rather than to one exercise, so a per-exercise save preserves
+    // the stored ones and does not commit newly typed ones. "Save Workout" at
+    // the bottom is what commits the session as a whole, and it is also the
+    // only thing that marks the session complete.
+    function blankExerciseLog(ex) {
+      const src = (ex && typeof ex === 'object') ? ex : {};
+      return Object.assign({}, src, {
+        sets: (src.sets || []).map(s => ({
+          targetReps: (s && s.targetReps) || '',
+          targetWeight: (s && s.targetWeight) || '',
+          reps: '', weight: '', rpe: '',
+        })),
+      });
+    }
+
+    // Pure: (storedPayload, liveExercises, exIdx) -> payload to save, or null
+    // when there is nothing at that index. Kept free of DOM and storage reads
+    // so the gate can assert it directly.
+    function mergeSingleExercise(stored, liveExercises, exIdx) {
+      const base = (stored && typeof stored === 'object' && !Array.isArray(stored)) ? stored : {};
+      const live = Array.isArray(liveExercises) ? liveExercises : [];
+      if (!Number.isInteger(exIdx) || !live[exIdx]) return null;
+      const storedList = Array.isArray(base.exercises) ? base.exercises : [];
+      const storedByName = new Map();
+      storedList.forEach(ex => { if (ex && ex.name) storedByName.set(exPRKey(ex.name), ex); });
+      const exercises = live.map((ex, i) => {
+        if (i === exIdx) return ex;
+        const prior = (ex && ex.name) ? storedByName.get(exPRKey(ex.name)) : null;
+        return prior || blankExerciseLog(ex);
+      });
+      // An exercise that is stored but no longer on the card is carried over,
+      // never dropped: saving one exercise must not delete another's log.
+      const liveKeys = new Set(live.filter(e => e && e.name).map(e => exPRKey(e.name)));
+      storedList.forEach(ex => {
+        if (ex && ex.name && !liveKeys.has(exPRKey(ex.name))) exercises.push(ex);
+      });
+      return Object.assign({}, base, { exercises });
+    }
+
+    // The last locally stored payload for a session. saveSession() always
+    // writes localStorage first, so this is the offline-first canonical copy
+    // and needs no await — which matters, because the merge has to happen
+    // before the write and a Supabase round trip in a gym has no business
+    // sitting between a button press and a saved set.
+    function readStoredSessionLocal(sessionKey) {
+      try {
+        const raw = localStorage.getItem('session_' + sessionKey);
+        const v = raw ? JSON.parse(raw) : null;
+        return (v && typeof v === 'object' && !Array.isArray(v)) ? v : null;
+      } catch { return null; }
+    }
+
+    // Reps are integers. Filling "6-8" or "8 reps" into every set would write
+    // a string the PR detector silently discards, which is the same
+    // silent-data-loss class parseRepsTarget already refuses.
+    function parseBulkReps(value) {
+      const s = String(value == null ? '' : value).trim();
+      if (!/^\d{1,3}$/.test(s)) return null;
+      const n = parseInt(s, 10);
+      return (n >= 1 && n <= 100) ? n : null;
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // v1.02 · PROGRAM EPOCH MIGRATION
     // ═══════════════════════════════════════════════════════════════
@@ -4982,8 +5062,198 @@ const COACH_HELP_TEXT =
       return { done, total };
     }
 
+    // ── Weekly running volume — BACKLOG A1 ─────────────────────────────
+    //
+    // Until v1.15 a week's running volume existed only as prose in `notes`
+    // ("run 16 + 13 + 13 + 5 quality"). Nothing summed it, nothing compared
+    // it to the week before, so the app could not show whether the approved
+    // ramp was being followed — and the prose understates the week anyway,
+    // because it counts only the quality WORK and drops the warm-up and
+    // cool-down that the ramp table counts. Wk 3 reads 10 + 7.4 + 7.4 + 4 =
+    // 28.8 in prose; the approved total is 32.3. Read the sessions, not the
+    // notes.
+    //
+    // Everything below goes through getPlanned(), so his own overrides are
+    // counted: a skipped session parses to nothing and the week legitimately
+    // shrinks rather than reporting a plan he did not run.
+    //
+    // Three session shapes exist in the data today and all three are read:
+    //   1. plain run   "7.4 km easy @ 6:15-6:40/km"          -> 7.4
+    //   2. quality     "≈ 4 km of quality + 2 km w-up + 1.5 km c-down"
+    //                                                        -> 4 + 2 + 1.5
+    //   3. time trial  "🏃 5K TIME TRIAL …" + "w-up 2 km …" + "c-down 1.5 km"
+    //                  Weeks 8, 16 and 20 carry NO "≈ N km of quality" line.
+    //                  A parser that assumes one mis-reads them — it did
+    //                  once, and over-trimmed their easy runs. Their trial
+    //                  distance is read from the "5K"/"10K" token instead.
+    // A tagged Marathon-Revolutie session ("[MR · INTENSIVE] 9 km …") states
+    // its own total with the warm-up already inside it, so its leading
+    // distance IS the session and nothing is added on top.
+    const RUN_SESSION_KEYS = ['longRun', 'recovery2', 'easy', 'quality'];
+    // The ceiling Mardy asked to stay inside: no build week more than +10%
+    // on the previous BUILD week.
+    const VOLUME_CEILING_PCT = 10;
+
+    const round1 = (n) => Math.round(n * 10) / 10;
+
+    // Leading distance of a run session, e.g. "11.5 km @ Zone 2" or a
+    // tagged one, "[SOME · TAG] 14 km — Sunday". Returns null for anything that
+    // does not open with a distance — prose, an interval prescription, or a
+    // skipped session — so the caller can tell "no run" from "zero km".
+    function parseRunDistanceKm(text) {
+      if (typeof text !== 'string') return null;
+      const m = text.match(/^\s*(?:\[[^\]]*\]\s*)?(\d+(?:\.\d+)?)\s*km\b/);
+      if (!m) return null;
+      const km = parseFloat(m[1]);
+      return Number.isFinite(km) && km > 0 ? km : null;
+    }
+
+    // Total distance of a quality session, with the work / warm-up /
+    // cool-down split kept so the UI can show what the number is made of.
+    // source records WHICH shape was read; a null source would mean a
+    // silently defaulted week, which is the failure mode this replaces.
+    function parseQualityVolumeKm(text) {
+      if (typeof text !== 'string') return null;
+      const num = (m) => (m ? parseFloat(m[1]) : 0);
+      const wu = num(text.match(/(\d+(?:\.\d+)?)\s*km\s*w-up/i)
+                  || text.match(/w-up\s*(\d+(?:\.\d+)?)\s*km/i));
+      const cd = num(text.match(/(\d+(?:\.\d+)?)\s*km\s*c-down/i)
+                  || text.match(/c-down\s*(\d+(?:\.\d+)?)\s*km/i));
+
+      // 1. the "≈ N km of quality" line, when the session has one
+      const approx = text.match(/≈\s*(\d+(?:\.\d+)?)\s*km\s+of\s+quality/);
+      if (approx) {
+        const work = parseFloat(approx[1]);
+        if (Number.isFinite(work) && work > 0) {
+          return { work, warmup: wu, cooldown: cd, total: round1(work + wu + cd),
+                   source: 'quality-line' };
+        }
+      }
+      // 2. a session that states its own total up front (the MR weeks).
+      //    Checked before the trial form because such a session's warm-up
+      //    is already inside its stated distance.
+      const lead = parseRunDistanceKm(text);
+      if (lead !== null) {
+        return { work: lead, warmup: 0, cooldown: 0, total: round1(lead),
+                 source: 'session-total' };
+      }
+      // 3. a time trial with no quality line: weeks 8, 16, 20.
+      const tt = text.match(/(\d+(?:\.\d+)?)\s*K\s+TIME\s+TRIAL/i);
+      if (tt) {
+        const work = parseFloat(tt[1]);
+        if (Number.isFinite(work) && work > 0) {
+          return { work, warmup: wu, cooldown: cd, total: round1(work + wu + cd),
+                   source: 'time-trial' };
+        }
+      }
+      return null;
+    }
+
+    // One week's running volume, resolved through the override chain.
+    function getWeeklyRunVolume(wk) {
+      const week = Number(wk);
+      if (!WEEKS[week]) return null;
+      const runs = [], skipped = [];
+      let quality = null, total = 0;
+      for (const key of RUN_SESSION_KEYS) {
+        const text = getPlanned(week, key);
+        let entry = null;
+        if (key === 'quality') {
+          const q = parseQualityVolumeKm(text);
+          if (q) { quality = q; entry = { key, km: q.total, source: q.source }; }
+        } else {
+          const km = parseRunDistanceKm(text);
+          if (km !== null) entry = { key, km, source: 'session-distance' };
+        }
+        if (entry) { runs.push(entry); total += entry.km; } else { skipped.push(key); }
+      }
+      total = round1(total);
+      const longRun = runs.find(r => r.key === 'longRun');
+      const qualityText = getPlanned(week, 'quality') || '';
+      return {
+        week, runs, skipped, quality, total,
+        counted: runs.length,
+        // Deload is read from the week's own notes marker, not a hardcoded
+        // week list — a hardcoded list is exactly what drifts.
+        isDeload: /DELOAD/i.test(WEEKS[week].notes || ''),
+        isTimeTrial: /TIME\s+TRIAL/i.test(qualityText),
+        longRunKm: longRun ? longRun.km : 0,
+        longRunShare: (longRun && total > 0) ? round1(longRun.km / total * 100) : 0,
+      };
+    }
+
+    // Every week in order, each carrying its delta against the previous
+    // BUILD week. Measuring against the previous CALENDAR week would read
+    // every post-deload rebound as a breach — wk 9 is +23.9% on the wk 8
+    // deload but +7.7% on wk 7, and +7.7% is the number the 10% ceiling was
+    // agreed against.
+    function getWeeklyVolumeSeries() {
+      const weeks = Object.keys(WEEKS).map(Number).sort((a, b) => a - b);
+      const out = [];
+      let lastBuild = null;
+      for (const wk of weeks) {
+        const v = getWeeklyRunVolume(wk);
+        if (!v) continue;
+        const deltaPct = (lastBuild && lastBuild.total > 0)
+          ? round1((v.total - lastBuild.total) / lastBuild.total * 100)
+          : null;
+        out.push(Object.assign({}, v, {
+          prevBuildWeek: lastBuild ? lastBuild.week : null,
+          prevBuildTotal: lastBuild ? lastBuild.total : null,
+          deltaPct,
+          exceedsCeiling: !v.isDeload && deltaPct !== null && deltaPct > VOLUME_CEILING_PCT,
+        }));
+        if (!v.isDeload) lastBuild = { week: wk, total: v.total };
+      }
+      return out;
+    }
+
+    function getWeeklyVolume(wk) {
+      const week = Number(wk);
+      return getWeeklyVolumeSeries().find(e => e.week === week) || null;
+    }
+
+    const VOLUME_RUN_SHORT = { longRun: 'long', recovery2: 'easy', easy: 'easy', quality: 'quality' };
+
+    function renderVolumeCard(v) {
+      if (!v || !(v.total > 0)) return '';
+      const parts = v.runs.map(r => (VOLUME_RUN_SHORT[r.key] || r.key) + ' ' + r.km).join(' · ');
+      const q = v.quality;
+      const addOn = (q && (q.warmup || q.cooldown)) ? round1(q.warmup + q.cooldown) : 0;
+      const extra = addOn ? ' · incl. ' + addOn + ' km w-up/c-down' : '';
+      let chip = '';
+      if (v.deltaPct !== null) {
+        const colour = v.exceedsCeiling ? 'var(--tag-red)' : 'var(--success)';
+        const sign = v.deltaPct > 0 ? '+' : '';
+        chip = '<span id="volumeDelta" style="font-family:\'DM Mono\',monospace;font-size:11px;color:'
+             + colour + '">' + sign + v.deltaPct + '% vs Wk ' + v.prevBuildWeek + '</span>';
+      }
+      const tags = [];
+      if (v.isDeload) tags.push('🔽 deload');
+      if (v.isTimeTrial) tags.push('🏃 time trial');
+      if (v.skipped.length) tags.push(v.skipped.length + ' run' + (v.skipped.length > 1 ? 's' : '') + ' not counted');
+      const flag = v.exceedsCeiling
+        ? '<div id="volumeCeilingFlag" style="margin-top:8px;font-size:11px;line-height:1.5;color:var(--tag-red)">⚠ Above the +'
+          + VOLUME_CEILING_PCT + '% step on Wk ' + v.prevBuildWeek + ' (' + v.prevBuildTotal + ' km).</div>'
+        : '';
+      return '<div class="card" id="volumeCard" data-volume-week="' + v.week + '" data-volume-total="' + v.total + '">'
+        + '<div class="planned-label">Running volume</div>'
+        + '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">'
+        +   '<span id="volumeTotal" style="font-family:\'DM Mono\',monospace;font-size:20px;font-weight:600;color:var(--text)">'
+        +     v.total + ' km</span>'
+        +   '<span style="font-size:11px;color:var(--text-muted)">' + v.counted + ' run' + (v.counted === 1 ? '' : 's') + '</span>'
+        +   chip
+        + '</div>'
+        + '<div id="volumeParts" style="margin-top:8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text-sub);line-height:1.6;overflow-wrap:anywhere">'
+        +   escapeHtml(parts + extra) + '</div>'
+        + '<div style="margin-top:6px;font-size:11px;color:var(--text-muted);overflow-wrap:anywhere">long run '
+        +   v.longRunShare + '% of the week' + (tags.length ? ' · ' + escapeHtml(tags.join(' · ')) : '') + '</div>'
+        + flag
+        + '</div>';
+    }
+
     function isRunSession(key) {
-      return ['easy', 'quality', 'longRun', 'recovery2'].includes(key);
+      return RUN_SESSION_KEYS.includes(key);
     }
 
     // Parse exercises from planned workout text
@@ -5544,6 +5814,7 @@ const COACH_HELP_TEXT =
             <div class="notes-text">${escapeHtml(data.notes)}</div>
           </div>
         ` : ''}
+        ${renderVolumeCard(getWeeklyVolume(wk))}
       `;
 
       SESSION_DAYS.forEach((day, i) => {
@@ -5786,7 +6057,7 @@ const COACH_HELP_TEXT =
             <textarea class="form-input form-textarea" id="notes" placeholder="How did it feel? Any technique notes...">${savedData.notes || ''}</textarea>
           </div>
           <div class="btn-row">
-            <button class="btn-primary" id="saveSession">Save Session</button>
+            <button class="btn-primary" id="saveSession">Save Workout</button>
             <button class="btn-secondary" id="askCoach">🧠 AI Coach</button>
           </div>
         </div>
@@ -6008,9 +6279,10 @@ const COACH_HELP_TEXT =
                 </div>
                 <button class="remove-btn" data-remove-ex="${exIdx}" title="Remove exercise">×</button>
               </div>
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:6px 8px;background:var(--bg-card-alt);border-radius:6px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:6px 8px;background:var(--bg-card-alt);border-radius:6px;flex-wrap:wrap;">
                 <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;white-space:nowrap;">All sets:</div>
-                <input type="text" class="form-input bulk-weight" data-bulk-ex="${exIdx}" placeholder="kg — fills all sets" style="flex:1;font-size:12px;padding:4px 8px;">
+                <input type="text" class="form-input bulk-weight" data-bulk-ex="${exIdx}" placeholder="kg — fills all sets" style="flex:1;min-width:96px;font-size:12px;padding:4px 8px;">
+                <input type="text" inputmode="numeric" class="form-input bulk-reps" data-bulk-reps-ex="${exIdx}" placeholder="reps — fills all sets" style="flex:1;min-width:96px;font-size:12px;padding:4px 8px;">
               </div>
               <div style="display:grid;grid-template-columns:32px 1fr 1fr 60px 28px;gap:6px;margin-bottom:6px;">
                 <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;">Set</div>
@@ -6064,7 +6336,9 @@ const COACH_HELP_TEXT =
             });
           });
 
-          // Bulk weight: fill all sets for an exercise
+          // Bulk weight: fill all sets for an exercise. Deliberately NOT
+          // validated as a number — "BW" is a legitimate entry for bodyweight
+          // work and refusing it would break logging pull-ups.
           container.querySelectorAll('.bulk-weight').forEach(input => {
             input.addEventListener('change', () => {
               const exIdx = parseInt(input.dataset.bulkEx);
@@ -6072,6 +6346,34 @@ const COACH_HELP_TEXT =
               if (!val) return;
               exercises[exIdx].sets.forEach(s => { s.weight = val; delete s.seeded; });
               renderExercises();
+            });
+          });
+
+          // Bulk reps: one field that sets the rep count on every set of this
+          // exercise. Integers only — see parseBulkReps. A rejected value is
+          // shown as rejected rather than silently ignored, and nothing is
+          // written, so a typo cannot quietly overwrite a logged set.
+          container.querySelectorAll('.bulk-reps').forEach(input => {
+            input.addEventListener('change', () => {
+              const exIdx = parseInt(input.dataset.bulkRepsEx);
+              const raw = input.value.trim();
+              if (!raw) return;
+              const reps = parseBulkReps(raw);
+              if (reps === null) {
+                input.dataset.bulkRepsInvalid = '1';
+                input.style.borderColor = 'var(--tag-red)';
+                input.style.color = 'var(--tag-red)';
+                return;
+              }
+              exercises[exIdx].sets.forEach(s => { s.reps = String(reps); delete s.seeded; });
+              renderExercises();
+            });
+            input.addEventListener('input', () => {
+              if (input.dataset.bulkRepsInvalid) {
+                delete input.dataset.bulkRepsInvalid;
+                input.style.borderColor = '';
+                input.style.color = '';
+              }
             });
           });
           
@@ -6125,20 +6427,22 @@ const COACH_HELP_TEXT =
             btn.addEventListener('click', async () => {
               const exIdx = parseInt(btn.dataset.saveEx);
               const exList = window.getExercises ? window.getExercises() : [];
-              const payload = {
-                sleepQuality: document.getElementById('sleepQuality')?.value || '',
-                rpe: document.getElementById('rpe')?.value || '',
-                notes: document.getElementById('notes')?.value || '',
-                savedAt: new Date().toISOString(),
-                exercises: exList
-              };
-              // PR detection before save
-              const exPRs = updateExercisePRs(exList, wk);
+              const target = exList[exIdx];
+              if (!target) return;
+              // Only this exercise is committed. Everything else in the record
+              // keeps its stored value; the workout-level fields keep theirs.
+              const payload = mergeSingleExercise(
+                readStoredSessionLocal(sessionKey), exList, exIdx);
+              if (!payload) return;
+              // PR detection for THIS exercise only — running it across the
+              // whole card was minting PRs from pre-filled plan targets.
+              const exPRs = updateExercisePRs([target], wk);
               await saveSession(wk, sessionKey, payload);
               const confirm = document.getElementById('save-ex-confirm-' + exIdx);
               if (confirm) {
+                confirm.textContent = '\u2713 ' + target.name + ' saved';
                 confirm.style.opacity = '1';
-                setTimeout(() => { confirm.style.opacity = '0'; }, 2000);
+                setTimeout(() => { confirm.style.opacity = '0'; }, 2500);
               }
               // Show PR toast
               if (exPRs.length > 0) {
@@ -6302,7 +6606,7 @@ const COACH_HELP_TEXT =
           btn.classList.add('saved');
           setTimeout(() => {
             if (document.getElementById('saveSession')) {
-              btn.textContent = 'Save Session';
+              btn.textContent = 'Save Workout';
               btn.classList.remove('saved');
             }
           }, 2000);
