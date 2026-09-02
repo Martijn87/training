@@ -33,7 +33,7 @@
        was previously mislabelled "v1.11", which is what caused the build
        number and the programme number to be confused with each other. -->
   <script>
-    window.APP_VERSION = 'v1.16';
+    window.APP_VERSION = 'v1.17';
     window.APP_BUILT   = '2 Sep 2026';
     window.PROGRAM_REV = '2026-08-30-bench120-vol50-q4to6';
   </script>
@@ -1438,7 +1438,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.16 · built 2 Sep 2026</div>
+        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.17 · built 2 Sep 2026</div>
         <script>(function(){try{var e=document.getElementById('versionBadge');if(e&&window.APP_VERSION){e.textContent=window.APP_VERSION+' \u00b7 built '+window.APP_BUILT;}}catch(_){}})();</script>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
@@ -4772,6 +4772,452 @@ const COACH_HELP_TEXT =
       return (n >= 1 && n <= 100) ? n : null;
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // OFFLINE STRENGTH ANALYSER — v1.17
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    // The offline coach was a cascade of hardcoded feedback strings with four
+    // analytical defects, all of which pushed in the same direction: it read
+    // one exercise, read it wrong, and measured it against a plan that no
+    // longer existed.
+    //
+    //  1. It carried its own bench ladder, `{3:115, 7:117.5, 11:120, ...}` —
+    //     the PRE-v1.11 ladder. v1.11 replaced wk 3's 115 kg attempt with a
+    //     107.5 kg tune-up single and moved 115 to wk 7 precisely because
+    //     115 at wk 3 was ~105% of a 110 max off an 86% top set. The coach
+    //     was still coaching the version that was diagnosed as broken.
+    //  2. Its deload and attempt week lists were week lists from a retired 32-week
+    //     epoch — weeks 24 and 32 and 33 among them. The plan is 21
+    //     weeks. Those weeks do not exist, so the attempt-week briefing and
+    //     the deload warning could NEVER fire. The single most important
+    //     coaching moment in the block — the 120 kg attempt in wk 11 — was
+    //     unreachable dead code.
+    //  3. e1RM paired weights with the wrong reps. `weights` and `reps` were
+    //     filtered into two separate arrays and then zipped by index, so one
+    //     set with a weight but no reps logged shifted every later pairing:
+    //     sets [(85,6),(85,-),(90,3)] became (85,6),(85,3),(90,nothing).
+    //  4. It found the bench by first name match, so on Upper B it picked
+    //     `Paused Bench` — a 70-73%, 2-3-RIR skill lift — and estimated a max
+    //     from it, then told him 120 kg looked ambitious. And on the two
+    //     weeks that carry the whole point of the peaking design, wks 6 and
+    //     10, it ignored `Top Single` entirely because the name has no
+    //     "bench" in it.
+    //
+    // Everything below is pure and exposed, so the gate asserts the analysis
+    // rather than the prose. Nothing here writes to the plan: it produces
+    // advice. Changing what a week contains stays Mardy's call.
+
+    // Reps above this make Epley unreliable enough that an estimate is worse
+    // than no estimate.
+    const E1RM_MAX_REPS = 12;
+
+    // Lifts whose sets legitimately estimate a bench max: the competition
+    // lift and its same-groove back-offs and top singles.
+    const BENCH_MAX_PATTERNS = [
+      /^flat\s*(bench|bp)\b/i, /^bench\s*press\b/i, /^bp\b/i,
+      /^top\s*single\b/i, /^back-?off\b/i,
+    ];
+    // Bench variants that must NOT set the max estimate. Paused bench is
+    // prescribed at 70-73% with 2-3 reps in reserve — it is a skill and
+    // frequency session by design, and reading a max out of it understates
+    // him by ~20 kg.
+    const BENCH_SKILL_PATTERNS = [
+      /paused\s*bench/i, /\bcgbp\b/i, /close[- ]?grip/i,
+      /incline/i, /\bdb\s*press\b/i, /dumbbell/i, /\bdips?\b/i,
+    ];
+
+    function classifyBenchLift(name) {
+      const n = String(name || '').trim();
+      if (!n) return null;
+      if (BENCH_SKILL_PATTERNS.some(re => re.test(n))) return 'skill';
+      if (BENCH_MAX_PATTERNS.some(re => re.test(n))) return 'max';
+      return null;
+    }
+
+    // One set, read as a unit. Pairing happens per set and never across two
+    // filtered arrays — that was defect 3.
+    function parseSetLog(s) {
+      if (!s || typeof s !== 'object') return null;
+      const weight = parseFloat(String(s.weight == null ? '' : s.weight).replace(',', '.'));
+      const reps = parseInt(String(s.reps == null ? '' : s.reps), 10);
+      if (!Number.isFinite(weight) || weight < 0) return null;
+      if (!Number.isFinite(reps) || reps <= 0) return null;
+      const rpeRaw = parseFloat(String(s.rpe == null ? '' : s.rpe));
+      const rpe = (Number.isFinite(rpeRaw) && rpeRaw > 0 && rpeRaw <= 10) ? rpeRaw : null;
+      return { weight, reps, rpe };
+    }
+
+    // e1RM with reps-in-reserve folded in. A set taken to RPE 8 has ~2 reps
+    // left, and those reps are the information that makes the estimate mean
+    // anything: 85x6 @RPE 7.5 and 85x6 @RPE 10 are not the same set, and raw
+    // Epley scores them identically. Without an RPE the set is read at face
+    // value and flagged, never silently assumed maximal — which is why the
+    // old coach kept reporting ~102 kg for a man benching 95x3 at RPE 8.
+    function e1rmFromSet(set) {
+      // Detect an ALREADY-PARSED set by type, not by presence: a raw set from
+      // the logger has string fields, and `set.weight !== undefined` is true
+      // for those too — which skipped the parser and then computed
+      // reps + rir as '3' + 2 = '32', so every real set returned null.
+      const s = (set && typeof set.weight === 'number' && typeof set.reps === 'number')
+        ? set : parseSetLog(set);
+      if (!s) return null;
+      if (s.reps > E1RM_MAX_REPS) return null;
+      const rir = (s.rpe === null) ? 0 : Math.max(0, Math.min(4, 10 - s.rpe));
+      const effectiveReps = s.reps + rir;
+      if (effectiveReps > E1RM_MAX_REPS + 4) return null;
+      const est = epley(s.weight, effectiveReps);
+      if (!(est > 0)) return null;
+      return {
+        e1rm: Math.round(est * 10) / 10,
+        rir,
+        effectiveReps,
+        rpeKnown: s.rpe !== null,
+        set: s,
+      };
+    }
+
+    // ── the bench ladder, read from the plan ───────────────────────────
+    // Replaces three separate hardcoded copies. Every entry comes from the
+    // week's own Upper A text through getPlanned(), so his overrides apply
+    // and a plan edit cannot leave the coach behind again.
+    function parseBenchLadderWeek(wk) {
+      const text = getPlanned(wk, 'upperA');
+      if (typeof text !== 'string' || !text) return null;
+      const entries = [];
+      const lineRe = /^(Flat Bench|Top Single|Back-?off)\s+(\d+)[×x](\S+)\s+@\s*([^(\n]+)/gim;
+      let m;
+      while ((m = lineRe.exec(text)) !== null) {
+        const lift = m[1], sets = parseInt(m[2], 10), repsTok = m[3];
+        const loadTok = m[4].trim();
+        // "120 or 122.5 kg" is conditional by design — wk 15 is a retry only
+        // if wk 11 missed. Report both and commit to neither.
+        const loads = (loadTok.match(/\d+(?:\.\d+)?/g) || []).map(Number);
+        const reps = parseInt(repsTok, 10);
+        const line = text.slice(m.index).split('\n')[0];
+        const rpeM = line.match(/RPE\s*(\d+(?:\.\d+)?)/i);
+        const isSingle = sets === 1 && reps === 1;
+        const isAttempt = isSingle && /PR attempt/i.test(line);
+        entries.push({
+          week: wk, lift, sets, reps,
+          load: loads.length === 1 ? loads[0] : null,
+          loadOptions: loads,
+          conditional: loads.length > 1,
+          targetRpe: rpeM ? parseFloat(rpeM[1]) : null,
+          kind: isAttempt ? 'attempt'
+              : (/^Top Single/i.test(lift) ? 'rung'
+              : (isSingle ? 'tuneup' : 'work')),
+        });
+      }
+      if (!entries.length) return null;
+      const goalM = text.match(/🎯\s*([^\n]+)/);
+      const nov = /NOVEMBER TARGET/i.test(text);
+      return {
+        week: wk,
+        entries,
+        goalLine: goalM ? goalM[1].trim() : null,
+        isNovemberTarget: nov,
+        top: entries.reduce((best, e) => {
+          const v = e.load !== null ? e.load : Math.min(...(e.loadOptions.length ? e.loadOptions : [0]));
+          const bv = best && (best.load !== null ? best.load : Math.min(...(best.loadOptions.length ? best.loadOptions : [0])));
+          return (!best || v > bv) ? e : best;
+        }, null),
+      };
+    }
+
+    function getBenchLadder() {
+      return Object.keys(WEEKS).map(Number).sort((a, b) => a - b)
+        .map(parseBenchLadderWeek).filter(Boolean);
+    }
+
+    // The next week at or after `fromWk` that carries a single — a rung, a
+    // tune-up or an attempt. This is what "next milestone" should always
+    // have meant.
+    function getNextBenchMilestone(fromWk) {
+      const from = Number(fromWk);
+      for (const w of getBenchLadder()) {
+        if (w.week < from) continue;
+        const single = w.entries.find(e => e.kind === 'attempt')
+                    || w.entries.find(e => e.kind === 'rung')
+                    || w.entries.find(e => e.kind === 'tuneup');
+        if (single) return Object.assign({}, single, {
+          goalLine: w.goalLine, isNovemberTarget: w.isNovemberTarget,
+        });
+      }
+      return null;
+    }
+
+    // Is this week a deload / an attempt week? Read from the week's own
+    // markers, never from a hardcoded list of week numbers.
+    function isDeloadWeekNum(wk) {
+      return /DELOAD/i.test((WEEKS[Number(wk)] || {}).notes || '');
+    }
+    function isBenchAttemptWeek(wk) {
+      const w = parseBenchLadderWeek(Number(wk));
+      return !!(w && w.entries.some(e => e.kind === 'attempt'));
+    }
+
+    // ── logged bench history ───────────────────────────────────────────
+    // Every stored session of the current epoch, scanned for bench-group
+    // sets, reduced to one best e1RM per week. The old coach had no history
+    // at all: it could not tell a stalled month from a good day.
+    function getLoggedBenchHistory() {
+      const out = [];
+      let keys = [];
+      try { keys = Object.keys(localStorage); } catch { return out; }
+      for (const k of keys) {
+        if (k.indexOf('session_') !== 0) continue;
+        let rec = null;
+        try { rec = JSON.parse(localStorage.getItem(k) || 'null'); } catch { continue; }
+        if (!rec || typeof rec !== 'object' || !Array.isArray(rec.exercises)) continue;
+        if (rec.epoch !== undefined && rec.epoch !== PROGRAM_EPOCH) continue;
+        const wkM = k.match(/session_e\d+:(\d+)_/);
+        const week = wkM ? parseInt(wkM[1], 10) : null;
+        let best = null;
+        for (const ex of rec.exercises) {
+          if (!ex || classifyBenchLift(ex.name) !== 'max') continue;
+          for (const s of (ex.sets || [])) {
+            const est = e1rmFromSet(s);
+            if (est && (!best || est.e1rm > best.e1rm)) {
+              best = { e1rm: est.e1rm, lift: ex.name, set: est.set, rir: est.rir, rpeKnown: est.rpeKnown };
+            }
+          }
+        }
+        if (best) out.push(Object.assign({ week, sessionKey: k.slice('session_'.length), savedAt: rec.savedAt || null }, best));
+      }
+      out.sort((a, b) => (a.week || 0) - (b.week || 0));
+      return out;
+    }
+
+    // ── per-exercise weight advice ─────────────────────────────────────
+    // The thing that was missing entirely: for each exercise in the workout,
+    // what should the load be next time? Driven by the plan's own target RPE
+    // where it states one, because "did you hit the prescribed effort" is a
+    // better question than "did you hit the prescribed number".
+    // ctx: { role, suppressIncrease }. Two coherence rules live here.
+    //
+    // A `skill` bench variant is PRESCRIBED at 2-3 reps in reserve — RPE 6 on
+    // paused bench is the instruction being followed, not slack to be taken
+    // up. Without a plan-stated target RPE it gets an implicit 6.5, so a
+    // compliant session reads "hold" instead of "add 2.5 kg", which is what
+    // would quietly turn a frequency session into a third heavy pressing day
+    // against a stated shoulder constraint.
+    //
+    // suppressIncrease is set on a deload or an attempt week. The coach
+    // already says "resist adding volume" on those weeks; emitting a load
+    // increase in the same breath is the incoherence, not the advice.
+    function adviseExerciseLoad(ex, plannedTargetRpe, ctx) {
+      if (!ex || !ex.name) return null;
+      const cx = ctx || {};
+      if ((plannedTargetRpe === null || plannedTargetRpe === undefined) && cx.role === 'skill') {
+        plannedTargetRpe = 6.5;
+      }
+      const logged = (ex.sets || []).map(parseSetLog).filter(Boolean);
+      if (!logged.length) return { name: ex.name, logged: 0, verdict: 'not-logged', advice: null };
+      const topSet = logged.reduce((a, b) => (b.weight > a.weight ? b : a), logged[0]);
+      const rpes = logged.map(s => s.rpe).filter(r => r !== null);
+      const meanRpe = rpes.length ? Math.round(rpes.reduce((a, b) => a + b, 0) / rpes.length * 10) / 10 : null;
+      const targetW = parseWeightTarget((ex.sets || []).map(s => s.targetWeight).find(Boolean) || '');
+      const targetR = parseRepsTarget((ex.sets || []).map(s => s.targetReps).find(Boolean) || '');
+      const est = e1rmFromSet(topSet);
+      const metReps = targetR === null ? null : logged.every(s => s.reps >= targetR);
+      const step = topSet.weight >= 100 ? 5 : 2.5;
+      let verdict = 'hold', delta = 0, reason;
+      if (meanRpe === null) {
+        verdict = 'no-rpe';
+        reason = 'no RPE logged — log it and this becomes a load recommendation rather than a guess';
+      } else if (plannedTargetRpe !== null && plannedTargetRpe !== undefined) {
+        if (meanRpe <= plannedTargetRpe - 1.5 && metReps !== false) {
+          verdict = 'add'; delta = step;
+          reason = `RPE ${meanRpe} against a planned ${plannedTargetRpe} with reps met — ${step} kg in hand`;
+        } else if (meanRpe >= plannedTargetRpe + 1.5 || metReps === false) {
+          verdict = 'reduce'; delta = -step;
+          reason = metReps === false
+            ? `reps missed at ${topSet.weight} kg — take ${step} kg off and earn it back`
+            : `RPE ${meanRpe} against a planned ${plannedTargetRpe} — ${step} kg too heavy for the prescribed effort`;
+        } else {
+          reason = `RPE ${meanRpe} sits on the planned ${plannedTargetRpe} — hold the load, the plan is working`;
+        }
+      } else {
+        if (meanRpe <= 6 && metReps !== false) {
+          verdict = 'add'; delta = step;
+          reason = `RPE ${meanRpe} with reps met — room for ${step} kg`;
+        } else if (meanRpe >= 9) {
+          verdict = 'reduce'; delta = -step;
+          reason = `RPE ${meanRpe} is a grind for planned work — back off ${step} kg`;
+        } else {
+          reason = `RPE ${meanRpe} — on target, hold`;
+        }
+      }
+      if (verdict === 'add' && cx.suppressIncrease) {
+        verdict = 'hold-taper'; delta = 0;
+        reason = `${reason} — but this is a ${cx.suppressReason || 'taper'} week, so hold and bank it`;
+      }
+      return {
+        name: ex.name,
+        logged: logged.length,
+        topWeight: topSet.weight,
+        topReps: topSet.reps,
+        meanRpe,
+        plannedWeight: targetW,
+        plannedReps: targetR,
+        metReps,
+        e1rm: est ? est.e1rm : null,
+        verdict,
+        nextWeight: delta ? Math.round((topSet.weight + delta) / 2.5) * 2.5 : topSet.weight,
+        reason,
+      };
+    }
+
+    // ── whole-session analysis ─────────────────────────────────────────
+    function analyseStrengthSession(opts) {
+      const o = opts || {};
+      const wk = Number(o.wk);
+      const exercises = Array.isArray(o.exercises) ? o.exercises : [];
+      const ladder = parseBenchLadderWeek(wk);
+      const rpeByLift = new Map();
+      if (ladder) ladder.entries.forEach(e => { if (e.targetRpe !== null) rpeByLift.set(exPRKey(e.lift), e.targetRpe); });
+
+      const deload = isDeloadWeekNum(wk), attempt = isBenchAttemptWeek(wk);
+      const perExercise = exercises.map(ex => {
+        const role = classifyBenchLift(ex && ex.name);
+        const key = exPRKey(ex && ex.name);
+        const a = adviseExerciseLoad(ex, rpeByLift.has(key) ? rpeByLift.get(key) : null, {
+          role,
+          suppressIncrease: deload || attempt,
+          suppressReason: attempt ? 'attempt' : (deload ? 'deload' : null),
+        });
+        if (a) a.benchRole = role;
+        return a;
+      }).filter(Boolean);
+
+      // Bench max estimate from THIS session — max-group lifts only.
+      let sessionBenchE1rm = null;
+      for (const ex of exercises) {
+        if (classifyBenchLift(ex && ex.name) !== 'max') continue;
+        for (const s of (ex.sets || [])) {
+          const est = e1rmFromSet(s);
+          if (est && (!sessionBenchE1rm || est.e1rm > sessionBenchE1rm.e1rm)) {
+            sessionBenchE1rm = Object.assign({ lift: ex.name }, est);
+          }
+        }
+      }
+      const history = getLoggedBenchHistory();
+      const bestHist = history.reduce((a, b) => (!a || b.e1rm > a.e1rm ? b : a), null);
+      const bestE1rm = [sessionBenchE1rm && sessionBenchE1rm.e1rm, bestHist && bestHist.e1rm]
+        .filter(v => typeof v === 'number').reduce((a, b) => Math.max(a, b), 0) || null;
+
+      const next = getNextBenchMilestone(wk);
+      // The November target: the attempt week the plan itself marks.
+      const target = getBenchLadder().find(w => w.isNovemberTarget) || null;
+      const targetEntry = target ? target.entries.find(e => e.kind === 'attempt') : null;
+      const trained = history.filter(h => bestE1rm && h.e1rm >= bestE1rm * 0.92);
+
+      return {
+        week: wk,
+        isDeload: deload,
+        isAttemptWeek: attempt,
+        perExercise,
+        sessionBenchE1rm,
+        bestE1rm: bestE1rm ? Math.round(bestE1rm * 10) / 10 : null,
+        history,
+        nextMilestone: next,
+        target: targetEntry ? { week: target.week, load: targetEntry.load, goalLine: target.goalLine } : null,
+        gapToTarget: (bestE1rm && targetEntry && targetEntry.load)
+          ? Math.round((targetEntry.load - bestE1rm) * 10) / 10 : null,
+        weeksToTarget: (target && Number.isFinite(wk)) ? target.week - wk : null,
+        trainedRungCount: trained.length,
+        adds: perExercise.filter(p => p.verdict === 'add'),
+        heldBack: perExercise.filter(p => p.verdict === 'hold-taper'),
+        reduces: perExercise.filter(p => p.verdict === 'reduce'),
+        missingRpe: perExercise.filter(p => p.verdict === 'no-rpe'),
+      };
+    }
+
+    // Advice lines, in priority order, from the analysis. Separate from the
+    // analysis itself so the gate can assert the numbers without matching
+    // prose, and the prose without recomputing the numbers.
+    function strengthCoachLines(an) {
+      if (!an) return [];
+      const out = [];
+      const kg = (n) => (Math.round(n * 10) / 10);
+      // 0 kg means bodyweight — pull-ups, dips. "Pull-Ups 0 kg" reads as a bug.
+      const loadLabel = (w) => (w === 0 ? 'bodyweight' : `${kg(w)} kg`);
+      if (an.bestE1rm) {
+        const src = an.sessionBenchE1rm
+          ? `${an.sessionBenchE1rm.lift} ${an.sessionBenchE1rm.set.weight}×${an.sessionBenchE1rm.set.reps}`
+            + (an.sessionBenchE1rm.rpeKnown ? ` @RPE ${an.sessionBenchE1rm.set.rpe}` : ' (no RPE — read at face value)')
+          : 'your logged history';
+        out.push(`📐 Bench e1RM ~${kg(an.bestE1rm)} kg, from ${src}. Reps-in-reserve is folded in — an RPE 8 triple is not a max-effort triple.`);
+      }
+      if (an.target && an.target.load) {
+        if (an.gapToTarget === null) {
+          out.push(`🎯 ${an.target.load} kg is the target, Wk ${an.target.week}. Log a bench set with an RPE and this becomes a gap rather than a hope.`);
+        } else if (an.gapToTarget <= 0) {
+          out.push(`🔥 ${an.target.load} kg target on Wk ${an.target.week}: your e1RM is already at or past it (${kg(an.bestE1rm)} kg). The job now is exposure to the load, not more estimate — make the trained singles.`);
+        } else {
+          const perWeek = (an.weeksToTarget && an.weeksToTarget > 0)
+            ? Math.round(an.gapToTarget / an.weeksToTarget * 100) / 100 : null;
+          const when = an.weeksToTarget === null ? ''
+            : (an.weeksToTarget === 0 ? ' — that is this week'
+            : (an.weeksToTarget < 0 ? ' — that week has passed'
+            : ` — ${an.weeksToTarget} week${an.weeksToTarget === 1 ? '' : 's'} out`));
+          out.push(`🎯 ${kg(an.gapToTarget)} kg to the ${an.target.load} kg target on Wk ${an.target.week}`
+            + when
+            + ((perWeek !== null && an.weeksToTarget > 0) ? `, ~${perWeek} kg of e1RM a week` : '')
+            + '.');
+        }
+      }
+      if (an.nextMilestone) {
+        const nm = an.nextMilestone;
+        const load = nm.load !== null ? `${nm.load} kg`
+          : (nm.loadOptions && nm.loadOptions.length ? nm.loadOptions.join(' or ') + ' kg' : 'see plan');
+        const kindWord = nm.kind === 'attempt' ? 'attempt' : (nm.kind === 'rung' ? 'trained single (the 92–97% rung)' : 'tune-up single');
+        out.push(`🪜 Next rung: ${load} ${kindWord}, Wk ${nm.week}${nm.week === an.week ? ' — that is this week' : ''}.`
+          + (nm.kind === 'rung' ? ' This is the rung the whole peak rests on: a max is built by training 92–97%, not by jumping from 86% to an attempt.' : ''));
+      }
+      if (an.isAttemptWeek) {
+        out.push('🏋️ Attempt week. Ramp singles at ~60 / 75 / 85 / 92%, then one attempt. Safeties set or a spotter. Do not grind a miss — a failed grind costs a week of confidence and gives no adaptation.');
+      }
+      if (an.isDeload) {
+        out.push('🔽 Deload. Resist adding volume; the point is to arrive sharp. Nothing in this session should be a load recommendation upward.');
+      }
+      if (an.adds.length) {
+        out.push('📈 Add load next time: ' + an.adds.map(p =>
+          `${p.name} ${loadLabel(p.topWeight)} → ${kg(p.nextWeight)} kg (${p.reason})`).join(' · '));
+      }
+      if (an.reduces.length) {
+        out.push('📉 Take load off: ' + an.reduces.map(p =>
+          `${p.name} ${loadLabel(p.topWeight)} → ${kg(p.nextWeight)} kg (${p.reason})`).join(' · '));
+      }
+      if (an.heldBack && an.heldBack.length) {
+        out.push('⏸ In hand but not now: ' + an.heldBack.map(p =>
+          `${p.name} (${p.reason})`).join(' · ') + '.');
+      }
+      const held = an.perExercise.filter(p => p.verdict === 'hold');
+      if (held.length) {
+        out.push('➡️ Hold as prescribed: ' + held.map(p => `${p.name} ${loadLabel(p.topWeight)}`).join(' · ') + '.');
+      }
+      if (an.missingRpe.length) {
+        out.push('📝 No RPE on ' + an.missingRpe.map(p => p.name).join(', ')
+          + '. RPE is what turns a logged set into a load decision — without it the next weight is guesswork.');
+      }
+      const skill = an.perExercise.filter(p => p.benchRole === 'skill' && p.logged > 0);
+      if (skill.length) {
+        out.push('🧠 ' + skill.map(p => p.name).join(', ')
+          + ' is deliberately submaximal — 70–73%, 2–3 reps in reserve. It is excluded from the max estimate on purpose; it buys bench frequency without a third pressing exposure.');
+      }
+      if (an.history.length >= 3) {
+        const last3 = an.history.slice(-3);
+        const drift = Math.round((last3[last3.length - 1].e1rm - last3[0].e1rm) * 10) / 10;
+        if (drift <= 0) {
+          out.push(`📊 e1RM across your last three logged bench sessions: ${last3.map(h => h.e1rm).join(' → ')} kg. Flat or down. If sleep and running volume are on plan, the ladder needs a rung, not more volume.`);
+        } else {
+          out.push(`📊 e1RM trend across your last three logged bench sessions: ${last3.map(h => h.e1rm).join(' → ')} kg (+${drift}).`);
+        }
+      }
+      return out;
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // v1.02 · PROGRAM EPOCH MIGRATION
     // ═══════════════════════════════════════════════════════════════
@@ -6911,9 +7357,12 @@ const COACH_HELP_TEXT =
         const sessionNotes = document.getElementById('notes').value;
         const feedback = [];
 
-        // ── MILESTONE targets per week (bench)
-        const benchMilestones = {3:115, 7:117.5, 11:120, 15:122.5, 19:125};
-        const nextMilestone = Object.entries(benchMilestones).find(([w]) => parseInt(w) >= wk);
+        // ── MILESTONE targets, read from the plan (v1.17) ──────────────
+        // Was a hardcoded {3:115, 7:117.5, ...} map holding the PRE-v1.11
+        // ladder, so the coach measured him against rungs the plan had
+        // deliberately removed. getNextBenchMilestone reads the week's own
+        // Upper A text through getPlanned().
+        const nextBench = getNextBenchMilestone(wk);
 
         if (isRun) {
           // ── RUN COACHING ──
@@ -7002,41 +7451,23 @@ const COACH_HELP_TEXT =
             else if (isQuality && rpe >= 7) feedback.push(`✅ RPE ${rpe} for a quality session — solid effort. Fergus would say: if it felt hard, it probably was quality work.`);
           }
 
-          if (nextMilestone) {
-            feedback.push(`🎯 Bench ${nextMilestone[1]} kg on Wk ${nextMilestone[0]} — stay disciplined on running volume, don't let it bleed into recovery for the gym. Polarised training: Zone 2 stays Zone 2.`);
+          if (nextBench) {
+            const load = nextBench.load !== null ? nextBench.load + ' kg'
+              : (nextBench.loadOptions || []).join(' or ') + ' kg';
+            feedback.push(`🎯 Bench ${load} on Wk ${nextBench.week} — stay disciplined on running volume, don't let it bleed into recovery for the gym. Polarised training: Zone 2 stays Zone 2.`);
           }
 
         } else {
-          // ── GYM COACHING ──
+          // ── GYM COACHING — v1.17, driven by analyseStrengthSession ──
+          // Previously: one exercise found by first name match, an e1RM that
+          // paired weights with the wrong reps, and a comparison against a
+          // stale ladder. Now the whole workout is read, every exercise gets
+          // a load verdict, and the bench estimate excludes the deliberately
+          // submaximal variants.
           const exs = (window.getExercises ? window.getExercises() : null) || [];
-          const benchEx = exs.find(e => e.name && e.name.toLowerCase().includes('bp') || (e.name && e.name.toLowerCase().includes('bench')));
-
-          // Check bench performance
-          if (benchEx && benchEx.sets.length > 0) {
-            const weights = benchEx.sets.map(s => parseFloat(s.weight)).filter(w => !isNaN(w));
-            const reps = benchEx.sets.map(s => parseInt(s.reps)).filter(r => !isNaN(r));
-            const topWeight = Math.max(...weights);
-            const totalSets = weights.length;
-
-            // Estimate e1RM using Epley: w * (1 + r/30)
-            const e1RM = weights.map((w, i) => reps[i] ? w * (1 + reps[i] / 30) : 0).reduce((a, b) => Math.max(a, b), 0);
-
-            // Planned bench weight from program
-            const plannedBenchMatch = planned.match(/@(\d+(?:\.\d+)?)\s*kg/);
-            const plannedWeight = plannedBenchMatch ? parseFloat(plannedBenchMatch[1]) : null;
-
-            if (e1RM > 0 && nextMilestone) {
-              const gap = nextMilestone[1] - e1RM;
-              if (gap <= 5) feedback.push(`🔥 Estimated 1RM ~${Math.round(e1RM)} kg — you're within ${Math.round(gap)} kg of your Wk ${nextMilestone[0]} target (${nextMilestone[1]} kg). Stay the course, the wave is working.`);
-              else if (gap <= 12) feedback.push(`📈 Estimated 1RM ~${Math.round(e1RM)} kg vs target ${nextMilestone[1]} kg on Wk ${nextMilestone[0]}. Gap of ${Math.round(gap)} kg — achievable. Trust the wave periodisation.`);
-              else feedback.push(`📊 Estimated 1RM ~${Math.round(e1RM)} kg. ${nextMilestone[1]} kg on Wk ${nextMilestone[0]} is ambitious but keep the RPE honest — if sets feel like RPE 8+, don't force weight jumps.`);
-            }
-
-            if (plannedWeight && topWeight > 0) {
-              if (topWeight >= plannedWeight) feedback.push(`✅ Bench weight on target (${topWeight} kg ≥ planned ${plannedWeight} kg). Execute the plan, don't improvise upward on a whim.`);
-              else if (topWeight < plannedWeight * 0.95) feedback.push(`⚠️ Bench weight below plan (${topWeight} kg vs ${plannedWeight} kg planned). If RPE was high, this is useful data — the wave may need adjusting. If it was fatigue, prioritise sleep.`);
-            }
-          }
+          const analysis = analyseStrengthSession({ wk, sessionKey, exercises: exs, rpe, sleep });
+          window._strengthAnalysis = analysis;
+          strengthCoachLines(analysis).forEach(l => feedback.push(l));
 
           // RPE analysis
           if (rpe !== null) {
@@ -7048,19 +7479,11 @@ const COACH_HELP_TEXT =
           // Sleep impact
           if (sleep !== null && sleep <= 5) feedback.push(`😴 Sleep score ${sleep}/10 — poor sleep blunts strength by up to 10%. If this is recurring, it's your biggest performance limiter. Don't push max weights on low sleep.`);
 
-          // Week-specific advice
-          const isDeloadWeek = [17,24,32].includes(wk);
-          const isAttemptWeek = [21,31,33].includes(wk);
-          if (isDeloadWeek) feedback.push(`🔽 Deload week — resist the urge to add volume. The goal is to arrive at next week's attempt feeling sharp, not tired. Less is more.`);
-          if (isAttemptWeek) {
-            const target = benchMilestones[wk];
-            feedback.push(`🏋️ Attempt week! Target: ${target} kg. Warm up with singles at 60%, 75%, 85%, then go. One attempt only — don't grind a miss, it kills confidence.`);
-          }
-
-          if (nextMilestone && !isAttemptWeek) {
-            const weeksOut = parseInt(nextMilestone[0]) - wk;
-            feedback.push(`🎯 ${weeksOut} weeks to ${nextMilestone[1]} kg bench on Wk ${nextMilestone[0]}. Stay ambitious — Fergus would say: if the plan doesn't scare you slightly, it's not ambitious enough.`);
-          }
+          // Week-specific advice now comes from the week's own markers via
+          // analyseStrengthSession. The old hardcoded lists held week
+          // numbers from a retired 32-week epoch, so the
+          // deload warning and the attempt-week briefing could never fire
+          // on a 21-week plan. See strengthCoachLines().
         }
 
         // Sleep catch-all
