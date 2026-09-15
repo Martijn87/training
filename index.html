@@ -33,7 +33,7 @@
        was previously mislabelled "v1.11", which is what caused the build
        number and the programme number to be confused with each other. -->
   <script>
-    window.APP_VERSION = 'v1.18';
+    window.APP_VERSION = 'v1.20';
     window.APP_BUILT   = '15 Sep 2026';
     window.PROGRAM_REV = '2026-08-30-bench120-vol50-q4to6';
   </script>
@@ -1438,7 +1438,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.18 · built 15 Sep 2026</div>
+        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.20 · built 15 Sep 2026</div>
         <script>(function(){try{var e=document.getElementById('versionBadge');if(e&&window.APP_VERSION){e.textContent=window.APP_VERSION+' \u00b7 built '+window.APP_BUILT;}}catch(_){}})();</script>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
@@ -5770,6 +5770,469 @@ const COACH_HELP_TEXT =
       return RUN_SESSION_KEYS.includes(key);
     }
 
+    // ══ RUN ANALYSER — v1.19 ════════════════════════════════════════════
+    // The strength side got a real analyser at v1.17. The run side did not,
+    // and it showed in four ways, all of the same class the bench ladder and
+    // the week lists were:
+    //
+    //   1. `runPace` was a DEAD READ. The logger asks for average pace on
+    //      every easy and long run, saveSession() stores it, the coach read
+    //      it into a local called `pace` — and then never referenced it. The
+    //      one number that says whether an easy run was actually easy was
+    //      collected and thrown away. `maxHR` was read and dropped the same way.
+    //   2. Every HR threshold was a hardcoded copy: 130, 137, 140, 145, 155,
+    //      161–168, 156–183, 183. getHRZones() already computes all of them,
+    //      clamps an absurd maxHR and honours a lactate-threshold pin. Change
+    //      maxHR in Settings and every one of those literals was silently wrong.
+    //   3. The plan's prescribed pace (`@ 6:15–6:40/km`, `@ 4:55/km`) was
+    //      never parsed, so the coach could not compare what he ran against
+    //      what was asked — which is the whole question on a 5K block.
+    //   4. Planned distance was matched with /(\d+)\s*km/ — the FIRST "N km"
+    //      anywhere in the text, which on a quality session is the warm-up.
+    //      parseRunDistanceKm() has been the right answer since v1.15.
+    //
+    // Everything below is pure and exposed so the gate asserts the analysis
+    // and not the prose. Nothing here writes to the plan.
+
+    const RUN_PACE_MIN_SEC = 120;   // 2:00/km — faster than any logged run
+    const RUN_PACE_MAX_SEC = 900;   // 15:00/km — slower than a walk
+
+    // "6:10" · "6:10/km" · " 5:50 " -> seconds per km. Anything outside the
+    // plausible band returns null rather than a number that would then be
+    // reported back to him as fact.
+    function parsePaceSec(text) {
+      if (typeof text === 'number') text = String(text);
+      if (typeof text !== 'string') return null;
+      const m = text.trim().match(/^(\d{1,2}):([0-5]\d)(?:\s*\/?\s*km)?$/i);
+      if (!m) return null;
+      const sec = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+      return (sec >= RUN_PACE_MIN_SEC && sec <= RUN_PACE_MAX_SEC) ? sec : null;
+    }
+
+    function formatPace(sec) {
+      if (!Number.isFinite(sec) || sec <= 0) return null;
+      const s = Math.round(sec);
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    // The pace band a session prescribes. A single pace becomes a band of
+    // zero width, so every consumer handles one shape. "@ Zone 2" carries no
+    // pace and returns null — it must not be guessed at.
+    function parsePlannedPaceBand(text) {
+      if (typeof text !== 'string') return null;
+      const range = text.match(/(\d{1,2}:[0-5]\d)\s*[–—-]\s*(\d{1,2}:[0-5]\d)\s*\/\s*km/);
+      if (range) {
+        const a = parsePaceSec(range[1]), b = parsePaceSec(range[2]);
+        if (a !== null && b !== null) return { low: Math.min(a, b), high: Math.max(a, b) };
+      }
+      const one = text.match(/@\s*(\d{1,2}:[0-5]\d)\s*\/\s*km/);
+      if (one) {
+        const a = parsePaceSec(one[1]);
+        if (a !== null) return { low: a, high: a };
+      }
+      return null;
+    }
+
+    // One interval row read as a unit. distance is what the logger seeded from
+    // the plan: a bare number is metres (550, 1200), anything carrying "km" is
+    // kilometres. A row missing either half drops out instead of producing a
+    // pace from half a measurement.
+    function parseIntervalLog(iv) {
+      if (!iv || typeof iv !== 'object') return null;
+      const raw = String(iv.distance == null ? '' : iv.distance).trim();
+      let km = null;
+      const kmM = raw.match(/^(\d+(?:[.,]\d+)?)\s*km$/i);
+      const mM = raw.match(/^(\d+(?:[.,]\d+)?)\s*m?$/i);
+      if (kmM) km = parseFloat(kmM[1].replace(',', '.'));
+      else if (mM) {
+        const n = parseFloat(mM[1].replace(',', '.'));
+        km = n >= 50 ? n / 1000 : n;     // 550 -> 0.55 km; 1 -> 1 km
+      }
+      if (!Number.isFinite(km) || km <= 0) return null;
+      // m:ss, or h:mm:ss for a long rep. Nothing else — a bare number could be
+      // seconds or minutes and guessing which is how a pace becomes fiction.
+      const t = String(iv.time == null ? '' : iv.time).trim();
+      const tm = t.match(/^(?:(\d{1,2}):)?(\d{1,2}):([0-5]\d)$/);
+      if (!tm) return null;
+      const sec = parseInt(tm[1] || '0', 10) * 3600
+                + parseInt(tm[2], 10) * 60
+                + parseInt(tm[3], 10);
+      if (!Number.isFinite(sec) || sec <= 0) return null;
+      const paceSec = sec / km;
+      if (paceSec < RUN_PACE_MIN_SEC || paceSec > RUN_PACE_MAX_SEC) return null;
+      const hr = parseInt(iv.hr, 10);
+      const rpe = parseFloat(iv.rpe);
+      return {
+        km, timeSec: sec, paceSec: Math.round(paceSec),
+        hr: (Number.isFinite(hr) && hr > 30 && hr < 240) ? hr : null,
+        rpe: (Number.isFinite(rpe) && rpe >= 1 && rpe <= 10) ? rpe : null,
+      };
+    }
+
+    // Which configured zone a heart rate falls in. Reads getHRZones(), so a
+    // change to maxHR or a threshold pin moves every verdict with it.
+    function hrZoneFor(bpm) {
+      const n = parseInt(bpm, 10);
+      if (!Number.isFinite(n) || n <= 0) return null;
+      const zones = getHRZones();
+      if (n < zones[0].low) return zones[0];
+      for (const z of zones) if (n <= z.high) return z;
+      return zones[zones.length - 1];
+    }
+
+    // The zone a session type is meant to sit in, by the app's own zone table.
+    const RUN_TARGET_ZONE = { easy: 'Z2', long: 'Z2', quality: 'Z4', trial: 'Z5' };
+
+    // The plan states a target heart-rate band on EVERY run session, and the
+    // bands differ by session type — which one zone ceiling cannot express.
+    // The easy and recovery runs state an upper cap only; the long runs state
+    // a two-sided band; the Marathon-Revolutie week states its own, higher
+    // one. Three shapes, sixty-odd sessions.
+    //
+    // The literals are NOT repeated here on purpose: a plan string duplicated
+    // in a comment is a future drift and it defeats the canary that protects
+    // the plan. This one fired on the first draft of this very comment.
+    //
+    // Until v1.20 both the coach and the live compliance widget used
+    // getZ2Range() for both, so a 135 bpm easy run was called compliant while
+    // the session text on screen said 130. Confirmed by Mardy on 15 Sep:
+    // easy stays below 130, the long run may go to 137. No plan edit was
+    // needed — those numbers were already written on every session; nothing
+    // read them.
+    //
+    // Read from the session's own text, like the bench ladder. Nothing here
+    // is hardcoded: change the plan text and every verdict moves with it.
+    function parsePlannedHrCap(text) {
+      if (typeof text !== 'string') return null;
+      const band = text.match(/(\d{2,3})\s*[–—-]\s*(\d{2,3})\s*bpm/);
+      if (band) {
+        const lo = parseInt(band[1], 10), hi = parseInt(band[2], 10);
+        if (lo > 30 && hi < 240 && hi > lo) return { low: lo, high: hi, source: 'stated-band' };
+      }
+      const cap = text.match(/[≤<]\s*=?\s*(\d{2,3})\s*bpm/);
+      if (cap) {
+        const hi = parseInt(cap[1], 10);
+        if (hi > 30 && hi < 240) return { low: null, high: hi, source: 'stated-cap' };
+      }
+      return null;
+    }
+
+    function hrBandLabel(b) {
+      if (!b) return null;
+      return b.low === null ? '≤' + b.high + ' bpm' : b.low + '–' + b.high + ' bpm';
+    }
+
+    // The session's own band wins; the zone model is the fallback for a
+    // session that states none (the quality sessions do not).
+    function assessHrAgainstPlan(bpm, planText, kind) {
+      const stated = parsePlannedHrCap(planText);
+      if (!stated) {
+        return Object.assign({ band: null, source: 'zone-model' }, assessHrAgainstZone(bpm, kind));
+      }
+      const zone = hrZoneFor(bpm);
+      if (!zone) return { verdict: 'no-hr', band: stated, source: stated.source, zone: null, target: null };
+      const n = parseInt(bpm, 10);
+      const verdict = n > stated.high ? 'above'
+                    : (stated.low !== null && n < stated.low ? 'below' : 'in');
+      return { verdict, band: stated, source: stated.source, zone, target: null };
+    }
+
+    function assessHrAgainstZone(bpm, kind) {
+      const target = RUN_TARGET_ZONE[kind] || null;
+      const z = hrZoneFor(bpm);
+      if (!z) return { verdict: 'no-hr', zone: null, target };
+      if (!target) return { verdict: 'no-target', zone: z, target: null };
+      const order = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
+      const d = order.indexOf(z.zone) - order.indexOf(target);
+      return { verdict: d === 0 ? 'in' : (d > 0 ? 'above' : 'below'), zone: z, target, drift: d };
+    }
+
+    function parseRunLog(raw) {
+      if (!raw || typeof raw !== 'object') return null;
+      const num = (v) => { const n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return Number.isFinite(n) ? n : null; };
+      const km = num(raw.runKm);
+      const avgHR = parseInt(raw.avgHR, 10);
+      const maxHR = parseInt(raw.maxHR, 10);
+      const rpe = num(raw.rpe);
+      return {
+        km: (km !== null && km > 0) ? km : null,
+        paceSec: parsePaceSec(raw.runPace),
+        avgHR: (Number.isFinite(avgHR) && avgHR > 30 && avgHR < 240) ? avgHR : null,
+        maxHR: (Number.isFinite(maxHR) && maxHR > 30 && maxHR < 240) ? maxHR : null,
+        rpe: (rpe !== null && rpe >= 1 && rpe <= 10) ? rpe : null,
+      };
+    }
+
+    function classifyRunSession(dayKey, planText) {
+      if (!isRunSession(dayKey)) return null;
+      const t = typeof planText === 'string' ? planText : '';
+      if (/TIME\s+TRIAL/i.test(t)) return 'trial';
+      if (dayKey === 'quality') return 'quality';
+      if (dayKey === 'longRun') return 'long';
+      return 'easy';
+    }
+
+    // ── VDOT, so the coach can compare the plan to current fitness ────────
+    // Daniels-Gilbert. This exists for one reason: every interval pace in the
+    // plan is an absolute number anchored to a target time. When a time trial
+    // comes in, nothing moved them (BACKLOG A4). The coach cannot rewrite his
+    // paces — that is his — but it can say that a prescription is faster than
+    // his current threshold, which is the difference between a quality session
+    // and a race.
+    function vdotFromRace(km, sec) {
+      const d = parseFloat(km), t = parseFloat(sec) / 60;
+      if (!Number.isFinite(d) || !Number.isFinite(t) || d <= 0 || t <= 0) return null;
+      const v = (d * 1000) / t;
+      const pct = 0.8 + 0.1894393 * Math.exp(-0.012778 * t) + 0.2989558 * Math.exp(-0.1932605 * t);
+      const vo2 = -4.60 + 0.182258 * v + 0.000104 * v * v;
+      const vdot = vo2 / pct;
+      return (vdot > 20 && vdot < 90) ? Math.round(vdot * 10) / 10 : null;
+    }
+
+    function velocityForVo2(vo2) {
+      const a = 0.000104, b = 0.182258, c = -4.60 - vo2;
+      const disc = b * b - 4 * a * c;
+      if (disc <= 0) return null;
+      return (-b + Math.sqrt(disc)) / (2 * a);      // m/min
+    }
+
+    // Training paces in seconds per km at a given VDOT.
+    function vdotPaces(vdot) {
+      if (!Number.isFinite(vdot) || vdot <= 0) return null;
+      const at = (frac) => {
+        const v = velocityForVo2(vdot * frac);
+        return v && v > 0 ? Math.round(60000 / v) : null;
+      };
+      return {
+        easyHigh: at(0.62), easyLow: at(0.74),     // easyLow is the FASTER end
+        marathon: at(0.84), threshold: at(0.88),
+        interval: at(0.975), rep: at(1.08),
+      };
+    }
+
+    const RUN_KIND_PACE_KEY = { easy: 'easy', long: 'easy', quality: 'threshold', trial: null };
+
+    // ── logged run history ───────────────────────────────────────────────
+    // The strength coach got history at v1.17; runs had none, so the coach
+    // could not tell a good day from a trend. Epoch-filtered for the same
+    // reason: a retired-programme record must not poison it.
+    function getLoggedRunHistory() {
+      const out = [];
+      let keys = [];
+      try { keys = Object.keys(localStorage); } catch { return out; }
+      for (const k of keys) {
+        if (k.indexOf('session_') !== 0) continue;
+        let rec = null;
+        try { rec = JSON.parse(localStorage.getItem(k) || 'null'); } catch { continue; }
+        if (!rec || typeof rec !== 'object') continue;
+        if (rec.epoch !== undefined && rec.epoch !== PROGRAM_EPOCH) continue;
+        const m = k.match(/session_e\d+:(\d+)_(\w+)$/);
+        if (!m) continue;
+        const week = parseInt(m[1], 10);
+        const key = m[2];
+        if (!isRunSession(key)) continue;
+        const log = parseRunLog(rec);
+        if (!log || (log.km === null && log.paceSec === null)) continue;
+        const kind = classifyRunSession(key, getPlanned(week, key));
+        out.push({ week, key, kind, km: log.km, paceSec: log.paceSec,
+                   avgHR: log.avgHR, rpe: log.rpe });
+      }
+      out.sort((a, b) => a.week - b.week || a.key.localeCompare(b.key));
+      return out;
+    }
+
+    // The most recent logged time trial that carries both a distance and a
+    // pace — the only thing in the log that can anchor a VDOT honestly.
+    function getLatestTrial() {
+      const trials = getLoggedRunHistory()
+        .filter(r => r.kind === 'trial' && r.km > 0 && r.paceSec !== null);
+      if (!trials.length) return null;
+      const t = trials[trials.length - 1];
+      const sec = Math.round(t.paceSec * t.km);
+      const vdot = vdotFromRace(t.km, sec);
+      if (vdot === null) return null;
+      return { week: t.week, km: t.km, seconds: sec, paceSec: t.paceSec, vdot, paces: vdotPaces(vdot) };
+    }
+
+    // ── the analysis ─────────────────────────────────────────────────────
+    function analyseRunSession(opts) {
+      const o = opts || {};
+      const wk = Number(o.wk);
+      const dayKey = o.dayKey;
+      const planText = typeof o.planned === 'string' ? o.planned : '';
+      const kind = classifyRunSession(dayKey, planText);
+      const log = parseRunLog(o.log || {}) || { km: null, paceSec: null, avgHR: null, maxHR: null, rpe: null };
+      const plannedKm = parseRunDistanceKm(planText);
+      const band = parsePlannedPaceBand(planText);
+
+      // distance
+      let distance = { verdict: 'not-logged', plannedKm, actualKm: log.km, deltaKm: null };
+      if (log.km !== null && plannedKm !== null) {
+        const delta = Math.round((log.km - plannedKm) * 10) / 10;
+        distance = {
+          plannedKm, actualKm: log.km, deltaKm: delta,
+          verdict: log.km >= plannedKm ? (delta > 0 ? 'over' : 'hit')
+                 : (log.km < plannedKm * 0.9 ? 'short' : 'hit'),
+        };
+      } else if (log.km !== null) {
+        distance = { verdict: 'no-plan', plannedKm: null, actualKm: log.km, deltaKm: null };
+      }
+
+      // heart rate: the session's own stated band first, the configured
+      // zones as the fallback. One ceiling for every run cannot express
+      // one cap for the easy runs and a wider band for the long run.
+      const hr = assessHrAgainstPlan(log.avgHR, planText, kind);
+
+      // pace against the prescription
+      let pace = { verdict: log.paceSec === null ? 'no-pace' : 'no-band',
+                   band, actualSec: log.paceSec, deltaSec: null };
+      if (log.paceSec !== null && band) {
+        const delta = log.paceSec < band.low ? log.paceSec - band.low
+                    : (log.paceSec > band.high ? log.paceSec - band.high : 0);
+        pace = {
+          band, actualSec: log.paceSec, deltaSec: delta,
+          verdict: delta < 0 ? 'faster' : (delta > 0 ? 'slower' : 'in-band'),
+        };
+      }
+
+      // intervals
+      const rows = Array.isArray(o.intervals) ? o.intervals.map(parseIntervalLog).filter(Boolean) : [];
+      let intervals = null;
+      if (rows.length) {
+        const paces = rows.map(r => r.paceSec);
+        const fastest = Math.min(...paces), slowest = Math.max(...paces);
+        const hrs = rows.map(r => r.hr).filter(h => h !== null);
+        const plannedCount = (planText.match(/(\d+)\s*[×x]\s*\d/) || [])[1];
+        intervals = {
+          n: rows.length,
+          plannedCount: plannedCount ? parseInt(plannedCount, 10) : null,
+          fastestSec: fastest, slowestSec: slowest,
+          driftSec: slowest - fastest,
+          driftPct: Math.round((slowest - fastest) / fastest * 1000) / 10,
+          avgPaceSec: Math.round(paces.reduce((a, b) => a + b, 0) / paces.length),
+          avgHR: hrs.length ? Math.round(hrs.reduce((a, b) => a + b, 0) / hrs.length) : null,
+          maxHR: hrs.length ? Math.max(...hrs) : null,
+        };
+        if (band) {
+          const d = intervals.avgPaceSec < band.low ? intervals.avgPaceSec - band.low
+                  : (intervals.avgPaceSec > band.high ? intervals.avgPaceSec - band.high : 0);
+          intervals.vsBandSec = d;
+          intervals.vsBand = d < 0 ? 'faster' : (d > 0 ? 'slower' : 'in-band');
+        }
+      }
+
+      // is the prescription itself still anchored to current fitness?
+      const anchor = getLatestTrial();
+      let prescriptionCheck = null;
+      if (anchor && band && kind && RUN_KIND_PACE_KEY[kind]) {
+        const key = RUN_KIND_PACE_KEY[kind];
+        const derived = key === 'easy' ? anchor.paces.easyLow : anchor.paces[key];
+        if (Number.isFinite(derived)) {
+          const gap = derived - band.high;   // >0 means the plan is faster than current fitness
+          prescriptionCheck = {
+            kind, derivedSec: derived, plannedSec: band.high, gapSec: gap,
+            stale: gap > 5, anchorWeek: anchor.week, vdot: anchor.vdot,
+          };
+        }
+      }
+
+      return {
+        wk, dayKey, kind, planText, log, distance, hr, pace, intervals,
+        anchor, prescriptionCheck,
+        history: getLoggedRunHistory().filter(r => r.kind === kind),
+      };
+    }
+
+    // ── the prose, kept separate from the analysis on purpose ────────────
+    function runCoachLines(an) {
+      if (!an || typeof an !== 'object') return [];
+      const out = [];
+      const p = (s) => formatPace(s);
+      const kindLabel = { easy: 'easy run', long: 'long run', quality: 'quality session', trial: 'time trial' }[an.kind] || 'run';
+
+      // distance
+      if (an.distance.verdict === 'hit' || an.distance.verdict === 'over') {
+        out.push(`✅ Distance ${an.distance.actualKm} km against a planned ${an.distance.plannedKm} km.`);
+      } else if (an.distance.verdict === 'short') {
+        out.push(`📏 Distance short — ${an.distance.actualKm} km against a planned ${an.distance.plannedKm} km. If heart rate or legs forced it, that was the right call.`);
+      } else if (an.distance.verdict === 'not-logged') {
+        out.push('📋 No distance logged, so distance and pace cannot be assessed.');
+      }
+
+      // heart rate, named by the configured zone
+      const bandTxt = hrBandLabel(an.hr.band);
+      const zoneTxt = an.hr.zone ? ` (${an.hr.zone.zone})` : '';
+      if (an.hr.verdict === 'in') {
+        out.push(bandTxt
+          ? `✅ Avg HR ${an.log.avgHR}, inside the ${bandTxt} this ${kindLabel} prescribes${zoneTxt}.`
+          : `✅ Avg HR ${an.log.avgHR} sits in ${an.hr.zone.zone} (${an.hr.zone.low}–${an.hr.zone.high}), which is where a ${kindLabel} belongs.`);
+      } else if (an.hr.verdict === 'above') {
+        out.push(bandTxt
+          ? `⚠ Avg HR ${an.log.avgHR} is above the ${bandTxt} this ${kindLabel} prescribes${zoneTxt}. Running an easy day in the middle zones costs recovery and buys very little.`
+          : `⚠ Avg HR ${an.log.avgHR} is in ${an.hr.zone.zone} (${an.hr.zone.low}–${an.hr.zone.high}); a ${kindLabel} targets ${an.hr.target}. Running an easy day in the middle zones costs recovery and buys very little.`);
+      } else if (an.hr.verdict === 'below') {
+        out.push(bandTxt
+          ? `📊 Avg HR ${an.log.avgHR} is below the ${bandTxt} this ${kindLabel} prescribes${zoneTxt}.`
+          : `📊 Avg HR ${an.log.avgHR} is in ${an.hr.zone.zone}, below the ${an.hr.target} a ${kindLabel} targets.`);
+      } else if (an.hr.verdict === 'no-hr' && an.log.km !== null) {
+        out.push('📊 No average heart rate logged — zone compliance is the main thing this session can be judged on.');
+      }
+
+      // pace against the prescription — the number that used to be discarded
+      if (an.pace.verdict === 'in-band') {
+        out.push(`✅ Pace ${p(an.pace.actualSec)}/km, inside the prescribed ${p(an.pace.band.low)}${an.pace.band.low !== an.pace.band.high ? '–' + p(an.pace.band.high) : ''}/km.`);
+      } else if (an.pace.verdict === 'faster') {
+        out.push(`⚠ Pace ${p(an.pace.actualSec)}/km against a prescribed ${p(an.pace.band.low)}${an.pace.band.low !== an.pace.band.high ? '–' + p(an.pace.band.high) : ''}/km — ${Math.abs(an.pace.deltaSec)}s/km faster than asked.`);
+      } else if (an.pace.verdict === 'slower') {
+        out.push(`📊 Pace ${p(an.pace.actualSec)}/km against a prescribed ${p(an.pace.band.low)}${an.pace.band.low !== an.pace.band.high ? '–' + p(an.pace.band.high) : ''}/km — ${an.pace.deltaSec}s/km slower than asked.`);
+      } else if (an.pace.verdict === 'no-pace' && an.log.km !== null && an.pace.band) {
+        out.push(`📋 No average pace logged. This session prescribes ${p(an.pace.band.low)}/km and nothing can check it.`);
+      }
+
+      // intervals
+      if (an.intervals) {
+        const iv = an.intervals;
+        if (iv.plannedCount && iv.n < iv.plannedCount) {
+          out.push(`📊 ${iv.n}/${iv.plannedCount} intervals logged. Stopping on form breakdown is a decision, not a failure.`);
+        } else {
+          out.push(`✅ ${iv.n} interval${iv.n === 1 ? '' : 's'} logged, avg ${p(iv.avgPaceSec)}/km.`);
+        }
+        if (iv.driftSec <= 3) out.push(`✅ Split spread ${iv.driftSec}s across the reps — well paced.`);
+        else out.push(`${iv.driftPct > 8 ? '⚠' : '📊'} Split spread ${iv.driftSec}s (${iv.driftPct}%), ${p(iv.fastestSec)} to ${p(iv.slowestSec)}/km. Going out hard is the usual cause.`);
+        if (iv.vsBand === 'faster') out.push(`📊 Reps averaged ${Math.abs(iv.vsBandSec)}s/km faster than the prescription.`);
+        if (iv.vsBand === 'slower') out.push(`📊 Reps averaged ${iv.vsBandSec}s/km slower than the prescription.`);
+        if (iv.avgHR) {
+          const z = hrZoneFor(iv.avgHR);
+          if (z) out.push(`📈 Avg interval HR ${iv.avgHR} (${z.zone}), peak ${iv.maxHR}.`);
+        }
+      }
+
+      // is the prescription still anchored to his current fitness?
+      if (an.prescriptionCheck && an.prescriptionCheck.stale) {
+        const c = an.prescriptionCheck;
+        out.push(`⚠ This session prescribes ${p(c.plannedSec)}/km. Your last time trial (Wk ${c.anchorWeek}) puts your current ${c.kind === 'quality' ? 'threshold' : 'easy'} pace at about ${p(c.derivedSec)}/km — the prescription is ${c.gapSec}s/km faster than your current fitness supports. Run to effort, and the paces are worth re-anchoring.`);
+      }
+
+      // trend
+      if (an.history.length >= 2) {
+        const withPace = an.history.filter(h => h.paceSec !== null);
+        if (withPace.length >= 2) {
+          const first = withPace[0], last = withPace[withPace.length - 1];
+          const d = last.paceSec - first.paceSec;
+          if (Math.abs(d) >= 3) {
+            out.push(`📉 ${kindLabel} pace across this block: ${p(first.paceSec)}/km (Wk ${first.week}) to ${p(last.paceSec)}/km (Wk ${last.week}), ${d < 0 ? Math.abs(d) + 's/km faster' : d + 's/km slower'}.`);
+          }
+        }
+      }
+
+      if (an.anchor) {
+        out.push(`🎯 Anchor: ${an.anchor.km} km in ${Math.floor(an.anchor.seconds / 60)}:${String(an.anchor.seconds % 60).padStart(2, '0')} (Wk ${an.anchor.week}) — VDOT ${an.anchor.vdot}. Easy ${p(an.anchor.paces.easyLow)}–${p(an.anchor.paces.easyHigh)}, threshold ${p(an.anchor.paces.threshold)}, interval ${p(an.anchor.paces.interval)}/km.`);
+      }
+
+      if (out.length === 0) out.push('📋 Log distance, average pace and heart rate to get specific feedback on this run.');
+      return out;
+    }
+
     // Parse exercises from planned workout text
     // Format: "Flat BP  3×3 @100 kg" or "Back Squat  4×6–8 @65–70%"
     // ── v1.02 ────────────────────────────────────────────────────────────
@@ -6594,12 +7057,20 @@ const COACH_HELP_TEXT =
           if (isZone2 && avgHRInput.value) {
             const hr = parseInt(avgHRInput.value);
             const compDiv = document.getElementById('zoneCompliance');
-            // Read dynamic Z2 ceiling from configured zones (was hardcoded 137 pre-v1.01).
+            // v1.20: the band comes from THIS session's own text, so an easy
+            // run is judged against its own cap and a long run against its
+            // own band. getZ2Range() stays the fallback for a session that
+            // states neither.
+            const statedBand = parsePlannedHrCap(planned);
             const z2 = getZ2Range();
-            if (hr <= z2.high) {
-              compDiv.innerHTML = `<div class="zone-compliance good">✓ Zone 2 compliance: ${hr} bpm is within ${z2.low}–${z2.high}</div>`;
+            const band = statedBand || { low: z2.low, high: z2.high, source: 'zone-model' };
+            const label = hrBandLabel(band);
+            if (hr > band.high) {
+              compDiv.innerHTML = `<div class="zone-compliance bad">⚠️ HR too high: ${hr} bpm is above this session's ${label}. Slow down or walk uphills.</div>`;
+            } else if (band.low !== null && hr < band.low) {
+              compDiv.innerHTML = `<div class="zone-compliance good">✓ ${hr} bpm is below this session's ${label} — easy is allowed to be easy</div>`;
             } else {
-              compDiv.innerHTML = `<div class="zone-compliance bad">⚠️ HR too high: ${hr} bpm is above Zone 2 (max ${z2.high}). Slow down or walk uphills.</div>`;
+              compDiv.innerHTML = `<div class="zone-compliance good">✓ ${hr} bpm is inside this session's ${label}</div>`;
             }
           }
         });
@@ -7153,6 +7624,17 @@ const COACH_HELP_TEXT =
         // list — see isSuggestionBlockedWeek for what the list got wrong.
         if (isSuggestionBlockedWeek(targetWk)) return suggestions;
 
+        // HR thresholds come from the configured zones, never from
+        // literals. getZ2Range() honours a maxHR change and a
+        // lactate-threshold pin; the numbers these replace were copies of its
+        // DEFAULTS and would have gone silently wrong the moment he edited
+        // either. At the default maxHR of 183 the shifts are: bump gate
+        // 140 -> 137, trim gate 138 -> 137, fatigue gate 130 -> mid-Z2. Every
+        // one of those moves toward less volume, which is the safe direction.
+        const z2Band = getZ2Range();
+        const HR_Z2_CEIL = z2Band.high;
+        const HR_Z2_MID = Math.round((z2Band.low + z2Band.high) / 2);
+
         const isZone2 = dayKey === 'easy' || dayKey === 'longRun';
         const isQuality = dayKey === 'quality';
         const isStrength = !isZone2 && !isQuality;
@@ -7167,7 +7649,7 @@ const COACH_HELP_TEXT =
             const nextKm = nextMatch ? parseFloat(nextMatch[1]) : 0;
             if (nextKm > 0) {
               // Over-performed with good metrics → bump next session (relaxed thresholds)
-              if (km >= plannedKm * 1.05 && (avgHR <= 0 || avgHR <= 140) && (rpe === null || rpe <= 7)) {
+              if (km >= plannedKm * 1.05 && (avgHR <= 0 || avgHR <= HR_Z2_CEIL) && (rpe === null || rpe <= 7)) {
                 const suggestedKm = nextKm + 1;
                 const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
                 suggestions.push({
@@ -7183,7 +7665,7 @@ const COACH_HELP_TEXT =
                 });
               }
               // Low RPE alone (even without distance over-performance) → small bump
-              else if (rpe !== null && rpe <= 4 && (avgHR <= 0 || avgHR <= 137) && nextKm > 0) {
+              else if (rpe !== null && rpe <= 4 && (avgHR <= 0 || avgHR <= HR_Z2_CEIL) && nextKm > 0) {
                 const suggestedKm = nextKm + 0.5;
                 const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
                 suggestions.push({
@@ -7199,7 +7681,7 @@ const COACH_HELP_TEXT =
                 });
               }
               // HR drifted too high → consider reducing
-              else if (avgHR > 138 && km > 0 && nextKm > 4) {
+              else if (avgHR > HR_Z2_CEIL && km > 0 && nextKm > 4) {
                 const suggestedKm = Math.max(Math.round((nextKm - 1) * 2) / 2, 5);
                 const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
                 suggestions.push({
@@ -7207,7 +7689,7 @@ const COACH_HELP_TEXT =
                   ts: new Date().toISOString(),
                   label: `Reduce Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
                   emoji: '📉',
-                  reason: `Avg HR ${avgHR} bpm was above Zone 2 ceiling (137 bpm). This session accumulated more cardiovascular stress than intended — trimming Wk ${targetWk} slightly protects aerobic adaptation quality.`,
+                  reason: `Avg HR ${avgHR} bpm was above the Zone 2 ceiling (${HR_Z2_CEIL} bpm). This session accumulated more cardiovascular stress than intended — trimming Wk ${targetWk} slightly protects aerobic adaptation quality.`,
                   week: targetWk,
                   sessionKey: dayKey,
                   oldValue: nextPlanned,
@@ -7215,7 +7697,7 @@ const COACH_HELP_TEXT =
                 });
               }
               // High RPE on an easy run → also a reduce signal (fatigue / under-recovery)
-              else if (rpe !== null && rpe >= 7 && nextKm > 4 && (avgHR <= 0 || avgHR > 130)) {
+              else if (rpe !== null && rpe >= 7 && nextKm > 4 && (avgHR <= 0 || avgHR > HR_Z2_MID)) {
                 const suggestedKm = Math.max(Math.round((nextKm - 1) * 2) / 2, 5);
                 const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
                 suggestions.push({
@@ -7441,85 +7923,31 @@ const COACH_HELP_TEXT =
         const nextBench = getNextBenchMilestone(wk);
 
         if (isRun) {
-          // ── RUN COACHING ──
-          const km = parseFloat(document.getElementById('runKm').value) || 0;
-          const avgHR = parseInt(document.getElementById('avgHR').value) || 0;
-          const maxHR = parseInt(document.getElementById('maxHR').value) || 0;
-          const pace = document.getElementById('runPace').value;
+          // ── RUN COACHING — v1.19, driven by analyseRunSession ──────────
+          // Previously: `runPace` and `maxHR` were read into locals and then
+          // never referenced — the average pace he types on every easy and
+          // long run was collected, stored and discarded. Every HR threshold
+          // was a hardcoded copy of what getHRZones() already computes. The
+          // prescribed pace was never parsed, so "did you run it as asked"
+          // could not be answered. And the planned distance came from the
+          // first "N km" anywhere in the text rather than from
+          // parseRunDistanceKm(). See analyseRunSession().
+          const runAnalysis = analyseRunSession({
+            wk, dayKey: day.key, planned,
+            log: {
+              runKm: (document.getElementById('runKm') || {}).value,
+              runPace: (document.getElementById('runPace') || {}).value,
+              avgHR: (document.getElementById('avgHR') || {}).value,
+              maxHR: (document.getElementById('maxHR') || {}).value,
+              rpe: (document.getElementById('rpe') || {}).value,
+            },
+            intervals: window._intervals || [],
+          });
+          window._runAnalysis = runAnalysis;
+          runCoachLines(runAnalysis).forEach(l => feedback.push(l));
+
           const isZone2 = day.key === 'easy' || day.key === 'longRun';
           const isQuality = day.key === 'quality';
-
-          if (isZone2) {
-            if (avgHR > 0 && avgHR <= 130) feedback.push('✅ Excellent Zone 2 control — HR well within 119–137. Your aerobic base is building efficiently.');
-            else if (avgHR > 0 && avgHR <= 137) feedback.push(`✅ Good Zone 2 compliance — HR within target range (119–137). Keep this discipline, it's the foundation of everything.`);
-            else if (avgHR > 137 && avgHR <= 145) feedback.push('⚠️ HR slightly above Zone 2 (target 119–137). Slow down by 10–15 sec/km on the next easy run. Ego has no place in Zone 2.');
-            else if (avgHR > 145) feedback.push('❌ HR too high for Zone 2 — this became a moderate session, which is the worst zone to train in. Slow to a walk on uphills next time. Zone 2 compliance trumps pace.');
-
-            if (km > 0) {
-              const planned_km = parseFloat((planned.match(/(\d+(?:\.\d+)?)\s*km/) || [])[1]) || 0;
-              if (planned_km > 0 && km >= planned_km) feedback.push(`✅ Distance hit (${km} km ≥ planned ${planned_km} km). Consistent long run progression is your biggest marathon lever.`);
-              else if (planned_km > 0 && km < planned_km * 0.9) feedback.push(`📏 Distance short (${km} km vs planned ${planned_km} km). If HR forced you to stop, that's the right call. Don't chase distance at the cost of Zone 2.`);
-            }
-          }
-
-          if (isQuality) {
-            const ivs = (window._intervals || []).filter(iv => iv.time || iv.hr || iv.rpe);
-            const isIntervalsSession = planned && planned.includes('[INTERVALS]');
-
-            if (isIntervalsSession && ivs.length > 0) {
-              // Per-interval analysis
-              const completedCount = ivs.filter(iv => iv.time).length;
-              const planMatch = planned.match(/(\d+)[×x]/);
-              const planCount = planMatch ? parseInt(planMatch[1]) : null;
-              if (planCount) {
-                if (completedCount >= planCount) feedback.push(`✅ All ${completedCount} intervals completed. Full session executed.`);
-                else feedback.push(`📊 ${completedCount}/${planCount} intervals completed. If you stopped early due to form breakdown or HR spike, that was the right call — never sacrifice quality for quantity.`);
-              }
-
-              // Parse times (m:ss format) into seconds
-              const parsedTimes = ivs.map(iv => {
-                if (!iv.time) return null;
-                const parts = iv.time.split(':').map(Number);
-                return parts.length === 2 ? parts[0]*60 + parts[1] : parts[0];
-              }).filter(t => t !== null);
-              if (parsedTimes.length >= 2) {
-                const fastest = Math.min(...parsedTimes);
-                const slowest = Math.max(...parsedTimes);
-                const drift = slowest - fastest;
-                const driftPct = Math.round((drift / fastest) * 100);
-                if (drift <= 3) feedback.push(`✅ Excellent pace consistency — only ${drift}s spread across intervals. This is a sign of good pacing strategy and aerobic fitness.`);
-                else if (driftPct <= 8) feedback.push(`✅ Good pace consistency (${drift}s drift, ~${driftPct}%). Minor fade is normal. Aim to keep the last interval within 5s of the first.`);
-                else feedback.push(`⚠️ Pace dropped ${drift}s (${driftPct}%) from fastest to slowest interval. Consider starting slightly more conservatively — going out too hard is the most common interval mistake.`);
-                const fastMm = Math.floor(fastest/60), fastSs = String(fastest%60).padStart(2,'0');
-                const slowMm = Math.floor(slowest/60), slowSs = String(slowest%60).padStart(2,'0');
-                feedback.push(`📊 Split range: ${fastMm}:${fastSs} (fastest) → ${slowMm}:${slowSs} (slowest). Target: ${planned.match(/@([^\n]+)/)?.[1]?.trim() || 'see plan'}.`);
-              }
-
-              // HR analysis per interval
-              const ivHRs = ivs.map(iv => parseInt(iv.hr)).filter(h => !isNaN(h) && h > 0);
-              if (ivHRs.length >= 2) {
-                const avgIvHR = Math.round(ivHRs.reduce((a,b)=>a+b,0)/ivHRs.length);
-                const maxIvHR = Math.max(...ivHRs);
-                if (avgIvHR >= 156 && avgIvHR <= 175) feedback.push(`✅ Avg interval HR ${avgIvHR} bpm — solidly in Zone 4/5 (156–183). This is exactly where interval adaptations happen.`);
-                else if (avgIvHR < 156) feedback.push(`📊 Avg interval HR ${avgIvHR} bpm — below Zone 4 (156+). Either pacing was conservative or fitness is good. Push a touch harder next time if splits are consistent.`);
-                else if (avgIvHR > 175) feedback.push(`⚠️ Avg interval HR ${avgIvHR} bpm — very high. Ensure recovery intervals are long enough to bring HR below ~140 before the next rep.`);
-                if (maxIvHR > 0) feedback.push(`📈 Peak interval HR: ${maxIvHR} bpm (max HR 183 bpm = ${Math.round(maxIvHR/183*100)}%).`);
-              }
-
-              // RPE per interval
-              const ivRPEs = ivs.map(iv => parseFloat(iv.rpe)).filter(r => !isNaN(r) && r > 0);
-              if (ivRPEs.length >= 2) {
-                const firstRPE = ivRPEs[0], lastRPE = ivRPEs[ivRPEs.length-1];
-                if (lastRPE - firstRPE >= 2) feedback.push(`⚠️ RPE rose from ${firstRPE} to ${lastRPE} across the session — significant fatigue accumulation. Your rest intervals may be too short, or starting pace was too aggressive.`);
-                else feedback.push(`✅ RPE progression looks controlled (${firstRPE} → ${lastRPE}). Manageable fatigue across the session.`);
-              }
-            } else {
-              // Tempo or intervals without per-rep data
-              if (avgHR > 0 && avgHR < 155) feedback.push('📊 HR suggests effort may have been too easy for a quality session. Tempo should sit at LTHR (161–168 bpm); intervals genuinely hard (Zone 4–5).');
-              else if (avgHR >= 155 && avgHR <= 175) feedback.push('✅ HR in the right zone for quality work. This is where your running fitness actually improves.');
-              else if (avgHR > 175) feedback.push('⚠️ HR very high — check if this was sustainable or if you went anaerobic. Quality runs should be hard but controlled.');
-            }
-          }
 
           if (rpe !== null) {
             if (isZone2 && rpe > 6) feedback.push(`⚠️ RPE ${rpe} is high for an easy/long run — should feel like a 4–5. If it felt hard, you went too fast or are under-recovered.`);
