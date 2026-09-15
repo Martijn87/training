@@ -33,8 +33,8 @@
        was previously mislabelled "v1.11", which is what caused the build
        number and the programme number to be confused with each other. -->
   <script>
-    window.APP_VERSION = 'v1.17';
-    window.APP_BUILT   = '2 Sep 2026';
+    window.APP_VERSION = 'v1.18';
+    window.APP_BUILT   = '15 Sep 2026';
     window.PROGRAM_REV = '2026-08-30-bench120-vol50-q4to6';
   </script>
 
@@ -1438,7 +1438,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.17 · built 2 Sep 2026</div>
+        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.18 · built 15 Sep 2026</div>
         <script>(function(){try{var e=document.getElementById('versionBadge');if(e&&window.APP_VERSION){e.textContent=window.APP_VERSION+' \u00b7 built '+window.APP_BUILT;}}catch(_){}})();</script>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
@@ -4956,6 +4956,19 @@ const COACH_HELP_TEXT =
       return !!(w && w.entries.some(e => e.kind === 'attempt'));
     }
 
+    // A week the coach must not push extra volume or load into: a deload, or
+    // a bench PR attempt week. Read from that week's own plan markers.
+    //
+    // This replaced two hardcoded lists in buildCoachSuggestions,
+    // [4,8,12,16,20] and [3,7,11,15,19]. The deload list agreed with the plan.
+    // The attempt list did NOT: it held the PRE-v1.11 attempt weeks, and wk 3
+    // has carried a 107.5 kg tune-up single rather than an attempt since
+    // v1.11 — so wk 3, an ordinary build week, was silently blocked from ever
+    // receiving a suggestion. BACKLOG B10 / B14.
+    function isSuggestionBlockedWeek(wk) {
+      return isDeloadWeekNum(wk) || isBenchAttemptWeek(wk);
+    }
+
     // ── logged bench history ───────────────────────────────────────────
     // Every stored session of the current epoch, scanned for bench-group
     // sets, reduced to one best e1RM per week. The old coach had no history
@@ -5657,6 +5670,61 @@ const COACH_HELP_TEXT =
     function getWeeklyVolume(wk) {
       const week = Number(wk);
       return getWeeklyVolumeSeries().find(e => e.week === week) || null;
+    }
+
+    // What a proposed edit to ONE session would do to that week's total,
+    // measured exactly the way the Running volume card measures it. Pure:
+    // nothing is written and no override is created — this exists so a coach
+    // suggestion can state its own consequence. Returns null when the edit
+    // does not move a run session's distance.
+    //
+    // BACKLOG B12. The suggestion builder offers "+1 km on next week's easy
+    // run" inside a plan whose entire design is a weekly total and a 10%
+    // ceiling, and had no way to know what that did to the week — it could
+    // not have had one before v1.15, because nothing computed a weekly total.
+    // It still offers the suggestion: suppressing one he would have accepted
+    // is a training decision and stays his. Showing him the cost is not.
+    function projectWeeklyVolume(week, sessionKey, oldValue, newValue) {
+      const base = getWeeklyVolume(week);
+      if (!base || !isRunSession(sessionKey)) return null;
+      const readKm = (text) => {
+        if (sessionKey === 'quality') {
+          const q = parseQualityVolumeKm(text);
+          return q ? q.total : null;
+        }
+        return parseRunDistanceKm(text);
+      };
+      const oldKm = readKm(oldValue), newKm = readKm(newValue);
+      if (oldKm === null || newKm === null) return null;
+      const diffKm = round1(newKm - oldKm);
+      if (diffKm === 0) return null;
+      const total = round1(base.total + diffKm);
+      const deltaPct = (base.prevBuildTotal > 0)
+        ? round1((total - base.prevBuildTotal) / base.prevBuildTotal * 100)
+        : null;
+      return {
+        week: base.week, diffKm, fromTotal: base.total, total,
+        prevBuildWeek: base.prevBuildWeek, prevBuildTotal: base.prevBuildTotal,
+        deltaPct, isDeload: base.isDeload,
+        exceedsCeiling: !base.isDeload && deltaPct !== null && deltaPct > VOLUME_CEILING_PCT,
+      };
+    }
+
+    // One line of prose for the above, or '' when there is nothing to say.
+    function volumeConsequenceLine(week, sessionKey, oldValue, newValue) {
+      const p = projectWeeklyVolume(week, sessionKey, oldValue, newValue);
+      if (!p) return '';
+      let core = 'Wk ' + p.week + ' total ' + p.fromTotal + ' \u2192 ' + p.total + ' km ('
+               + (p.diffKm > 0 ? '+' : '') + p.diffKm + ' km)';
+      if (p.deltaPct !== null) {
+        core += ', ' + (p.deltaPct > 0 ? '+' : '') + p.deltaPct + '% vs Wk '
+              + p.prevBuildWeek + ' (' + p.prevBuildTotal + ' km)';
+      }
+      core += '.';
+      return p.exceedsCeiling
+        ? '\u26a0 ' + core + ' That is past the +' + VOLUME_CEILING_PCT
+          + '% weekly step the ramp was built around \u2014 your call, but it is a breach.'
+        : '\ud83d\udcd0 ' + core;
     }
 
     const VOLUME_RUN_SHORT = { longRun: 'long', recovery2: 'easy', easy: 'easy', quality: 'quality' };
@@ -7079,11 +7147,11 @@ const COACH_HELP_TEXT =
       let _suggestionCounter = 0;
       function buildCoachSuggestions({ wk, dayKey, km, avgHR, rpe, planned, exs, sleep }) {
         const suggestions = [];
-        const deloadWeeks = [4,8,12,16,20];
-        const attemptWeeks = [3,7,11,15,19];
         const targetWk = wk + 1;
         if (!WEEKS[targetWk]) return suggestions;
-        if (deloadWeeks.includes(targetWk) || attemptWeeks.includes(targetWk)) return suggestions;
+        // Deload and attempt weeks come from the plan, never from a week
+        // list — see isSuggestionBlockedWeek for what the list got wrong.
+        if (isSuggestionBlockedWeek(targetWk)) return suggestions;
 
         const isZone2 = dayKey === 'easy' || dayKey === 'longRun';
         const isQuality = dayKey === 'quality';
@@ -7225,7 +7293,7 @@ const COACH_HELP_TEXT =
           }
         }
 
-        if (isStrength && !deloadWeeks.includes(targetWk) && !attemptWeeks.includes(targetWk)) {
+        if (isStrength && !isSuggestionBlockedWeek(targetWk)) {
           const nextPlannedGym = getPlanned(targetWk, dayKey);
           if (nextPlannedGym && exs && exs.length > 0) {
             const nextLines = nextPlannedGym.split('\n');
@@ -7321,7 +7389,7 @@ const COACH_HELP_TEXT =
         const strongSingle = (rpe !== null && rpe >= 9) || (sleep !== null && sleep <= 3);
         const combinedMod  = (rpe !== null && rpe >= 8 && sleep !== null && sleep <= 5);
         if (isStrength && (strongSingle || combinedMod)
-            && !deloadWeeks.includes(targetWk) && !attemptWeeks.includes(targetWk)) {
+            && !isSuggestionBlockedWeek(targetWk)) {
           const nextPlannedGym = getPlanned(targetWk, dayKey);
           if (nextPlannedGym) {
             // Reduce all @X kg weights by 10%, round to nearest 2.5
@@ -7344,6 +7412,14 @@ const COACH_HELP_TEXT =
               });
             }
           }
+        }
+
+        // Every suggestion that moves a run now states what it does to
+        // that week's total. Done once here rather than at each push site,
+        // so a suggestion added later cannot forget to carry its cost.
+        for (const s of suggestions) {
+          const line = volumeConsequenceLine(s.week, s.sessionKey, s.oldValue, s.newValue);
+          if (line) s.reason += '\n' + line;
         }
 
         return suggestions;
