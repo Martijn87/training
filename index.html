@@ -33,9 +33,9 @@
        was previously mislabelled "v1.11", which is what caused the build
        number and the programme number to be confused with each other. -->
   <script>
-    window.APP_VERSION = 'v1.24';
-    window.APP_BUILT   = '27 Sep 2026';
-    window.PROGRAM_REV = '2026-09-27-run4x-rampin-tempo-interval';
+    window.APP_VERSION = 'v1.26';
+    window.APP_BUILT   = '30 Sep 2026';
+    window.PROGRAM_REV = '2026-09-30-bench120-dec29-row2b-easy5k';
   </script>
 
   <script>
@@ -472,6 +472,9 @@
     .ai-diff-arrow { color: var(--text-muted); }
     .ai-apply-btn { font-size: 11px; padding: 5px 12px; }
     .ai-applied-badge { font-size: 11px; color: var(--success); font-family: 'DM Mono', monospace; padding: 5px 0; }
+    .ai-suggest-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ai-dismiss-btn { font-size: 11px; padding: 5px 12px; }
+    .ai-dismissed-badge { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; padding: 5px 0; }
 
     /* HR Zones */
     .zones-card {
@@ -1438,7 +1441,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.24 · built 27 Sep 2026</div>
+        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.26 · built 30 Sep 2026</div>
         <script>(function(){try{var e=document.getElementById('versionBadge');if(e&&window.APP_VERSION){e.textContent=window.APP_VERSION+' \u00b7 built '+window.APP_BUILT;}}catch(_){}})();</script>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
@@ -1608,177 +1611,177 @@
       },
       6: {
         dates: "28 Sep – 4 Oct",
-        upperA: "Flat Bench  4×3 @97.5 kg (RPE 8)\nTop Single  1×1 @110 kg (RPE 8–9 — the 92–97% rung; stop if bar path breaks)\nBack-off  2×5 @87.5 kg\nClose-Grip Bench  4×8 @72.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @52.5 kg\nPec Deck  4×15\nBB Row  4×10 @65 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
-        recovery2: "9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Flat Bench  4×3 @97.5 kg (RPE 8)\nTop Single  1×1 @105 kg (RPE 8 — the 93% rung for 112.5)\nyour 110 on 16 Sep was RPE 10, i.e. a true max — so this is a rung, not a second attempt\nBack-off  2×5 @87.5 kg\nClose-Grip Bench  4×8 @72.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @52.5 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 5 rounds for time (cap 12 min)\n12 DB Floor Press @2×20 kg · 15 Weighted Sit-Ups @10 kg · 30s Hollow Hold\nthe floor stops you at the same depth your lockout has to take over\nscore = time → log it in Notes",
+        recovery2: "5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "7.9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nRAMP-IN week — the fourth run is easy on purpose. Three weeks at four runs\nbefore any of them turns into a hard session.",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @107.5 kg\nSumo Deadlift  5×5 @100 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
-        easy: "9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nPull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @60 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        easy: "5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nPull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @60 kg\nBB Row  4×10 @65 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — 10 min AMRAP\n12 KB Swings @24 kg · 8 Man Makers @2×12.5 kg · 12 Hanging Knee Raises\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = rounds + reps → log it in Notes",
         longRun: "12.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 2 W2/4 — bench 4×3 @97.5 • legs: SQUAT heavier • run 12.5 + 9 + 9 + 7.9 easy",
+        notes: "Block 2 W2/4 — bench 4×3 @97.5 + top single 105 • legs: SQUAT heavier • run 12.5 + 5 + 5 + 7.9 easy",
       },
       7: {
         dates: "5–11 Oct",
-        upperA: "Unload week — attempt day\n🎯 115 kg BENCH ATTEMPT\nFlat Bench  1×1 @115 kg (PR attempt)\nramp: 85×3 · 97.5×1 · 107.5×1 → 115\nBack-off  3×3 @77.5 kg\nClose-Grip Bench  3×6 @67.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @47.5 kg\nPec Deck  4×15\nBB Row  4×10 @60 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
-        recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Unload week — attempt day\n🎯 112.5 kg BENCH ATTEMPT — Tue 6 Oct 2026\nFlat Bench  1×1 @112.5 kg (PR attempt)\nramp: 82.5×3 · 95×1 · 105×1 → 112.5\n+2.5 kg on a true 110 max. Come in fresh — this week is the unload.\nsafeties set or a spotter — this is a genuine max\nBack-off  3×3 @77.5 kg\nClose-Grip Bench  3×6 @67.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @47.5 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CORE ONLY — you took a max single today\n3 rounds: 15 Weighted Sit-Ups @10 kg · 30s Hollow Hold · 45s Plank\nnothing on the chest and nothing overhead after an attempt — the bar already had it",
+        recovery2: "5.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "7.9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nRAMP-IN week — the fourth run is easy on purpose. Three weeks at four runs\nbefore any of them turns into a hard session.",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @125 kg\nBack Squat  5×5 @85 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
-        easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nPull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @55 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        easy: "5.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nPull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @55 kg\nBB Row  4×10 @60 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — EMOM 12\nmin 1: 12 KB Swings @24 kg · min 2: 8 Burpees · min 3: 15 Russian Twists @10 kg\nscore = last minute completed unbroken → log it in Notes",
         longRun: "13.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 2 W3/4 — 🎯 115 kg attempt Tue 6 Oct • legs: SUMO heavier • run 13.5 + 10 + 10 + 7.9 easy",
+        notes: "Block 2 W3/4 — 🎯 112.5 kg attempt Tue 6 Oct • legs: SUMO heavier • run 13.5 + 5.5 + 5.5 + 7.9 easy",
       },
       8: {
         dates: "12–18 Oct",
-        upperA: "🔽 DELOAD\nFlat Bench  3×3 @82.5 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @67.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @42.5 kg\nPec Deck  4×15\nBB Row  4×10 @57.5 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
-        recovery2: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "🔽 DELOAD\nFlat Bench  3×3 @82.5 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @67.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @42.5 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 4 rounds for time (cap 10 min)\n12 Push-Ups (feet elevated) · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
+        recovery2: "4.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🏃 5K TIME TRIAL — target 23:15\nWednesday 14 Oct · this replaces the speed session\nw-up 2 km + 4×20s strides, then all-out\nc-down 1.5 km easy",
         lower: "⬆ SQUAT heavier · sumo lighter — DELOAD\nBack Squat  4×5 @90 kg\nSumo Deadlift  4×5 @102.5 kg (lighter)\nJumping Lunges  3×20 each (bodyweight)\nHip Thrust  3×15\nDead Bug  3×15 each",
-        easy: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nPull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @52.5 kg\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        easy: "4.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nPull-Ups  4×8 (add +5 kg once 8+ clean at bodyweight)\nSeated Low Row  4×10 @52.5 kg\nBB Row  4×10 @57.5 kg\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — 3 rounds, not for time (cap 8 min)\n10 KB Swings @20 kg · 8 Man Makers @2×10 kg · 30s Side Plank each\ndeload week — move well, do not chase a score\nman maker = row, row, push-up, clean to the shoulders — nothing overhead",
         longRun: "11.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 2 W4/4 — 🔽 DELOAD • legs: SQUAT heavier • run 11.5 + 8 + 8 + 5 quality • 🏃 5K TT Wed 14 Oct",
+        notes: "Block 2 W4/4 — 🔽 DELOAD • legs: SQUAT heavier • run 11.5 + 4.5 + 4.5 + 5 quality • 🏃 5K TT Wed 14 Oct",
       },
       9: {
         dates: "19–25 Oct",
-        upperA: "Flat Bench  4×6 @87.5 kg (RPE 7.5 — volume)\nBack-off  2×8 @77.5 kg\nClose-Grip Bench  4×8 @75 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×8 @45 kg\nCable Fly  4×12\nCable Row  4×10 @65 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
-        recovery2: "11 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Flat Bench  4×6 @87.5 kg (RPE 7.5 — volume)\nBack-off  2×8 @77.5 kg\nClose-Grip Bench  4×8 @75 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×8 @45 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 10 min AMRAP\n12 Close-Grip Push-Ups · 12 Hollow Rocks · 20 Mountain Climbers\nhands inside shoulder width — this is lockout work, which is where 120 fails\nscore = rounds + reps → log it in Notes",
+        recovery2: "6 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[TEMPO] 2×2300 m @ 5:00/km\n3 min jog\n≈ 4.6 km of quality + 2 km w-up + 1.5 km c-down\nfirst intensity after the three-week ramp-in — threshold, not VO2max",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @110 kg\nSumo Deadlift  5×5 @105 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "11 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @60 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "6 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @60 kg\nCable Row  4×10 @65 kg (new implement — treat the load as a starting point)\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — 5 rounds for time (cap 12 min)\n10 Man Makers @2×12.5 kg · 15 KB Swings @24 kg · 20 Sit-Ups\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = time → log it in Notes",
         longRun: "14.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 3 W1/4 — bench 4×6 @87.5 • legs: SQUAT heavier • run 14.5 + 11 + 11 + 4.6 quality",
+        notes: "Block 3 W1/4 — bench 4×6 @87.5 • legs: SQUAT heavier • run 14.5 + 6 + 6 + 4.6 quality",
       },
       10: {
         dates: "26 Oct – 1 Nov",
-        upperA: "Flat Bench  4×3 @100 kg (RPE 8)\nTop Single  1×1 @115 kg (RPE 8–9 — the 92–97% rung; stop if bar path breaks)\nBack-off  2×5 @90 kg\nClose-Grip Bench  4×8 @75 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @55 kg\nCable Fly  4×12\nCable Row  4×10 @67.5 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
-        recovery2: "12.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Flat Bench  4×3 @100 kg (RPE 8)\nTop Single  1×1 @107.5 kg (RPE 8–9 — the 93% rung for 115; stop if bar path breaks)\nBack-off  2×5 @90 kg\nClose-Grip Bench  4×8 @75 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @55 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 5 rounds for time (cap 12 min)\n12 DB Floor Press @2×20 kg · 15 Weighted Sit-Ups @10 kg · 30s Hollow Hold\nthe floor stops you at the same depth your lockout has to take over\nscore = time → log it in Notes",
+        recovery2: "6.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×800 m @ 4:37/km\n90s jog\n≈ 4.8 km of quality + 2 km w-up + 1.5 km c-down\nVO2max pace off your 23:43, not off the 22:30 target",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @127.5 kg\nBack Squat  5×5 @87.5 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "12.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @62.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "6.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @62.5 kg\nCable Row  4×10 @67.5 kg (new implement — treat the load as a starting point)\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — 10 min AMRAP\n12 KB Swings @24 kg · 8 Man Makers @2×12.5 kg · 12 Hanging Knee Raises\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = rounds + reps → log it in Notes",
         longRun: "15.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 3 W2/4 — bench 4×3 @100 • legs: SUMO heavier • run 15.5 + 12.5 + 12.5 + 4.8 quality",
+        notes: "Block 3 W2/4 — bench 4×3 @100 • legs: SUMO heavier • run 15.5 + 6.5 + 6.5 + 4.8 quality",
       },
       11: {
         dates: "2–8 Nov",
-        upperA: "Unload week — attempt day\n🎯 117.5 kg BENCH ATTEMPT\nFlat Bench  1×1 @117.5 kg (PR attempt)\nramp: 87.5×3 · 100×1 · 110×1 → 117.5\nthe rung is wk 10\u0027s 115 top single, which is 98% of this — make it, do not grind it\nif wk 7\u0027s 115 was a miss or a bad grind, repeat 115 here instead and leave 120 at wk 15\nsafeties set or a spotter\nBack-off  3×3 @80 kg\nClose-Grip Bench  3×6 @70 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @50 kg\nCable Fly  4×12\nCable Row  4×10 @62.5 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
-        recovery2: "11.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Unload week — attempt day\n🎯 115 kg BENCH ATTEMPT — Tue 3 Nov 2026\nFlat Bench  1×1 @115 kg (PR attempt)\nramp: 85×3 · 97.5×1 · 107.5×1 → 115\nif wk 7's 112.5 was a miss or a bad grind, repeat 112.5 here and leave the rest as written\nsafeties set or a spotter — this is a genuine max\nthe rung is wk 10\u0027s 115 top single, which is 98% of this — make it, do not grind it\nif wk 7\u0027s 115 was a miss or a bad grind, repeat 115 here instead and leave 120 at wk 15\nsafeties set or a spotter\nBack-off  3×3 @80 kg\nClose-Grip Bench  3×6 @70 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @50 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CORE ONLY — you took a max single today\n3 rounds: 15 Weighted Sit-Ups @10 kg · 30s Hollow Hold · 45s Plank\nnothing on the chest and nothing overhead after an attempt — the bar already had it",
+        recovery2: "7 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[TEMPO] 2×2400 m @ 5:00/km\n3 min jog\n≈ 4.8 km of quality + 2 km w-up + 1.5 km c-down\nbench attempt week — the gentler of the two hard sessions sits here",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @112.5 kg\nSumo Deadlift  5×5 @107.5 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "11.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @57.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "7 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @57.5 kg\nCable Row  4×10 @62.5 kg (new implement — treat the load as a starting point)\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — EMOM 12\nmin 1: 12 KB Swings @24 kg · min 2: 8 Burpees · min 3: 15 Russian Twists @10 kg\nscore = last minute completed unbroken → log it in Notes",
         longRun: "15 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 3 W3/4 — 🎯 117.5 kg attempt Tue 3 Nov • legs: SQUAT heavier • run 15 + 11.5 + 11.5 + 4.8 quality",
+        notes: "Block 3 W3/4 — 🎯 115 kg attempt Tue 3 Nov • legs: SQUAT heavier • run 15 + 7 + 7 + 4.8 quality",
       },
       12: {
         dates: "9–15 Nov",
-        upperA: "🔽 DELOAD\nFlat Bench  3×3 @85 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @70 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @42.5 kg\nCable Fly  4×12\nCable Row  4×10 @60 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
-        recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "🔽 DELOAD\nFlat Bench  3×3 @85 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @70 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @42.5 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 4 rounds for time (cap 10 min)\n12 Push-Ups (feet elevated) · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
+        recovery2: "5.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🏃 5K TIME TRIAL — run it rested, that is what the deload is for\nall-out 5 km · this is the measurement, not a session\n≈ 5 km of quality + 2 km w-up + 1.5 km c-down\nlog the time — compare it against the wk4 and wk8 trials",
         lower: "⬆ SUMO heavier · squat lighter — DELOAD\nSumo Deadlift  4×5 @110 kg\nBack Squat  4×5 @90 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @55 kg\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "5.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @82.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @55 kg\nCable Row  4×10 @60 kg (new implement — treat the load as a starting point)\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — 3 rounds, not for time (cap 8 min)\n10 KB Swings @20 kg · 8 Man Makers @2×10 kg · 30s Side Plank each\ndeload week — move well, do not chase a score\nman maker = row, row, push-up, clean to the shoulders — nothing overhead",
         longRun: "13.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 3 W4/4 — 🔽 DELOAD • legs: SUMO heavier • run 13.5 + 10 + 10 + 5 quality",
+        notes: "Block 3 W4/4 — 🔽 DELOAD • legs: SUMO heavier • run 13.5 + 5.5 + 5.5 + 5 quality",
       },
       13: {
         dates: "16–22 Nov",
-        upperA: "Flat Bench  4×6 @90 kg (RPE 7.5 — volume)\nBack-off  2×8 @80 kg\nClose-Grip Bench  4×8 @77.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×8 @47.5 kg\nCable Fly  4×12\nCable Row  4×10 @67.5 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
-        recovery2: "13 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Flat Bench  4×6 @90 kg (RPE 7.5 — volume)\nBack-off  2×8 @80 kg\nClose-Grip Bench  4×8 @77.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×8 @47.5 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 10 min AMRAP\n12 Close-Grip Push-Ups · 12 Hollow Rocks · 20 Mountain Climbers\nhands inside shoulder width — this is lockout work, which is where 120 fails\nscore = rounds + reps → log it in Notes",
+        recovery2: "7.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 5×1000 m @ 4:37/km\n2 min jog\n≈ 5 km of quality + 2 km w-up + 1.5 km c-down",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @130 kg\nBack Squat  5×5 @92.5 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "13 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @62.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "7.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @62.5 kg\nCable Row  4×10 @67.5 kg (new implement — treat the load as a starting point)\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — 5 rounds for time (cap 12 min)\n10 Man Makers @2×12.5 kg · 15 KB Swings @24 kg · 20 Sit-Ups\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = time → log it in Notes",
         longRun: "16 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 4 W1/4 — bench 4×6 @90 • legs: SUMO heavier • run 16 + 13 + 13 + 5 quality",
+        notes: "Block 4 W1/4 — bench 4×6 @90 • legs: SUMO heavier • run 16 + 7.5 + 7.5 + 5 quality",
       },
       14: {
         dates: "23–29 Nov",
-        upperA: "Flat Bench  4×3 @102.5 kg (RPE 8)\nTop Single  1×1 @115 kg (RPE 8–9 — the 92–97% rung for 120; second exposure after wk 10)\nBack-off  2×5 @92.5 kg\nClose-Grip Bench  4×8 @77.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @57.5 kg\nCable Fly  4×12\nCable Row  4×10 @70 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
-        recovery2: "13.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Flat Bench  4×3 @102.5 kg (RPE 8)\nTop Single  1×1 @112.5 kg (RPE 8–9 — the 94% rung for 120; second heavy single after wk 10)\nBack-off  2×5 @92.5 kg\nClose-Grip Bench  4×8 @77.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @57.5 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 5 rounds for time (cap 12 min)\n12 DB Floor Press @2×20 kg · 15 Weighted Sit-Ups @10 kg · 30s Hollow Hold\nthe floor stops you at the same depth your lockout has to take over\nscore = time → log it in Notes",
+        recovery2: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[TEMPO] 2×2600 m @ 4:53/km\n3 min jog\n≈ 5.2 km of quality + 2 km w-up + 1.5 km c-down\npaces step down after the wk 12 trial",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @115 kg\nSumo Deadlift  5×5 @112.5 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "13.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @65 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @65 kg\nCable Row  4×10 @70 kg (new implement — treat the load as a starting point)\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — 10 min AMRAP\n12 KB Swings @24 kg · 8 Man Makers @2×12.5 kg · 12 Hanging Knee Raises\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = rounds + reps → log it in Notes",
         longRun: "16 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 4 W2/4 — bench 4×3 @102.5 • legs: SQUAT heavier • run 16 + 13.5 + 13.5 + 5.2 quality",
+        notes: "Block 4 W2/4 — bench 4×3 @102.5 • legs: SQUAT heavier • run 16 + 8 + 8 + 5.2 quality",
       },
       15: {
         dates: "30 Nov – 6 Dec",
-        upperA: "Unload week — attempt day\n🎯 120 kg BENCH ATTEMPT — THE DECEMBER TARGET\nFlat Bench  1×1 @120 kg (PR attempt)\nramp: 90×3 · 102.5×1 · 112.5×1 → 120\nyou will have made 110 (wk6) and 115 (wk10, wk14) as trained singles, and 117.5 at wk 11\nsafeties set or a spotter — this is a genuine max\nBack-off  3×3 @82.5 kg\nClose-Grip Bench  3×6 @72.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @52.5 kg\nCable Fly  4×12\nCable Row  4×10 @65 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
-        recovery2: "12.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Build week — no attempt here; the taper for 120 is at wk 19\nFlat Bench  4×4 @105 kg (RPE 8 — fourth build week, no taper)\nBack-off  2×5 @92.5 kg\nClose-Grip Bench  4×8 @77.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @52.5 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — EMOM 12\nmin 1: 10 Dips · min 2: 12 Hanging Leg Raises · min 3: 40s Plank\nscore = last minute completed unbroken → log it in Notes",
+        recovery2: "8.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 8×650 m @ 4:30/km\n90s jog\n≈ 5.2 km of quality + 2 km w-up + 1.5 km c-down\n120 kg attempt is Tuesday — run this one Thursday, and to effort",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @132.5 kg\nBack Squat  5×5 @95 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "12.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @60 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "8.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @60 kg\nCable Row  4×10 @65 kg (new implement — treat the load as a starting point)\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — EMOM 12\nmin 1: 12 KB Swings @24 kg · min 2: 8 Burpees · min 3: 15 Russian Twists @10 kg\nscore = last minute completed unbroken → log it in Notes",
         longRun: "16 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 4 W3/4 — 🎯 120 kg BENCH ATTEMPT — THE DECEMBER TARGET Tue 1 Dec • legs: SUMO heavier • run 16 + 12.5 + 12.5 + 5.2 quality",
+        notes: "Block 4 W3/4 — build week — no attempt; the 120 taper is wk 19 • legs: SUMO heavier • run 16 + 8.5 + 8.5 + 5.2 quality",
       },
       16: {
         dates: "7–13 Dec",
-        upperA: "🔽 DELOAD\nFlat Bench  3×3 @87.5 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @72.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @45 kg\nCable Fly  4×12\nCable Row  4×10 @62.5 kg (new implement — treat the load as a starting point)\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
-        recovery2: "11 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "🔽 DELOAD\nFlat Bench  3×3 @87.5 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @72.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @45 kg\nCable Fly  4×12\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 4 rounds for time (cap 10 min)\n12 Push-Ups (feet elevated) · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
+        recovery2: "7 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🏃 5K TIME TRIAL — target 22:45\nWednesday 9 Dec · this replaces the speed session\nw-up 2 km + 4×20s strides, then all-out\nc-down 1.5 km easy",
         lower: "⬆ SQUAT heavier · sumo lighter — DELOAD\nBack Squat  4×5 @97.5 kg\nSumo Deadlift  4×5 @112.5 kg (lighter)\nSplit Squat  3×10 each (rear foot elevated, bodyweight)\nRDL  3×10 (RPE 7 — hamstring accessory, deliberately lighter than your sumo)\nPallof Press  3×12 each",
-        easy: "11 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @57.5 kg\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12",
+        easy: "7 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @85 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nWeighted Pull-Ups  4×6 (+5 kg; add 2.5 kg when 6 are clean)\nSeated Low Row  4×10 @57.5 kg\nCable Row  4×10 @62.5 kg (new implement — treat the load as a starting point)\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nDB Curl  3×10\nHammer Curl  3×15\nAb Wheel  3×12\n🔥 KB + CORE FINISHER — 3 rounds, not for time (cap 8 min)\n10 KB Swings @20 kg · 8 Man Makers @2×10 kg · 30s Side Plank each\ndeload week — move well, do not chase a score\nman maker = row, row, push-up, clean to the shoulders — nothing overhead",
         longRun: "14.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 4 W4/4 — 🔽 DELOAD • legs: SQUAT heavier • run 14.5 + 11 + 11 + 5 quality • 🏃 5K TT Wed 9 Dec",
+        notes: "Block 4 W4/4 — 🔽 DELOAD • legs: SQUAT heavier • run 14.5 + 7 + 7 + 5 quality • 🏃 5K TT Wed 9 Dec",
       },
       17: {
         dates: "14–20 Dec",
-        upperA: "Flat Bench  4×6 @92.5 kg (RPE 7.5 — volume)\nBack-off  2×8 @82.5 kg\nClose-Grip Bench  4×8 @80 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×8 @50 kg\nPec Deck  4×15\nBB Row  4×10 @70 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
-        recovery2: "13 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Flat Bench  4×6 @90 kg (RPE 7.5 — volume)\nBack-off  2×8 @82.5 kg\nClose-Grip Bench  4×8 @80 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×8 @50 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 10 min AMRAP\n12 Close-Grip Push-Ups · 12 Hollow Rocks · 20 Mountain Climbers\nhands inside shoulder width — this is lockout work, which is where 120 fails\nscore = rounds + reps → log it in Notes",
+        recovery2: "9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[TEMPO] 4×1400 m @ 4:46/km\n2 min jog\n≈ 5.6 km of quality + 2 km w-up + 1.5 km c-down\nthreshold is now at 22:30 pace — this is the target made real",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @117.5 kg\nSumo Deadlift  5×5 @115 kg (lighter)\nLeg Press  3×12\nHip Thrust  3×15\nDead Bug  3×15 each",
-        easy: "13 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @65 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        easy: "9 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @65 kg\nBB Row  4×10 @70 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — 5 rounds for time (cap 12 min)\n10 Man Makers @2×12.5 kg · 15 KB Swings @24 kg · 20 Sit-Ups\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = time → log it in Notes",
         longRun: "16 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 5 W1/4 — bench 4×6 @92.5 • legs: SQUAT heavier • run 16 + 13 + 13 + 5.6 quality",
+        notes: "Block 5 W1/4 — bench 4×6 @92.5 • legs: SQUAT heavier • run 16 + 9 + 9 + 5.6 quality",
       },
       18: {
         dates: "21–27 Dec",
-        upperA: "Flat Bench  4×3 @105 kg (RPE 8)\nBack-off  2×5 @95 kg\nClose-Grip Bench  4×8 @80 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @57.5 kg\nPec Deck  4×15\nBB Row  4×10 @72.5 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 5 rounds for time (cap 12 min)\n15 Push-Ups · 20 Sit-Ups · 30s Plank\nscore = time → log it in Notes",
-        recovery2: "13.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Flat Bench  4×3 @102.5 kg (RPE 8)\nTop Single  1×1 @117.5 kg (RPE 8–9 — the 98% rung for 120; last heavy single before the attempt)\nBack-off  2×5 @95 kg\nClose-Grip Bench  4×8 @80 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×5 @57.5 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 5 rounds for time (cap 12 min)\n12 DB Floor Press @2×20 kg · 15 Weighted Sit-Ups @10 kg · 30s Hollow Hold\nthe floor stops you at the same depth your lockout has to take over\nscore = time → log it in Notes",
+        recovery2: "9.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[INTERVALS] 6×1000 m @ 4:23/km\n2 min jog\n≈ 6 km of quality + 2 km w-up + 1.5 km c-down\npeak quality week",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @135 kg\nBack Squat  5×5 @97.5 kg (lighter)\nLeg Press  3×12\nHip Thrust  3×15\nDead Bug  3×15 each",
-        easy: "13.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @67.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        easy: "9.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @67.5 kg\nBB Row  4×10 @72.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — 10 min AMRAP\n12 KB Swings @24 kg · 8 Man Makers @2×12.5 kg · 12 Hanging Knee Raises\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = rounds + reps → log it in Notes",
         longRun: "16 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 5 W2/4 — bench 4×3 @105 • legs: SUMO heavier • run 16 + 13.5 + 13.5 + 6 quality",
+        notes: "Block 5 W2/4 — bench 4×3 @102.5 + top single 117.5 • legs: SUMO heavier • run 16 + 9.5 + 9.5 + 6 quality",
       },
       19: {
         dates: "28 Dec – 3 Jan",
-        upperA: "Flat Bench  4×4 @107.5 kg (RPE 8 — fourth build week, no taper)\nthe 122.5 attempt came out here: 115 (wk7) · 117.5 (wk11) · 120 (wk15) is three attempts,\nwhich is the ceiling A7 set, and all three land before the year ends\nBack-off  2×5 @95 kg\nClose-Grip Bench  4×8 @80 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×6 @55 kg\nPec Deck  4×15\nBB Row  4×10 @67.5 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — EMOM 10\nodd min: 12 Push-Ups · even min: 15 Hanging Leg Raises\nscore = last minute completed unbroken → log it in Notes",
-        recovery2: "13 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "Unload week — attempt day\n🎯 120 kg BENCH ATTEMPT — THE DECEMBER TARGET — Tue 29 Dec 2026\nFlat Bench  1×1 @120 kg (PR attempt)\nramp: 90×3 · 102.5×1 · 112.5×1 → 120\n112.5 (wk7) · 115 (wk11) · 120 is three attempts, which is the ceiling A7 set,\nand 117.5 at wk 18 is the trained single this one stands on\nsafeties set or a spotter — this is a genuine max\nBack-off  3×3 @82.5 kg\nClose-Grip Bench  3×6 @75 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×6 @55 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CORE ONLY — you took a max single today\n3 rounds: 15 Weighted Sit-Ups @10 kg · 30s Hollow Hold · 45s Plank\nnothing on the chest and nothing overhead after an attempt — the bar already had it",
+        recovery2: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "[TEMPO] 3×2000 m @ 4:46/km\n3 min jog\n≈ 6 km of quality + 2 km w-up + 1.5 km c-down\nsharpening",
         lower: "⬆ SQUAT heavier · sumo lighter\nBack Squat  5×5 @120 kg\nSumo Deadlift  5×5 @117.5 kg (lighter)\nLeg Press  3×12\nHip Thrust  3×15\nDead Bug  3×15 each",
-        easy: "13 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @62.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        easy: "10 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×4 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @62.5 kg\nBB Row  4×10 @67.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — EMOM 12\nmin 1: 12 KB Swings @24 kg · min 2: 8 Burpees · min 3: 15 Russian Twists @10 kg\nscore = last minute completed unbroken → log it in Notes",
         longRun: "16 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 5 W3/4 — fourth build week, no attempt — the block ends on 120 at wk 15 • legs: SQUAT heavier • run 16 + 13 + 13 + 6 quality",
+        notes: "Block 5 W3/4 — 🎯 120 kg BENCH ATTEMPT — THE DECEMBER TARGET Tue 29 Dec • legs: SQUAT heavier • run 16 + 10 + 10 + 6 quality",
       },
       20: {
         dates: "4–10 Jan",
-        upperA: "🔽 DELOAD\nFlat Bench  3×3 @90 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @75 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @47.5 kg\nPec Deck  4×15\nBB Row  4×10 @65 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 4 rounds for time (cap 10 min)\n12 Push-Ups · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
-        recovery2: "8.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
+        upperA: "🔽 DELOAD\nFlat Bench  3×3 @90 kg (RPE 6 — crisp, fast bar)\nClose-Grip Bench  3×6 @75 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  3×6 @47.5 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 4 rounds for time (cap 10 min)\n12 Push-Ups (feet elevated) · 12 V-Ups · 20 Russian Twists @10 kg\nscore = time → log it in Notes",
+        recovery2: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nTUESDAY — run first, lift after (or split AM/PM)\n+ core: Dead Bug  2×12 each",
         quality: "🏃 10K TIME TRIAL — target sub-49:00\nWednesday 6 Jan · this replaces the speed session\nw-up 2 km + 4×20s strides, then all-out\nc-down 1.5 km easy",
         lower: "⬆ SUMO heavier · squat lighter — DELOAD\nSumo Deadlift  4×5 @117.5 kg\nBack Squat  4×5 @100 kg (lighter)\nLeg Press  3×12\nHip Thrust  3×15\nDead Bug  3×15 each",
-        easy: "8.5 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @60 kg\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        easy: "8 km easy @ 6:15–6:40/km\n❤️ Zone 1–2: ≤130 bpm — conversational\nFRIDAY — second easy run of the week\n+ core: Dead Bug  2×12 each",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @87.5 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @60 kg\nBB Row  4×10 @65 kg\nLateral Raise  3×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — 3 rounds, not for time (cap 8 min)\n10 KB Swings @20 kg · 8 Man Makers @2×10 kg · 30s Side Plank each\ndeload week — move well, do not chase a score\nman maker = row, row, push-up, clean to the shoulders — nothing overhead",
         longRun: "14.5 km @ Zone 2\n❤️ Zone 2: 119–137 bpm (5:50–6:10/km)\nSUNDAY — last day of the week",
-        notes: "Block 5 W4/4 — 🔽 DELOAD • legs: SUMO heavier • run 14.5 + 8.5 + 8.5 + 10 quality • 🏃 10K TT Wed 6 Jan",
+        notes: "Block 5 W4/4 — 🔽 DELOAD • legs: SUMO heavier • run 14.5 + 8 + 8 + 10 quality • 🏃 10K TT Wed 6 Jan",
       },
       21: {
         dates: "11–17 Jan",
-        upperA: "Flat Bench  4×5 @95 kg (maintenance — running leads now)\nBack-off  2×8 @85 kg\nClose-Grip Bench  4×8 @72.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×6 @52.5 kg\nPec Deck  4×15\nBB Row  4×10 @67.5 kg\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 PUSH-UP + CORE METCON — 10 min AMRAP\n12 Push-Ups · 15 Hanging Knee Raises · 20 Mountain Climbers\nscore = rounds + reps → log it in Notes",
+        upperA: "Flat Bench  4×5 @95 kg (maintenance — running leads now)\nBack-off  2×8 @85 kg\nClose-Grip Bench  4×8 @72.5 kg (lockout work — elbows tucked, same groove as your comp bench)\nMilitary Press  4×6 @52.5 kg\nPec Deck  4×15\nOverhead Tricep Ext  3×12\nFace Pulls  3×20 (shoulder health)\n🔥 CHEST + CORE FINISHER — 10 min AMRAP\n12 Close-Grip Push-Ups · 12 Hollow Rocks · 20 Mountain Climbers\nhands inside shoulder width — this is lockout work, which is where 120 fails\nscore = rounds + reps → log it in Notes",
         recovery2: "[MR · MARATHON HR] 7 km — Tuesday\n❤️ marathon HR 140–150 bpm (low Zone 3) · ~5:35–5:50/km\nMR rule 3: two runs a week at marathon heart rate\n+ core: Dead Bug  2×12 each",
         quality: "[MR · INTENSIVE] 9 km — the one hard run of the week\n2 km w-up + 6×800 m @ 4:40/km (2 min jog) + 1.5 km c-down\nMR rule 4: train intensively once a week",
         lower: "⬆ SUMO heavier · squat lighter\nSumo Deadlift  5×5 @130 kg\nBack Squat  5×5 @100 kg (lighter)\nLeg Press  3×12\nHip Thrust  3×15\nDead Bug  3×15 each",
         easy: "[MR · BIRD-WATCHING] 14 km very easy — Friday\n❤️ Zone 1: ≤130 bpm · ~6:30/km\nMR rule 5: one deliberately slow run a week\n+ core: Dead Bug  2×12 each",
-        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @65 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15",
+        upperB: "Band Dislocates  3×15 (shoulder PREP — first, before you press)\nPaused Bench  3×3 @80 kg (2s pause on the chest)\ngrip just inside the rings · elbows 45–60°, not flared\nleave 2–3 reps in reserve — skill + frequency, never a grind\nLat Pulldown  4×10\nSeated Low Row  4×10 @65 kg\nBB Row  4×10 @67.5 kg\nLateral Raise  4×15 (medial delt — the one head with no work in the block)\n— biceps superset —\nEZ-Bar Curl  3×10\nHammer Curl  3×15\nHanging Leg Raise  3×15\n🔥 KB + CORE FINISHER — 5 rounds for time (cap 12 min)\n10 Man Makers @2×12.5 kg · 15 KB Swings @24 kg · 20 Sit-Ups\nman maker = row, row, push-up, clean to the shoulders — nothing overhead\nscore = time → log it in Notes",
         longRun: "[MR · MARATHON HR] 14 km — Sunday, the MR long run\n❤️ marathon HR 140–150 bpm\nMR rule 2: never further than 14 km",
         notes: "🔬 MARATHON REVOLUTION preview — heaviest MR week: 14 + 14 + 9 + 7 = 44 km • fits the same Tue/Wed/Fri/Sun run days • needs the Wk 20 10K result first",
       },
@@ -7285,6 +7288,463 @@ const COACH_HELP_TEXT =
       });
     }
 
+    // ── Coach: the two goals, read from the plan and from the log ──
+    // B25, his words: "It should always keep the goal i have very clear.
+    // 120kg bench press and a faster 5k."
+    //
+    // Neither number is written here. The bench goal is whichever week the
+    // plan itself marks as the primary target; the run goal is the most
+    // ambitious trial target the plan states, compared by VDOT so a 10K
+    // target and a 5K target are comparable. Both move when he edits his
+    // training, which is the whole point — the coach has been wrong about
+    // his ladder twice by holding its own copy of a number (v1.17, v1.18).
+    function getGoalAnchors(wk, opts) {
+      const o = opts || {};
+      const week = Number(wk);
+      const out = { bench: null, run: null };
+
+      const target = getBenchLadder().find(w => w.isPrimaryTarget) || null;
+      const entry = target ? target.entries.find(e => e.kind === 'attempt') : null;
+      if (target && entry && entry.load !== null) {
+        const hist = getLoggedBenchHistory();
+        const bestHist = hist.reduce((a, b) => (!a || b.e1rm > a.e1rm ? b : a), null);
+        const best = [bestHist && bestHist.e1rm, o.sessionBenchE1rm]
+          .filter(v => typeof v === 'number' && v > 0)
+          .reduce((a, b) => Math.max(a, b), 0) || null;
+        out.bench = {
+          load: entry.load,
+          week: target.week,
+          dates: getWeekDates(target.week),
+          weeksAway: Number.isFinite(week) ? target.week - week : null,
+          best: best ? Math.round(best * 10) / 10 : null,
+          gap: best ? Math.round((entry.load - best) * 10) / 10 : null,
+        };
+      }
+
+      let best = null;
+      const series = getWeeklyVolumeSeries();
+      for (const e of series) {
+        const t = getPlanned(e.week, 'quality') || '';
+        const km = getPlannedTrialKm(e.week);
+        const m = t.match(/target\s+(?:sub-)?(\d{1,2}):([0-5]\d)/i);
+        if (!m || !km) continue;
+        const sec = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+        const v = vdotFromRace(km, sec);
+        if (v === null) continue;
+        if (!best || v > best.vdot) best = { week: e.week, km, seconds: sec, vdot: v };
+      }
+      const latest = getLatestTrial();
+      const from = Number.isFinite(week) ? week : -Infinity;
+      const nextTrial = series
+        .filter(e => e.week >= from)
+        .map(e => ({ week: e.week, km: getPlannedTrialKm(e.week) }))
+        .find(e => e.km !== null) || null;
+      if (best || latest) {
+        out.run = {
+          target: best,
+          latest,
+          nextTrial,
+          vdotGap: (best && latest) ? Math.round((best.vdot - latest.vdot) * 10) / 10 : null,
+          // only comparable at the same distance — a 10K target against a 5K
+          // trial would report a twenty-five-minute deficit on a better run,
+          // which is the mistake getTrialTrend already refuses to make
+          secondsGap: (best && latest && best.km === latest.km)
+            ? latest.seconds - best.seconds : null,
+        };
+      }
+      return out;
+    }
+
+    // The prose. Separate from the anchors so the gate can assert the
+    // numbers without matching wording, and the wording without recomputing
+    // the numbers — the split every analyser in this file uses.
+    function goalAnchorLines(wk, opts) {
+      const g = getGoalAnchors(wk, opts);
+      const out = [];
+      if (g.bench) {
+        const b = g.bench;
+        const when = b.dates ? ` (${b.dates})` : '';
+        const away = (b.weeksAway !== null && b.weeksAway > 0)
+          ? `, ${b.weeksAway} week${b.weeksAway === 1 ? '' : 's'} out` : '';
+        let l = `\u{1F3AF} Goal 1 \u2014 ${b.load} kg bench, Wk ${b.week}${when}${away}.`;
+        if (b.best !== null && b.gap !== null) {
+          l += b.gap > 0
+            ? ` Best estimate ${b.best} kg, ${b.gap} kg still to find.`
+            : ` Best estimate ${b.best} kg \u2014 the estimate already covers it; the attempt is the proof.`;
+        } else {
+          l += ' No bench set logged with an RPE yet, so there is no estimate to measure the gap against.';
+        }
+        out.push(l);
+      }
+      if (g.run) {
+        const r = g.run;
+        let l = '\u{1F3AF} Goal 2 \u2014 a faster 5K.';
+        l += r.latest
+          ? ` Last trial ${formatTrialTime(r.latest.seconds)} over ${r.latest.km} km (VDOT ${r.latest.vdot}).`
+          : ' No trial recorded yet, so every derived pace is still an assumption.';
+        if (r.target) {
+          l += ` The plan's own best target is ${formatTrialTime(r.target.seconds)}`
+             + ` over ${r.target.km} km on Wk ${r.target.week}`;
+          const bits = [];
+          if (r.secondsGap !== null) {
+            bits.push(r.secondsGap > 0 ? `${r.secondsGap} s to find`
+                                       : `${Math.abs(r.secondsGap)} s inside it already`);
+          }
+          if (r.vdotGap !== null) {
+            bits.push(r.vdotGap > 0 ? `${r.vdotGap} VDOT points`
+                                    : `${Math.abs(r.vdotGap)} VDOT points clear`);
+          }
+          l += bits.length ? ` \u2014 ${bits.join(', ')}.` : '.';
+        }
+        if (r.nextTrial) l += ` Next trial Wk ${r.nextTrial.week}.`;
+        out.push(l);
+      }
+      return out;
+    }
+
+    // ── Coach: an adjustment, put as a question (B25) ──
+    // "Maybe ask questions at the end of the session: I see x y z, would you
+    // like me to adjust this or this?" The card used to state a change and
+    // offer one button. It now asks, and offers both answers. The question
+    // is built from the suggestion's own label, so a suggestion added later
+    // cannot forget to phrase itself.
+    function coachQuestionFor(s) {
+      if (!s || typeof s.label !== 'string') return null;
+      const week = Number(s.week);
+      const base = s.label.trim().replace(/[.?!\s]+$/, '');
+      if (!base || !Number.isFinite(week)) return null;
+      const named = base.indexOf('Wk ' + week) !== -1 ? base : `${base} (Wk ${week})`;
+      return `${named} \u2014 want me to make that change?`;
+    }
+
+    // ── Coach: the quality session's own rep scheme (BACKLOG B27) ──
+    // The suggestion builder's quality branch held three detectors —
+    // digits-touching-m, kilometres, and the word "min" — and every hard
+    // session in this plan is written as a rep count, a multiplication sign,
+    // a distance in metres and a space. It could not fire on any of the 21
+    // weeks and never had. Fifth instance of the class this codebase keeps
+    // producing: a detector that does not fit the data it reads.
+    //
+    // The reader below asks the session what it says instead of assuming a
+    // shape, and it REFUSES a session whose stated quality volume disagrees
+    // with its own rep scheme — because the two have to move together or the
+    // plan text and getWeeklyRunVolume() start reporting different weeks.
+    function parseQualityRepScheme(text) {
+      if (typeof text !== 'string' || !text) return null;
+      // only a tagged hard session. A parked easy run, a trial and the
+      // Marathon-Revolutie session all state their own totals and are never
+      // rescaled mechanically.
+      if (!/^\s*\[(?:TEMPO|INTERVALS|THRESHOLD|CRUISE|RACE\s+PACE|REPS?)\]/m.test(text)) return null;
+      const m = text.match(/(\d+)\s*[×x]\s*(\d+(?:\.\d+)?)\s*(km|m)\b/);
+      if (!m) return null;
+      const reps = parseInt(m[1], 10);
+      const dist = parseFloat(m[2]);
+      const unit = m[3];
+      if (!(reps > 0) || !(dist > 0)) return null;
+      const workKm = Math.round(reps * dist * (unit === 'km' ? 1 : 0.001) * 1000) / 1000;
+      // the session states its quality volume too; if the two disagree the
+      // reader has misread one of them and must not guess which
+      const q = text.match(/≈\s*(\d+(?:\.\d+)?)\s*km\s+of\s+quality/i);
+      if (q && Math.abs(parseFloat(q[1]) - workKm) > 0.001) return null;
+      return { reps, dist, unit, workKm };
+    }
+
+    // Add reps to a hard session, moving its stated quality volume with them.
+    // Returns null rather than a half-edited session on anything it cannot
+    // rewrite safely. Only two lines may change: the prescription and the
+    // "≈ N km of quality" line the weekly volume model reads.
+    function rewriteQualityReps(text, newReps) {
+      const cur = parseQualityRepScheme(text);
+      if (!cur) return null;
+      const n = Number(newReps);
+      if (!Number.isInteger(n) || n <= 0 || n === cur.reps) return null;
+      const newWork = Math.round(n * cur.dist * (cur.unit === 'km' ? 1 : 0.001) * 1000) / 1000;
+      const scheme = new RegExp('(^|[^\\d])' + cur.reps + '(\\s*[×x]\\s*)'
+        + String(cur.dist).replace('.', '\\.') + '(\\s*' + cur.unit + '\\b)');
+      if (!scheme.test(text)) return null;
+      let out = text.replace(scheme, (_, pre, mid, post) => pre + n + mid + cur.dist + post);
+      if (out === text) return null;
+      const q = out.match(/≈\s*(\d+(?:\.\d+)?)(\s*km\s+of\s+quality)/i);
+      if (q) {
+        out = out.replace(q[0], q[0].replace(q[1], String(newWork)));
+      }
+      return out;
+    }
+
+    // ── Coach: Program Suggestion Builder ──
+    // Lifted to top level at v1.25 (BACKLOG B17). It was declared INSIDE
+    // renderSessionLogger, so it was not on window and the gate could only
+    // reach it by driving the real UI — one branch per run. The strength
+    // branch had therefore never been asserted directly. Nothing else about
+    // it changed: it reads WEEKS, getPlanned, getZ2Range,
+    // isSuggestionBlockedWeek and volumeConsequenceLine, all of which are
+    // top-level too, so the move is a relocation and not a rewrite.
+    let _suggestionCounter = 0;
+    function buildCoachSuggestions({ wk, dayKey, km, avgHR, rpe, planned, exs, sleep } = {}) {
+      const suggestions = [];
+      const targetWk = wk + 1;
+      if (!WEEKS[targetWk]) return suggestions;
+      // Deload and attempt weeks come from the plan, never from a week
+      // list — see isSuggestionBlockedWeek for what the list got wrong.
+      if (isSuggestionBlockedWeek(targetWk)) return suggestions;
+
+      // HR thresholds come from the configured zones, never from
+      // literals. getZ2Range() honours a maxHR change and a
+      // lactate-threshold pin; the numbers these replace were copies of its
+      // DEFAULTS and would have gone silently wrong the moment he edited
+      // either. At the default maxHR of 183 the shifts are: bump gate
+      // 140 -> 137, trim gate 138 -> 137, fatigue gate 130 -> mid-Z2. Every
+      // one of those moves toward less volume, which is the safe direction.
+      const z2Band = getZ2Range();
+      const HR_Z2_CEIL = z2Band.high;
+      const HR_Z2_MID = Math.round((z2Band.low + z2Band.high) / 2);
+
+      const isZone2 = dayKey === 'easy' || dayKey === 'longRun';
+      const isQuality = dayKey === 'quality';
+      const isStrength = !isZone2 && !isQuality;
+      const sessionLabel = { easy: 'easy run', longRun: 'long run', quality: 'quality run', upperA: 'Upper A', upperB: 'Upper B', lower: 'legs session' }[dayKey] || dayKey;
+
+      if (isZone2 && km > 0 && planned) {
+        const plannedMatch = planned.match(/^(\d+(?:\.\d+)?)/);
+        const plannedKm = plannedMatch ? parseFloat(plannedMatch[1]) : 0;
+        const nextPlanned = getPlanned(targetWk, dayKey);
+        if (nextPlanned && plannedKm > 0) {
+          const nextMatch = nextPlanned.match(/^(\d+(?:\.\d+)?)/);
+          const nextKm = nextMatch ? parseFloat(nextMatch[1]) : 0;
+          if (nextKm > 0) {
+            // Over-performed with good metrics → bump next session (relaxed thresholds)
+            if (km >= plannedKm * 1.05 && (avgHR <= 0 || avgHR <= HR_Z2_CEIL) && (rpe === null || rpe <= 7)) {
+              const suggestedKm = nextKm + 1;
+              const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
+              suggestions.push({
+                id: ++_suggestionCounter,
+                ts: new Date().toISOString(),
+                label: `Bump Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
+                emoji: '📈',
+                reason: `You covered ${km} km vs planned ${plannedKm} km${avgHR > 0 ? ` at avg HR ${avgHR} bpm` : ''}${rpe !== null ? `, RPE ${rpe}` : ''}. Session was within capacity — a conservative +1 km step-up is appropriate.`,
+                week: targetWk,
+                sessionKey: dayKey,
+                oldValue: nextPlanned,
+                newValue
+              });
+            }
+            // Low RPE alone (even without distance over-performance) → small bump
+            else if (rpe !== null && rpe <= 4 && (avgHR <= 0 || avgHR <= HR_Z2_CEIL) && nextKm > 0) {
+              const suggestedKm = nextKm + 0.5;
+              const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
+              suggestions.push({
+                id: ++_suggestionCounter,
+                ts: new Date().toISOString(),
+                label: `Nudge Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
+                emoji: '📈',
+                reason: `RPE ${rpe} shows this was genuinely easy. A small +0.5 km nudge accumulates aerobic volume without risking Z2 drift.`,
+                week: targetWk,
+                sessionKey: dayKey,
+                oldValue: nextPlanned,
+                newValue
+              });
+            }
+            // HR drifted too high → consider reducing
+            else if (avgHR > HR_Z2_CEIL && km > 0 && nextKm > 4) {
+              const suggestedKm = Math.max(Math.round((nextKm - 1) * 2) / 2, 5);
+              const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
+              suggestions.push({
+                id: ++_suggestionCounter,
+                ts: new Date().toISOString(),
+                label: `Reduce Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
+                emoji: '📉',
+                reason: `Avg HR ${avgHR} bpm was above the Zone 2 ceiling (${HR_Z2_CEIL} bpm). This session accumulated more cardiovascular stress than intended — trimming Wk ${targetWk} slightly protects aerobic adaptation quality.`,
+                week: targetWk,
+                sessionKey: dayKey,
+                oldValue: nextPlanned,
+                newValue
+              });
+            }
+            // High RPE on an easy run → also a reduce signal (fatigue / under-recovery)
+            else if (rpe !== null && rpe >= 7 && nextKm > 4 && (avgHR <= 0 || avgHR > HR_Z2_MID)) {
+              const suggestedKm = Math.max(Math.round((nextKm - 1) * 2) / 2, 5);
+              const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
+              suggestions.push({
+                id: ++_suggestionCounter,
+                ts: new Date().toISOString(),
+                label: `Reduce Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
+                emoji: '📉',
+                reason: `RPE ${rpe} on an easy run is a fatigue flag — a truly aerobic session should feel like 3–5. Trimming Wk ${targetWk} protects recovery for strength days.`,
+                week: targetWk,
+                sessionKey: dayKey,
+                oldValue: nextPlanned,
+                newValue
+              });
+            }
+          }
+        }
+      }
+
+      if (isQuality && rpe !== null && rpe <= 7) {
+        const nextQuality = getPlanned(targetWk, 'quality');
+        if (nextQuality) {
+          // B27: the rep scheme comes from the session's own text, and the
+          // stated quality volume moves with it so the plan and the weekly
+          // volume model cannot disagree. Mardy, 30 Sep: "dont worry about
+          // the strictness on climbing the quality ramp."
+          const scheme = parseQualityRepScheme(nextQuality);
+          const repBump = rpe <= 5 ? 2 : 1;
+          if (scheme) {
+            const newReps = scheme.reps + repBump;
+            const newValue = rewriteQualityReps(nextQuality, newReps);
+            const unit = scheme.unit;
+            if (newValue) {
+              suggestions.push({
+                id: ++_suggestionCounter,
+                ts: new Date().toISOString(),
+                label: `Add ${repBump} rep${repBump > 1 ? 's' : ''} to Wk ${targetWk}: `
+                     + `${scheme.reps}×${scheme.dist} ${unit} → ${newReps}×${scheme.dist} ${unit}`,
+                emoji: '📈',
+                reason: `RPE ${rpe} on today's hard session shows capacity for progression. `
+                      + `+${repBump} rep at the same pace takes the quality volume `
+                      + `${scheme.workKm} → ${Math.round(newReps * scheme.dist * (unit === 'km' ? 1 : 0.001) * 1000) / 1000} km.`,
+                week: targetWk,
+                sessionKey: 'quality',
+                oldValue: nextQuality,
+                newValue
+              });
+            }
+          }
+        }
+      }
+
+      if (isStrength && !isSuggestionBlockedWeek(targetWk)) {
+        const nextPlannedGym = getPlanned(targetWk, dayKey);
+        if (nextPlannedGym && exs && exs.length > 0) {
+          const nextLines = nextPlannedGym.split('\n');
+          const sessionLabel = { upperA: 'Upper A', upperB: 'Upper B', lower: 'Legs' }[dayKey] || dayKey;
+
+          // ── Per-exercise analysis ──
+          const exChanges = [];   // { exName, from, to, line, newLine, reason }
+          const holdItems  = [];  // exercises to hold flat
+
+          for (const ex of exs) {
+            if (!ex.name || !ex.sets || ex.sets.length === 0) continue;
+            const weights = ex.sets.map(s => parseFloat(s.weight)).filter(w => !isNaN(w) && w > 0);
+            if (weights.length === 0) continue;
+
+            const topWeight = Math.max(...weights);
+            const setRPEs   = ex.sets.map(s => parseFloat(s.rpe)).filter(r => !isNaN(r) && r > 0);
+            const avgSetRpe = setRPEs.length > 0 ? (setRPEs.reduce((a,b) => a+b,0) / setRPEs.length) : null;
+            const effectiveRpe = avgSetRpe !== null ? avgSetRpe : rpe;
+            if (effectiveRpe === null) continue;
+
+            // Find matching line in next week's plan (case-insensitive substring)
+            const exLower = ex.name.toLowerCase().trim();
+            const matchLine = nextLines.find(line => {
+              const ll = line.toLowerCase();
+              return ll.includes(exLower) || exLower.split(' ').filter(w => w.length > 3).every(w => ll.includes(w));
+            });
+            if (!matchLine) continue;
+
+            // Only act on kg-based weights (skip % and bodyweight)
+            const wMatch = matchLine.match(/@(\d+(?:\.\d+)?)\s*kg/);
+            if (!wMatch) continue;
+            const plannedW = parseFloat(wMatch[1]);
+            const rpeLabel = avgSetRpe !== null ? `avg set RPE ${avgSetRpe.toFixed(1)}` : `session RPE ${effectiveRpe}`;
+
+            if (effectiveRpe <= 5) {
+              const newW = plannedW + 5;
+              const newLine = matchLine.replace(`@${wMatch[1]} kg`, `@${newW} kg`);
+              exChanges.push({ exName: ex.name, from: plannedW, to: newW, line: matchLine, newLine, reason: `${rpeLabel} — strong capacity, +5 kg` });
+            } else if (effectiveRpe <= 7) {
+              const newW = plannedW + 2.5;
+              const newLine = matchLine.replace(`@${wMatch[1]} kg`, `@${newW} kg`);
+              exChanges.push({ exName: ex.name, from: plannedW, to: newW, line: matchLine, newLine, reason: `${rpeLabel} — capacity available, +2.5 kg` });
+            } else if (effectiveRpe >= 9 && plannedW > topWeight) {
+              const newLine = matchLine.replace(`@${wMatch[1]} kg`, `@${topWeight} kg`);
+              exChanges.push({ exName: ex.name, from: plannedW, to: topWeight, line: matchLine, newLine, reason: `${rpeLabel} — at max capacity, drop to today's top weight` });
+            } else if (effectiveRpe >= 8.5) {
+              holdItems.push(`${ex.name} (${rpeLabel})`);
+            }
+          }
+
+          // ── Combined bump suggestion ──
+          if (exChanges.length > 0) {
+            let newValue = nextPlannedGym;
+            exChanges.forEach(ch => { newValue = newValue.replace(ch.line, ch.newLine); });
+            const bumps   = exChanges.filter(ch => ch.to > ch.from);
+            const holds   = exChanges.filter(ch => ch.to <= ch.from);
+            const summary = bumps.map(ch => `📈 ${ch.exName}: ${ch.from} → ${ch.to} kg (${ch.reason})`).join('\n') +
+                            (holds.length ? '\n' + holds.map(ch => `📉 ${ch.exName}: hold at ${ch.to} kg (${ch.reason})`).join('\n') : '');
+            const label   = bumps.length > 0
+              ? `Wk ${targetWk} ${sessionLabel}: ${bumps.length} exercise${bumps.length > 1 ? 's' : ''} bumped${holds.length ? `, ${holds.length} held` : ''}`
+              : `Wk ${targetWk} ${sessionLabel}: ${holds.length} exercise${holds.length > 1 ? 's' : ''} held flat`;
+            suggestions.push({
+              id: ++_suggestionCounter,
+              ts: new Date().toISOString(),
+              label,
+              emoji: bumps.length >= holds.length ? '📈' : '📉',
+              reason: summary,
+              week: targetWk,
+              sessionKey: dayKey,
+              oldValue: nextPlannedGym,
+              newValue
+            });
+          }
+
+          // ── Hold-only note (no apply needed — just coaching) ──
+          if (holdItems.length > 0 && exChanges.length === 0) {
+            suggestions.push({
+              id: ++_suggestionCounter,
+              ts: new Date().toISOString(),
+              label: `Wk ${targetWk} ${sessionLabel}: hold weights flat`,
+              emoji: '➡️',
+              reason: `Max-effort sets logged on: ${holdItems.join(', ')}. The program already has progression built in — don't add to it when you hit the ceiling.`,
+              week: targetWk,
+              sessionKey: dayKey,
+              oldValue: nextPlannedGym,
+              newValue: nextPlannedGym
+            });
+          }
+        }
+      }
+
+      // ── DELOAD SUGGESTION — fatigue signal (relaxed: either strong single or combined moderate) ──
+      const strongSingle = (rpe !== null && rpe >= 9) || (sleep !== null && sleep <= 3);
+      const combinedMod  = (rpe !== null && rpe >= 8 && sleep !== null && sleep <= 5);
+      if (isStrength && (strongSingle || combinedMod)
+          && !isSuggestionBlockedWeek(targetWk)) {
+        const nextPlannedGym = getPlanned(targetWk, dayKey);
+        if (nextPlannedGym) {
+          // Reduce all @X kg weights by 10%, round to nearest 2.5
+          const newValue = nextPlannedGym.replace(/@(\d+(?:\.\d+)?)\s*kg/g, (_, w) => {
+            const reduced = Math.round((parseFloat(w) * 0.9) / 2.5) * 2.5;
+            return `@${reduced} kg`;
+          });
+          if (newValue !== nextPlannedGym) {
+            const sessionLabel = { upperA: 'Upper A', upperB: 'Upper B', lower: 'Legs' }[dayKey] || dayKey;
+            suggestions.push({
+              id: ++_suggestionCounter,
+              ts: new Date().toISOString(),
+              label: `Light session Wk ${targetWk} ${sessionLabel} — fatigue flag`,
+              emoji: '😴',
+              reason: `Fatigue signal: ${rpe !== null ? `RPE ${rpe}` : 'high session effort'}${sleep !== null ? ` + sleep ${sleep}/10` : ''}. All weights reduced ~10% for Wk ${targetWk}. Recovery is where adaptation happens — one lighter week costs nothing.`,
+              week: targetWk,
+              sessionKey: dayKey,
+              oldValue: nextPlannedGym,
+              newValue
+            });
+          }
+        }
+      }
+
+      // Every suggestion that moves a run now states what it does to
+      // that week's total. Done once here rather than at each push site,
+      // so a suggestion added later cannot forget to carry its cost.
+      for (const s of suggestions) {
+        const line = volumeConsequenceLine(s.week, s.sessionKey, s.oldValue, s.newValue);
+        if (line) s.reason += '\n' + line;
+      }
+
+      return suggestions;
+    }
+
     async function renderSessionLogger() {
       // Clear stale session-local globals from any previous session view
       window._intervals = [];
@@ -8065,298 +8525,6 @@ const COACH_HELP_TEXT =
         }
       });
 
-      // ── Coach: Program Suggestion Builder ──
-      let _suggestionCounter = 0;
-      function buildCoachSuggestions({ wk, dayKey, km, avgHR, rpe, planned, exs, sleep }) {
-        const suggestions = [];
-        const targetWk = wk + 1;
-        if (!WEEKS[targetWk]) return suggestions;
-        // Deload and attempt weeks come from the plan, never from a week
-        // list — see isSuggestionBlockedWeek for what the list got wrong.
-        if (isSuggestionBlockedWeek(targetWk)) return suggestions;
-
-        // HR thresholds come from the configured zones, never from
-        // literals. getZ2Range() honours a maxHR change and a
-        // lactate-threshold pin; the numbers these replace were copies of its
-        // DEFAULTS and would have gone silently wrong the moment he edited
-        // either. At the default maxHR of 183 the shifts are: bump gate
-        // 140 -> 137, trim gate 138 -> 137, fatigue gate 130 -> mid-Z2. Every
-        // one of those moves toward less volume, which is the safe direction.
-        const z2Band = getZ2Range();
-        const HR_Z2_CEIL = z2Band.high;
-        const HR_Z2_MID = Math.round((z2Band.low + z2Band.high) / 2);
-
-        const isZone2 = dayKey === 'easy' || dayKey === 'longRun';
-        const isQuality = dayKey === 'quality';
-        const isStrength = !isZone2 && !isQuality;
-        const sessionLabel = { easy: 'easy run', longRun: 'long run', quality: 'quality run', upperA: 'Upper A', upperB: 'Upper B', lower: 'legs session' }[dayKey] || dayKey;
-
-        if (isZone2 && km > 0 && planned) {
-          const plannedMatch = planned.match(/^(\d+(?:\.\d+)?)/);
-          const plannedKm = plannedMatch ? parseFloat(plannedMatch[1]) : 0;
-          const nextPlanned = getPlanned(targetWk, dayKey);
-          if (nextPlanned && plannedKm > 0) {
-            const nextMatch = nextPlanned.match(/^(\d+(?:\.\d+)?)/);
-            const nextKm = nextMatch ? parseFloat(nextMatch[1]) : 0;
-            if (nextKm > 0) {
-              // Over-performed with good metrics → bump next session (relaxed thresholds)
-              if (km >= plannedKm * 1.05 && (avgHR <= 0 || avgHR <= HR_Z2_CEIL) && (rpe === null || rpe <= 7)) {
-                const suggestedKm = nextKm + 1;
-                const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
-                suggestions.push({
-                  id: ++_suggestionCounter,
-                  ts: new Date().toISOString(),
-                  label: `Bump Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
-                  emoji: '📈',
-                  reason: `You covered ${km} km vs planned ${plannedKm} km${avgHR > 0 ? ` at avg HR ${avgHR} bpm` : ''}${rpe !== null ? `, RPE ${rpe}` : ''}. Session was within capacity — a conservative +1 km step-up is appropriate.`,
-                  week: targetWk,
-                  sessionKey: dayKey,
-                  oldValue: nextPlanned,
-                  newValue
-                });
-              }
-              // Low RPE alone (even without distance over-performance) → small bump
-              else if (rpe !== null && rpe <= 4 && (avgHR <= 0 || avgHR <= HR_Z2_CEIL) && nextKm > 0) {
-                const suggestedKm = nextKm + 0.5;
-                const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
-                suggestions.push({
-                  id: ++_suggestionCounter,
-                  ts: new Date().toISOString(),
-                  label: `Nudge Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
-                  emoji: '📈',
-                  reason: `RPE ${rpe} shows this was genuinely easy. A small +0.5 km nudge accumulates aerobic volume without risking Z2 drift.`,
-                  week: targetWk,
-                  sessionKey: dayKey,
-                  oldValue: nextPlanned,
-                  newValue
-                });
-              }
-              // HR drifted too high → consider reducing
-              else if (avgHR > HR_Z2_CEIL && km > 0 && nextKm > 4) {
-                const suggestedKm = Math.max(Math.round((nextKm - 1) * 2) / 2, 5);
-                const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
-                suggestions.push({
-                  id: ++_suggestionCounter,
-                  ts: new Date().toISOString(),
-                  label: `Reduce Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
-                  emoji: '📉',
-                  reason: `Avg HR ${avgHR} bpm was above the Zone 2 ceiling (${HR_Z2_CEIL} bpm). This session accumulated more cardiovascular stress than intended — trimming Wk ${targetWk} slightly protects aerobic adaptation quality.`,
-                  week: targetWk,
-                  sessionKey: dayKey,
-                  oldValue: nextPlanned,
-                  newValue
-                });
-              }
-              // High RPE on an easy run → also a reduce signal (fatigue / under-recovery)
-              else if (rpe !== null && rpe >= 7 && nextKm > 4 && (avgHR <= 0 || avgHR > HR_Z2_MID)) {
-                const suggestedKm = Math.max(Math.round((nextKm - 1) * 2) / 2, 5);
-                const newValue = nextPlanned.replace(/^\d+(?:\.\d+)?/, suggestedKm);
-                suggestions.push({
-                  id: ++_suggestionCounter,
-                  ts: new Date().toISOString(),
-                  label: `Reduce Wk ${targetWk} ${sessionLabel}: ${nextKm} → ${suggestedKm} km`,
-                  emoji: '📉',
-                  reason: `RPE ${rpe} on an easy run is a fatigue flag — a truly aerobic session should feel like 3–5. Trimming Wk ${targetWk} protects recovery for strength days.`,
-                  week: targetWk,
-                  sessionKey: dayKey,
-                  oldValue: nextPlanned,
-                  newValue
-                });
-              }
-            }
-          }
-        }
-
-        if (isQuality && rpe !== null && rpe <= 7) {
-          const nextQuality = getPlanned(targetWk, 'quality');
-          if (nextQuality) {
-            const intMatch = nextQuality.match(/(\d+)×(\d+)m/);
-            const intKmMatch = nextQuality.match(/(\d+)×(\d+)\s*km/);
-            const tempoMatch = nextQuality.match(/(\d+)\s*min\s*(continuous|@)/i);
-            const repBump = rpe <= 5 ? 2 : 1;
-            const tempoBump = rpe <= 5 ? 5 : 3;
-            if (intMatch) {
-              const reps = parseInt(intMatch[1]);
-              const dist = intMatch[2];
-              const newReps = reps + repBump;
-              const newValue = nextQuality.replace(`${reps}×${dist}m`, `${newReps}×${dist}m`);
-              suggestions.push({
-                id: ++_suggestionCounter,
-                ts: new Date().toISOString(),
-                label: `Add ${repBump} rep${repBump > 1 ? 's' : ''} to Wk ${targetWk} intervals: ${reps}×${dist}m → ${newReps}×${dist}m`,
-                emoji: '📈',
-                reason: `RPE ${rpe} on today's session shows capacity for progression. +${repBump} rep at the same pace is a conservative step.`,
-                week: targetWk,
-                sessionKey: 'quality',
-                oldValue: nextQuality,
-                newValue
-              });
-            } else if (intKmMatch) {
-              const reps = parseInt(intKmMatch[1]);
-              const dist = intKmMatch[2];
-              const newReps = reps + 1;
-              const newValue = nextQuality.replace(`${reps}×${dist} km`, `${newReps}×${dist} km`);
-              suggestions.push({
-                id: ++_suggestionCounter,
-                ts: new Date().toISOString(),
-                label: `Add 1 rep to Wk ${targetWk} intervals: ${reps}×${dist} km → ${newReps}×${dist} km`,
-                emoji: '📈',
-                reason: `RPE ${rpe} indicates headroom for volume progression. +1 km-rep at the same pace.`,
-                week: targetWk,
-                sessionKey: 'quality',
-                oldValue: nextQuality,
-                newValue
-              });
-            } else if (tempoMatch) {
-              const mins = parseInt(tempoMatch[1]);
-              const newMins = mins + tempoBump;
-              const newValue = nextQuality.replace(`${mins} min`, `${newMins} min`);
-              suggestions.push({
-                id: ++_suggestionCounter,
-                ts: new Date().toISOString(),
-                label: `Extend Wk ${targetWk} tempo: ${mins} → ${newMins} min`,
-                emoji: '📈',
-                reason: `RPE ${rpe} indicates this tempo was within your lactate threshold. +${tempoBump} min keeps aerobic stimulus progressing without pushing anaerobic.`,
-                week: targetWk,
-                sessionKey: 'quality',
-                oldValue: nextQuality,
-                newValue
-              });
-            }
-          }
-        }
-
-        if (isStrength && !isSuggestionBlockedWeek(targetWk)) {
-          const nextPlannedGym = getPlanned(targetWk, dayKey);
-          if (nextPlannedGym && exs && exs.length > 0) {
-            const nextLines = nextPlannedGym.split('\n');
-            const sessionLabel = { upperA: 'Upper A', upperB: 'Upper B', lower: 'Legs' }[dayKey] || dayKey;
-
-            // ── Per-exercise analysis ──
-            const exChanges = [];   // { exName, from, to, line, newLine, reason }
-            const holdItems  = [];  // exercises to hold flat
-
-            for (const ex of exs) {
-              if (!ex.name || !ex.sets || ex.sets.length === 0) continue;
-              const weights = ex.sets.map(s => parseFloat(s.weight)).filter(w => !isNaN(w) && w > 0);
-              if (weights.length === 0) continue;
-
-              const topWeight = Math.max(...weights);
-              const setRPEs   = ex.sets.map(s => parseFloat(s.rpe)).filter(r => !isNaN(r) && r > 0);
-              const avgSetRpe = setRPEs.length > 0 ? (setRPEs.reduce((a,b) => a+b,0) / setRPEs.length) : null;
-              const effectiveRpe = avgSetRpe !== null ? avgSetRpe : rpe;
-              if (effectiveRpe === null) continue;
-
-              // Find matching line in next week's plan (case-insensitive substring)
-              const exLower = ex.name.toLowerCase().trim();
-              const matchLine = nextLines.find(line => {
-                const ll = line.toLowerCase();
-                return ll.includes(exLower) || exLower.split(' ').filter(w => w.length > 3).every(w => ll.includes(w));
-              });
-              if (!matchLine) continue;
-
-              // Only act on kg-based weights (skip % and bodyweight)
-              const wMatch = matchLine.match(/@(\d+(?:\.\d+)?)\s*kg/);
-              if (!wMatch) continue;
-              const plannedW = parseFloat(wMatch[1]);
-              const rpeLabel = avgSetRpe !== null ? `avg set RPE ${avgSetRpe.toFixed(1)}` : `session RPE ${effectiveRpe}`;
-
-              if (effectiveRpe <= 5) {
-                const newW = plannedW + 5;
-                const newLine = matchLine.replace(`@${wMatch[1]} kg`, `@${newW} kg`);
-                exChanges.push({ exName: ex.name, from: plannedW, to: newW, line: matchLine, newLine, reason: `${rpeLabel} — strong capacity, +5 kg` });
-              } else if (effectiveRpe <= 7) {
-                const newW = plannedW + 2.5;
-                const newLine = matchLine.replace(`@${wMatch[1]} kg`, `@${newW} kg`);
-                exChanges.push({ exName: ex.name, from: plannedW, to: newW, line: matchLine, newLine, reason: `${rpeLabel} — capacity available, +2.5 kg` });
-              } else if (effectiveRpe >= 9 && plannedW > topWeight) {
-                const newLine = matchLine.replace(`@${wMatch[1]} kg`, `@${topWeight} kg`);
-                exChanges.push({ exName: ex.name, from: plannedW, to: topWeight, line: matchLine, newLine, reason: `${rpeLabel} — at max capacity, drop to today's top weight` });
-              } else if (effectiveRpe >= 8.5) {
-                holdItems.push(`${ex.name} (${rpeLabel})`);
-              }
-            }
-
-            // ── Combined bump suggestion ──
-            if (exChanges.length > 0) {
-              let newValue = nextPlannedGym;
-              exChanges.forEach(ch => { newValue = newValue.replace(ch.line, ch.newLine); });
-              const bumps   = exChanges.filter(ch => ch.to > ch.from);
-              const holds   = exChanges.filter(ch => ch.to <= ch.from);
-              const summary = bumps.map(ch => `📈 ${ch.exName}: ${ch.from} → ${ch.to} kg (${ch.reason})`).join('\n') +
-                              (holds.length ? '\n' + holds.map(ch => `📉 ${ch.exName}: hold at ${ch.to} kg (${ch.reason})`).join('\n') : '');
-              const label   = bumps.length > 0
-                ? `Wk ${targetWk} ${sessionLabel}: ${bumps.length} exercise${bumps.length > 1 ? 's' : ''} bumped${holds.length ? `, ${holds.length} held` : ''}`
-                : `Wk ${targetWk} ${sessionLabel}: ${holds.length} exercise${holds.length > 1 ? 's' : ''} held flat`;
-              suggestions.push({
-                id: ++_suggestionCounter,
-                ts: new Date().toISOString(),
-                label,
-                emoji: bumps.length >= holds.length ? '📈' : '📉',
-                reason: summary,
-                week: targetWk,
-                sessionKey: dayKey,
-                oldValue: nextPlannedGym,
-                newValue
-              });
-            }
-
-            // ── Hold-only note (no apply needed — just coaching) ──
-            if (holdItems.length > 0 && exChanges.length === 0) {
-              suggestions.push({
-                id: ++_suggestionCounter,
-                ts: new Date().toISOString(),
-                label: `Wk ${targetWk} ${sessionLabel}: hold weights flat`,
-                emoji: '➡️',
-                reason: `Max-effort sets logged on: ${holdItems.join(', ')}. The program already has progression built in — don't add to it when you hit the ceiling.`,
-                week: targetWk,
-                sessionKey: dayKey,
-                oldValue: nextPlannedGym,
-                newValue: nextPlannedGym
-              });
-            }
-          }
-        }
-
-        // ── DELOAD SUGGESTION — fatigue signal (relaxed: either strong single or combined moderate) ──
-        const strongSingle = (rpe !== null && rpe >= 9) || (sleep !== null && sleep <= 3);
-        const combinedMod  = (rpe !== null && rpe >= 8 && sleep !== null && sleep <= 5);
-        if (isStrength && (strongSingle || combinedMod)
-            && !isSuggestionBlockedWeek(targetWk)) {
-          const nextPlannedGym = getPlanned(targetWk, dayKey);
-          if (nextPlannedGym) {
-            // Reduce all @X kg weights by 10%, round to nearest 2.5
-            const newValue = nextPlannedGym.replace(/@(\d+(?:\.\d+)?)\s*kg/g, (_, w) => {
-              const reduced = Math.round((parseFloat(w) * 0.9) / 2.5) * 2.5;
-              return `@${reduced} kg`;
-            });
-            if (newValue !== nextPlannedGym) {
-              const sessionLabel = { upperA: 'Upper A', upperB: 'Upper B', lower: 'Legs' }[dayKey] || dayKey;
-              suggestions.push({
-                id: ++_suggestionCounter,
-                ts: new Date().toISOString(),
-                label: `Light session Wk ${targetWk} ${sessionLabel} — fatigue flag`,
-                emoji: '😴',
-                reason: `Fatigue signal: ${rpe !== null ? `RPE ${rpe}` : 'high session effort'}${sleep !== null ? ` + sleep ${sleep}/10` : ''}. All weights reduced ~10% for Wk ${targetWk}. Recovery is where adaptation happens — one lighter week costs nothing.`,
-                week: targetWk,
-                sessionKey: dayKey,
-                oldValue: nextPlannedGym,
-                newValue
-              });
-            }
-          }
-        }
-
-        // Every suggestion that moves a run now states what it does to
-        // that week's total. Done once here rather than at each push site,
-        // so a suggestion added later cannot forget to carry its cost.
-        for (const s of suggestions) {
-          const line = volumeConsequenceLine(s.week, s.sessionKey, s.oldValue, s.newValue);
-          if (line) s.reason += '\n' + line;
-        }
-
-        return suggestions;
-      }
 
       // ── Built-in Rule-Based AI Coach (no API key needed) ──
       document.getElementById('askCoach').addEventListener('click', () => {
@@ -8365,6 +8533,11 @@ const COACH_HELP_TEXT =
         const sleep = parseFloat(document.getElementById('sleepQuality').value) || null;
         const sessionNotes = document.getElementById('notes').value;
         const feedback = [];
+        // The best bench estimate from THIS session, if it is a gym day —
+        // passed to the goal block so today's set counts toward the gap
+        // before it has been saved. Never read from window._strengthAnalysis,
+        // which survives a navigation and would carry another week in.
+        let sessionBenchE1rm = null;
 
         // ── MILESTONE targets, read from the plan (v1.17) ──────────────
         // Was a hardcoded {3:115, 7:117.5, ...} map holding the PRE-v1.11
@@ -8422,6 +8595,7 @@ const COACH_HELP_TEXT =
           const exs = (window.getExercises ? window.getExercises() : null) || [];
           const analysis = analyseStrengthSession({ wk, sessionKey, exercises: exs, rpe, sleep });
           window._strengthAnalysis = analysis;
+          sessionBenchE1rm = analysis.sessionBenchE1rm ? analysis.sessionBenchE1rm.e1rm : null;
           strengthCoachLines(analysis).forEach(l => feedback.push(l));
 
           // RPE analysis
@@ -8448,6 +8622,13 @@ const COACH_HELP_TEXT =
 
         if (feedback.length === 0) feedback.push('📋 Log your sets, reps, weight and RPE to get specific coaching feedback.');
 
+        // ── The two goals, at the top, on every session (B25) ────────────
+        // v1.24 named the bench target on a gym session only, through
+        // strengthCoachLines, and never named the 5K goal at all. He asked
+        // for both to be in front of him every time.
+        const goalLines = goalAnchorLines(wk, { sessionBenchE1rm });
+        for (let gi = goalLines.length - 1; gi >= 0; gi--) feedback.unshift(goalLines[gi]);
+
         // Build program suggestions
         const km = isRun ? (parseFloat(document.getElementById('runKm')?.value) || 0) : 0;
         const avgHR = isRun ? (parseInt(document.getElementById('avgHR')?.value) || 0) : 0;
@@ -8458,17 +8639,20 @@ const COACH_HELP_TEXT =
 
         const suggestionsHtml = suggestions.length > 0 ? `
           <div class="ai-suggestions">
-            <div class="ai-suggest-header">💡 Program adjustments</div>
+            <div class="ai-suggest-header">💡 ${suggestions.length} change${suggestions.length > 1 ? 's' : ''} I would make \u2014 want me to?</div>
             ${suggestions.map(s => `
               <div class="ai-suggest-card" id="suggest-${s.id}">
-                <div class="ai-suggest-label">${s.emoji} ${escapeHtml(s.label)}</div>
+                <div class="ai-suggest-label">${s.emoji} ${escapeHtml(coachQuestionFor(s) || s.label)}</div>
                 <div class="ai-suggest-reason">${s.reason.split('\n').map(l => `<div style="margin-bottom:3px;">${escapeHtml(l)}</div>`).join('')}</div>
                 <div class="ai-suggest-diff">
                   <span class="ai-diff-old">${escapeHtml((s.oldValue || '').split('\n')[0])}</span>
                   <span class="ai-diff-arrow">→</span>
                   <span class="ai-diff-new">${escapeHtml((s.newValue || '').split('\n')[0])}</span>
                 </div>
-                <button class="btn-secondary ai-apply-btn" data-sid="${s.id}">Apply to program</button>
+                <div class="ai-suggest-actions">
+                  <button class="btn-secondary ai-apply-btn" data-sid="${s.id}">Yes, apply</button>
+                  <button class="btn-secondary ai-dismiss-btn" data-sid="${s.id}">No, leave it</button>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -8499,6 +8683,8 @@ const COACH_HELP_TEXT =
             const card = document.getElementById(`suggest-${sid}`);
             if (card) {
               btn.style.display = 'none';
+              const no = card.querySelector('.ai-dismiss-btn');
+              if (no) no.style.display = 'none';
               const badge = document.createElement('div');
               badge.className = 'ai-applied-badge';
               badge.textContent = '✓ Applied to Wk ' + s.week;
@@ -8508,6 +8694,28 @@ const COACH_HELP_TEXT =
             // plan (getPlanned reads the new override) is visible without
             // the user having to navigate away and back.
             try { render(); } catch (e) { console.warn('post-apply render skipped:', e); }
+          });
+        });
+
+        // Decline handlers. "No" is deliberately inert: it writes nothing,
+        // queues nothing and touches no override. It retires the question so
+        // an answered card cannot be answered twice by a stray tap in a gym.
+        window._dismissedSuggestions = {};
+        document.querySelectorAll('.ai-dismiss-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const sid = parseInt(btn.dataset.sid);
+            const s = window._pendingSuggestions[sid];
+            if (!s) return;
+            window._dismissedSuggestions[sid] = true;
+            const card = document.getElementById(`suggest-${sid}`);
+            if (!card) return;
+            const yes = card.querySelector('.ai-apply-btn');
+            if (yes) yes.style.display = 'none';
+            btn.style.display = 'none';
+            const badge = document.createElement('div');
+            badge.className = 'ai-dismissed-badge';
+            badge.textContent = '\u2014 Left as planned for Wk ' + s.week;
+            card.appendChild(badge);
           });
         });
       });
