@@ -33,8 +33,8 @@
        was previously mislabelled "v1.11", which is what caused the build
        number and the programme number to be confused with each other. -->
   <script>
-    window.APP_VERSION = 'v1.27';
-    window.APP_BUILT   = '5 Oct 2026';
+    window.APP_VERSION = 'v1.28';
+    window.APP_BUILT   = '6 Oct 2026';
     window.PROGRAM_REV = '2026-10-05-run2hard-longeasy-blocklabels';
   </script>
 
@@ -1441,7 +1441,7 @@
     <div class="header-inner">
       <div class="header-top">
         <div class="header-title">Mardy · 2026 <span class="sync-dot" id="syncDot"></span></div>
-        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.27 · built 5 Oct 2026</div>
+        <div id="versionBadge" style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.5px;">v1.28 · built 6 Oct 2026</div>
         <script>(function(){try{var e=document.getElementById('versionBadge');if(e&&window.APP_VERSION){e.textContent=window.APP_VERSION+' \u00b7 built '+window.APP_BUILT;}}catch(_){}})();</script>
         <button class="theme-toggle" id="themeToggle">☽ Dark</button>
       </div>
@@ -1529,6 +1529,8 @@
       { key: "upperB", label: "Upper B · Back", sub: "Pull-ups · Low Row · Pullover · Biceps · Core", icon: "🏋", color: "#2980b9" },
       { key: "longRun", label: "Long Run", sub: "Sun · Zone 2 endurance · TT weeks", icon: "🛤", color: "#c0392b" },
     ];
+
+    window.SESSION_DAYS = SESSION_DAYS;   // test hook — see regression.mjs header
 
     const MILESTONES = [
       { label: "🎯 112.5 kg Bench attempt", date: "2026-10-06", emoji: "🏋" },
@@ -4718,6 +4720,13 @@ const COACH_HELP_TEXT =
     }
 
     function getBestE1RM(exName) {
+      // v1.28: one estimate. This used to compute its own, from the PR table,
+      // with raw Epley and no dates — the second estimator, and the one that
+      // said 118. It now answers with the current one. The PR table is kept
+      // only as a cold-start floor for an exercise with nothing logged this
+      // epoch, which is what it always was: a floor, not a performance.
+      const cur = getCurrentE1RM(exName);
+      if (cur) return cur.e1rm;
       const key = exPRKey(exName);
       const prs = state.exercisePRs?.[key];
       if (!prs) return null;
@@ -4737,15 +4746,17 @@ const COACH_HELP_TEXT =
     function getExerciseSuggestion(exName, targetReps) {
       const key = exPRKey(exName);
       const prs = state.exercisePRs?.[key];
-      if (!prs || Object.keys(prs).length === 0) return null;
 
+      // v1.28: the estimate decides whether there is advice to give, not the
+      // PR table. Requiring a PR row meant an exercise he had logged this
+      // epoch — the better source — produced no suggestion at all.
       const e1rm = getBestE1RM(exName);
       if (!e1rm) return null;
 
       // find the most recent log for context label. An implied entry carries
       // no date and was never lifted, so it must not become "your last lift".
       let lastPR = null;
-      Object.values(prs).forEach(pr => {
+      Object.values(prs || {}).forEach(pr => {
         if (pr.implied || !pr.date) return;
         if (!lastPR || pr.date > lastPR.date) lastPR = pr;
       });
@@ -5113,6 +5124,87 @@ const COACH_HELP_TEXT =
       return out;
     }
 
+    // ── the one e1RM estimate ──────────────────────────────────────────
+    // v1.28. There used to be two, and they disagreed. getBestE1RM read
+    // state.exercisePRs with raw Epley — no RPE, no dates, best-ever wins —
+    // and that is what reported ~118 kg on a day he benched 110×1 at RPE 10,
+    // from a rep PR months old. The coach's own estimator folded RIR in but
+    // still took the maximum over all history, so an old 95×5 @RPE 8 also
+    // outranked a genuine maximal single. Both rules are gone.
+    //
+    // One function, one rule, his: the most recent maximal effort. A set is
+    // an effort when it carries an RPE of at least MAX_EFFORT_RPE — below
+    // that the reps-in-reserve are a guess, and a guess is what produced the
+    // 118. Peak is still computed, but it is reported as history, never as
+    // "your e1RM".
+    const MAX_EFFORT_RPE = 8;
+
+    function loggedSets(matchName) {
+      const out = [];
+      let keys = [];
+      try { keys = Object.keys(localStorage); } catch { return out; }
+      for (const k of keys) {
+        if (k.indexOf('session_') !== 0) continue;
+        let rec = null;
+        try { rec = JSON.parse(localStorage.getItem(k) || 'null'); } catch { continue; }
+        if (!rec || typeof rec !== 'object' || !Array.isArray(rec.exercises)) continue;
+        if (rec.epoch !== undefined && rec.epoch !== PROGRAM_EPOCH) continue;
+        const wkM = k.match(/session_e\d+:(\d+)_/);
+        const week = wkM ? parseInt(wkM[1], 10) : null;
+        for (const ex of rec.exercises) {
+          if (!ex || !matchName(ex.name)) continue;
+          for (const s of (ex.sets || [])) {
+            const est = e1rmFromSet(s);
+            if (!est) continue;
+            out.push({
+              e1rm: est.e1rm, set: est.set, rir: est.rir, rpeKnown: est.rpeKnown,
+              lift: ex.name, week, sessionKey: k.slice('session_'.length),
+              savedAt: rec.savedAt || null,
+            });
+          }
+        }
+      }
+      return out;
+    }
+
+    // Recency: the saved timestamp when the record carries one, the week
+    // number otherwise. Never Object.keys order — storage order is not a clock.
+    function setRecency(s) {
+      const t = s && s.savedAt ? Date.parse(s.savedAt) : NaN;
+      return Number.isFinite(t) ? t : ((s && s.week ? s.week : 0) * 86400000);
+    }
+
+    // The most recent maximal effort in a pool of logged sets. Efforts are
+    // preferred absolutely: a set at RPE 9 three weeks ago beats an RPE 6
+    // back-off yesterday, because only one of them measures anything. With no
+    // effort logged at all it falls back to the most recent set and says so.
+    function mostRecentMaxEffort(sets) {
+      if (!sets || !sets.length) return null;
+      const efforts = sets.filter(s => s.rpeKnown && s.set.rpe >= MAX_EFFORT_RPE);
+      const pool = efforts.length ? efforts : sets;
+      let newest = -Infinity;
+      pool.forEach(s => { const r = setRecency(s); if (r > newest) newest = r; });
+      const sameSession = pool.filter(s => setRecency(s) === newest);
+      const pick = sameSession.reduce((a, b) => (!a || b.e1rm > a.e1rm ? b : a), null);
+      if (!pick) return null;
+      return {
+        e1rm: Math.round(pick.e1rm * 10) / 10,
+        set: pick.set, lift: pick.lift, week: pick.week, savedAt: pick.savedAt,
+        rpeKnown: pick.rpeKnown,
+        fromMaxEffort: efforts.length > 0,
+      };
+    }
+
+    function getCurrentE1RM(exName) {
+      const want = exPRKey(exName);
+      if (!want) return null;
+      return mostRecentMaxEffort(loggedSets(nm => exPRKey(nm) === want));
+    }
+
+    function getCurrentBenchE1RM() {
+      return mostRecentMaxEffort(loggedSets(nm => classifyBenchLift(nm) === 'max'));
+    }
+
     // ── per-exercise weight advice ─────────────────────────────────────
     // The thing that was missing entirely: for each exercise in the workout,
     // what should the load be next time? Driven by the plan's own target RPE
@@ -5193,6 +5285,27 @@ const COACH_HELP_TEXT =
       };
     }
 
+    // The RPE the plan asks for on a given lift. The bench ladder states its
+    // own; everything else states it on the plan line that names the lift.
+    function plannedTargetRpe(planText, exName) {
+      const t = typeof planText === 'string' ? planText : '';
+      const want = exPRKey(exName);
+      if (!want || !t) return null;
+      for (const line of t.split('\n')) {
+        if (!line.trim()) continue;
+        // The plan states the lift first and everything else after it:
+        // "Flat Bench  4×6 @82.5 kg (RPE 7.5 — volume)". Prefix, not equality.
+        const norm = exPRKey(line);
+        if (!norm || norm.indexOf(want) !== 0) continue;
+        const m = line.match(/RPE\s*(\d+(?:\.\d+)?)/i);
+        if (m) {
+          const v = parseFloat(m[1]);
+          if (v >= 1 && v <= 10) return v;
+        }
+      }
+      return null;
+    }
+
     // ── whole-session analysis ─────────────────────────────────────────
     function analyseStrengthSession(opts) {
       const o = opts || {};
@@ -5227,9 +5340,18 @@ const COACH_HELP_TEXT =
         }
       }
       const history = getLoggedBenchHistory();
-      const bestHist = history.reduce((a, b) => (!a || b.e1rm > a.e1rm ? b : a), null);
-      const bestE1rm = [sessionBenchE1rm && sessionBenchE1rm.e1rm, bestHist && bestHist.e1rm]
-        .filter(v => typeof v === 'number').reduce((a, b) => Math.max(a, b), 0) || null;
+      // v1.28: current, not best-ever. The set in front of him wins when it is
+      // a maximal effort; otherwise the most recent logged maximal effort
+      // does. The all-time peak is still computed and still shown — as
+      // history, labelled, never as the number the advice is built on.
+      const sessionIsEffort = !!(sessionBenchE1rm && sessionBenchE1rm.rpeKnown
+        && sessionBenchE1rm.set.rpe >= MAX_EFFORT_RPE);
+      const storedCurrent = getCurrentBenchE1RM();
+      const current = sessionIsEffort ? sessionBenchE1rm
+        : (storedCurrent || sessionBenchE1rm || null);
+      const bestE1rm = current ? Math.round(current.e1rm * 10) / 10 : null;
+      const peak = history.reduce((a, b) => (!a || b.e1rm > a.e1rm ? b : a), null);
+      const peakE1rm = peak ? peak.e1rm : null;
 
       const next = getNextBenchMilestone(wk);
       // The November target: the attempt week the plan itself marks.
@@ -5244,6 +5366,11 @@ const COACH_HELP_TEXT =
         perExercise,
         sessionBenchE1rm,
         bestE1rm: bestE1rm ? Math.round(bestE1rm * 10) / 10 : null,
+        currentE1rm: current || null,
+        currentIsSession: sessionIsEffort,
+        currentFromMaxEffort: sessionIsEffort ? true : !!(storedCurrent && storedCurrent.fromMaxEffort),
+        peakE1rm: peakE1rm ? Math.round(peakE1rm * 10) / 10 : null,
+        peakWeek: peak ? peak.week : null,
         history,
         nextMilestone: next,
         target: targetEntry ? { week: target.week, load: targetEntry.load, goalLine: target.goalLine } : null,
@@ -5268,11 +5395,19 @@ const COACH_HELP_TEXT =
       // 0 kg means bodyweight — pull-ups, dips. "Pull-Ups 0 kg" reads as a bug.
       const loadLabel = (w) => (w === 0 ? 'bodyweight' : `${kg(w)} kg`);
       if (an.bestE1rm) {
-        const src = an.sessionBenchE1rm
-          ? `${an.sessionBenchE1rm.lift} ${an.sessionBenchE1rm.set.weight}×${an.sessionBenchE1rm.set.reps}`
-            + (an.sessionBenchE1rm.rpeKnown ? ` @RPE ${an.sessionBenchE1rm.set.rpe}` : ' (no RPE — read at face value)')
+        const c = an.currentE1rm;
+        const src = c
+          ? `${c.lift} ${c.set.weight}×${c.set.reps}`
+            + (c.rpeKnown ? ` @RPE ${c.set.rpe}` : ' (no RPE — read at face value)')
+            + (an.currentIsSession ? ', this session' : (c.week ? `, Wk ${c.week}` : ''))
           : 'your logged history';
-        out.push(`📐 Bench e1RM ~${kg(an.bestE1rm)} kg, from ${src}. Reps-in-reserve is folded in — an RPE 8 triple is not a max-effort triple.`);
+        out.push(`📐 Bench e1RM ~${kg(an.bestE1rm)} kg — your most recent maximal effort: ${src}. Reps-in-reserve is folded in; an RPE 8 triple is not a max-effort triple.`);
+        if (!an.currentFromMaxEffort) {
+          out.push(`⚠ Nothing logged at RPE ${MAX_EFFORT_RPE} or above, so that estimate is read off submaximal work. Log an RPE on a hard set and it stops being a guess.`);
+        }
+        if (an.peakE1rm && an.peakE1rm > an.bestE1rm + 0.5) {
+          out.push(`📉 Your peak estimate this epoch was ${kg(an.peakE1rm)} kg${an.peakWeek ? ` (Wk ${an.peakWeek})` : ''}. That is history, not your number today — the advice below is built on the ${kg(an.bestE1rm)} kg.`);
+        }
       }
       if (an.target && an.target.load) {
         if (an.gapToTarget === null) {
@@ -7800,13 +7935,18 @@ const COACH_HELP_TEXT =
       return suggestions;
     }
 
-    async function renderSessionLogger() {
+    async function renderSessionLogger(opts) {
       // Clear stale session-local globals from any previous session view
       window._intervals = [];
       window.getExercises = null;
       window._pendingSuggestions = {};
-      const wk = state.selectedWeek;
-      const day = SESSION_DAYS[state.selectedDayIndex];
+      // v1.28: optional explicit target, so a test can open the Friday slot of
+      // a given week. No argument means exactly the previous behaviour.
+      const o = opts || {};
+      const wk = (o.week !== undefined && o.week !== null) ? Number(o.week) : state.selectedWeek;
+      const dayIndex = (o.dayIndex !== undefined && o.dayIndex !== null)
+        ? Number(o.dayIndex) : state.selectedDayIndex;
+      const day = SESSION_DAYS[dayIndex];
       const data = WEEKS[wk];
       const planned = getPlanned(wk, day.key) || '';
       const sessionKey = sessionId(wk, day.key);
@@ -7841,15 +7981,26 @@ const COACH_HELP_TEXT =
       `;
 
       if (isRun) {
-        const isZone2 = day.key === 'easy' || day.key === 'longRun';
-        const isIntervals = day.key === 'quality' && planned && planned.includes('[INTERVALS]');
-        const isTempo    = day.key === 'quality' && planned && planned.includes('[TEMPO]');
+        // v1.28 — SEVENTH instance of this codebase's oldest defect: ask the
+        // data, not the container. v1.27 moved the second hard session into
+        // the Friday slot (key 'easy') and fixed three READERS, but this form
+        // still decided by slot name. Consequence on a Friday intervals day:
+        // no per-rep table at all, and isZone2 true, so the app ran Zone 2
+        // compliance nudges against a set of 400s. classifyRunSession is the
+        // one classifier every reader uses; the form uses it now too.
+        const runKind     = classifyRunSession(day.key, planned);
+        const isIntervals = /\[INTERVALS?\]/i.test(planned || '');
+        const isTempo     = /\[TEMPO\]/i.test(planned || '');
+        const isHardRun   = runKind === 'quality';
+        const isZone2     = runKind === 'easy' || runKind === 'long';
 
-        if (isIntervals) {
-          // Parse planned interval count & distance e.g. "6×400m"
-          const planMatch = planned.match(/(\d+)[×x](\S+)/);
-          const planCount = planMatch ? parseInt(planMatch[1]) : 4;
-          const planDist  = planMatch ? planMatch[2] : '';
+        if (isHardRun) {
+          // Planned rep count & distance, e.g. "6×400m" or "2×10 min". A
+          // continuous tempo states no multiplier, so it seeds a single rep
+          // rather than the old blind default of four.
+          const planMatch = planned.match(/(\d+)\s*[×x]\s*(\d+(?:[.,]\d+)?\s*(?:m|km|min|mins|minutes|s|sec)?)/i);
+          const planCount = planMatch ? parseInt(planMatch[1], 10) : (isTempo ? 1 : 4);
+          const planDist  = planMatch ? planMatch[2].replace(/\s+/g, '') : '';
           // Restore saved intervals or seed from plan
           let intervals = (savedData.intervals && savedData.intervals.length > 0)
             ? savedData.intervals
@@ -7900,7 +8051,7 @@ const COACH_HELP_TEXT =
 
           html += `
             <div class="card mb-12">
-              <div style="font-size:11px;font-weight:600;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:10px;letter-spacing:0.5px;">⚡ INTERVAL LOG</div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:10px;letter-spacing:0.5px;">⚡ ${isTempo && !isIntervals ? 'TEMPO LOG' : 'INTERVAL LOG'} · per rep</div>
               <div style="overflow-x:auto;">
                 <table style="width:100%;border-collapse:collapse;">
                   <thead>
@@ -7924,12 +8075,20 @@ const COACH_HELP_TEXT =
                 <input type="text" class="form-input" id="runKm" placeholder="e.g. 5.0" value="${savedData.runKm || ''}">
               </div>
               <div>
+                <div class="form-label">Avg Pace (/km)</div>
+                <input type="text" class="form-input" id="runPace" placeholder="e.g. 4:37" value="${savedData.runPace || ''}">
+              </div>
+            </div>
+            <div class="form-grid mb-12">
+              <div>
                 <div class="form-label">Avg HR (bpm)</div>
                 <input type="text" class="form-input" id="avgHR" placeholder="e.g. 168" value="${savedData.avgHR || ''}">
               </div>
+              <div>
+                <div class="form-label">Max HR (bpm)</div>
+                <input type="text" class="form-input" id="maxHR" placeholder="e.g. 181" value="${savedData.maxHR || ''}">
+              </div>
             </div>
-            <input type="hidden" id="runPace" value="${savedData.runPace || ''}">
-            <input type="hidden" id="maxHR" value="${savedData.maxHR || ''}">
             <div id="zoneCompliance"></div>
           `;
           // Defer binding until DOM is ready
@@ -7984,6 +8143,7 @@ const COACH_HELP_TEXT =
               ${bits.join('')}
             </div>`;
           })()}
+          <div id="suggestedLoads"></div>
           <div id="exerciseContainer"></div>
           <button class="add-exercise-btn" id="addExercise">+ Add Exercise</button>
           <div id="exerciseSuggestions" class="suggestions-dropdown hidden"></div>
@@ -8017,7 +8177,13 @@ const COACH_HELP_TEXT =
 
       if (isRun) {
         const avgHRInput = document.getElementById('avgHR');
-        const isZone2 = day.key === 'easy' || day.key === 'longRun';
+        // v1.28: a SECOND copy of the slot test lived here, shadowing the one
+        // above, so the live Zone 2 nudge still fired on whatever sat in the
+        // Friday slot — including a set of 400s. Same classifier as everywhere
+        // else. The duplication class that has produced a wrong conclusion
+        // six times now; this is the last copy in this function.
+        const zoneKind = classifyRunSession(day.key, planned);
+        const isZone2 = zoneKind === 'easy' || zoneKind === 'long';
         
         avgHRInput.addEventListener('input', () => {
           if (isZone2 && avgHRInput.value) {
@@ -8211,6 +8377,42 @@ const COACH_HELP_TEXT =
         }
         window._planDelta = planDelta;
 
+        // v1.28, his request: the suggested weight, with the RPE to hit,
+        // readable at the top of the workout instead of one line per card
+        // halfway down. Suggestion and RPE come from the same places the
+        // per-exercise line uses — the one e1RM estimate, and the plan's own
+        // stated RPE — so the two can never disagree.
+        function renderSuggestedLoads() {
+          const host = document.getElementById('suggestedLoads');
+          if (!host) return;
+          const ladder = parseBenchLadderWeek(wk);
+          const rpeByLift = new Map();
+          if (ladder) ladder.entries.forEach(e => {
+            if (e.targetRpe !== null) rpeByLift.set(exPRKey(e.lift), e.targetRpe);
+          });
+          const rows = exercises.map(ex => {
+            const targetReps = ex.sets && ex.sets[0] && ex.sets[0].targetReps
+              ? (parseInt(ex.sets[0].targetReps, 10) || null) : null;
+            const sug = getExerciseSuggestion(ex.name, targetReps);
+            const key = exPRKey(ex.name);
+            const rpe = rpeByLift.has(key) ? rpeByLift.get(key)
+              : plannedTargetRpe(planned, ex.name);
+            if (!sug || !sug.suggested) return null;
+            return { name: ex.name, kg: sug.suggested, reps: targetReps, rpe };
+          }).filter(Boolean);
+          if (!rows.length) { host.innerHTML = ''; return; }
+          host.innerHTML = `
+            <div class="card mb-12" id="suggestedLoadsCard">
+              <div style="font-size:11px;font-weight:600;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:8px;letter-spacing:0.5px;">🎚 SUGGESTED LOADS</div>
+              ${rows.map(r => `
+                <div data-suggest-row="${escapeHtml(r.name)}" style="display:flex;justify-content:space-between;gap:10px;font-family:'DM Mono',monospace;font-size:11px;padding:3px 0;">
+                  <span style="color:var(--text-sub);">${escapeHtml(r.name)}</span>
+                  <span style="color:var(--accent);white-space:nowrap;"><strong>${r.kg} kg</strong>${r.reps ? ' × ' + r.reps : ''}${r.rpe !== null && r.rpe !== undefined ? ' @ RPE ' + r.rpe : ''}</span>
+                </div>`).join('')}
+              <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:8px;line-height:1.5;">From your most recent maximal effort. RPE is what the plan asks for — where it states one.</div>
+            </div>`;
+        }
+
         function renderExercises() {
           const container = document.getElementById('exerciseContainer');
           container.innerHTML = exercises.map((ex, exIdx) => `
@@ -8223,7 +8425,8 @@ const COACH_HELP_TEXT =
                     const targetReps = ex.sets[0]?.targetReps ? parseInt(ex.sets[0].targetReps) || null : null;
                     const sug = getExerciseSuggestion(ex.name, targetReps);
                     if (!sug) return '';
-                    const sugText = sug.suggested ? ` · suggest <strong>${sug.suggested} kg</strong>${targetReps ? ' for ' + targetReps + ' reps' : ''}` : '';
+                    const sugRpe = plannedTargetRpe(planned, ex.name);
+                    const sugText = sug.suggested ? ` · suggest <strong>${sug.suggested} kg</strong>${targetReps ? ' for ' + targetReps + ' reps' : ''}${sugRpe !== null ? ' @ RPE ' + sugRpe : ''}` : '';
                     const lastText = sug.last ? `Last: ${sug.last.w} kg × ${sug.last.r}${sug.last.rpe ? ' @ RPE ' + sug.last.rpe : ''}` : '';
                     return `<div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:3px;">${lastText}${sugText}</div>`;
                   })()}
@@ -8296,7 +8499,7 @@ const COACH_HELP_TEXT =
               let val = input.value.replace(',', '.').trim();
               if (!val) return;
               exercises[exIdx].sets.forEach(s => { s.weight = val; delete s.seeded; });
-              renderExercises();
+              renderExercises(); renderSuggestedLoads();
             });
           });
 
@@ -8317,7 +8520,7 @@ const COACH_HELP_TEXT =
                 return;
               }
               exercises[exIdx].sets.forEach(s => { s.reps = String(reps); delete s.seeded; });
-              renderExercises();
+              renderExercises(); renderSuggestedLoads();
             });
             input.addEventListener('input', () => {
               if (input.dataset.bulkRepsInvalid) {
@@ -8340,7 +8543,7 @@ const COACH_HELP_TEXT =
                 weight: '', 
                 rpe: '' 
               });
-              renderExercises();
+              renderExercises(); renderSuggestedLoads();
             });
           });
           
@@ -8350,7 +8553,7 @@ const COACH_HELP_TEXT =
               const [exIdx, setIdx] = btn.dataset.removeSet.split('-').map(Number);
               if (exercises[exIdx].sets.length > 1) {
                 exercises[exIdx].sets.splice(setIdx, 1);
-                renderExercises();
+                renderExercises(); renderSuggestedLoads();
               }
             });
           });
@@ -8361,7 +8564,7 @@ const COACH_HELP_TEXT =
               const exIdx = parseInt(btn.dataset.removeEx);
               if (exercises.length > 1) {
                 exercises.splice(exIdx, 1);
-                renderExercises();
+                renderExercises(); renderSuggestedLoads();
               }
             });
           });
@@ -8370,7 +8573,7 @@ const COACH_HELP_TEXT =
           bindSaveExButtons();
         }
 
-        renderExercises();
+        renderExercises(); renderSuggestedLoads();
         
         // Save individual exercise buttons
         function bindSaveExButtons() {
@@ -8489,7 +8692,7 @@ const COACH_HELP_TEXT =
           });
           
           hideSuggestions();
-          renderExercises();
+          renderExercises(); renderSuggestedLoads();
         }
         
         addExerciseBtn.addEventListener('click', () => {
@@ -8625,8 +8828,12 @@ const COACH_HELP_TEXT =
           window._runAnalysis = runAnalysis;
           runCoachLines(runAnalysis).forEach(l => feedback.push(l));
 
-          const isZone2 = day.key === 'easy' || day.key === 'longRun';
-          const isQuality = day.key === 'quality';
+          // v1.28: third copy of the slot test, in the coach's own feedback.
+          // On a Friday intervals day it told him RPE 8 was "high for an easy
+          // run". Classified, like everything else.
+          const fbKind = classifyRunSession(day.key, planned);
+          const isZone2 = fbKind === 'easy' || fbKind === 'long';
+          const isQuality = fbKind === 'quality';
 
           if (rpe !== null) {
             if (isZone2 && rpe > 6) feedback.push(`⚠️ RPE ${rpe} is high for an easy/long run — should feel like a 4–5. If it felt hard, you went too fast or are under-recovered.`);
