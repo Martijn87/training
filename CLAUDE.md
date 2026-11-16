@@ -157,8 +157,9 @@ cite it as a build.
    `claude/sw-current.js`, `claude/regression.mjs`; copy the two build files to
    `index.html` and `sw.js` at the repo root; prepend a CHANGELOG entry and
    update line 3. Run `--state` again — it must exit 0.
-6. **Commit and push all of it in one commit.** The push is what makes the build
-   real. Then mirror the changed files to the claude.ai Project.
+6. **Write the build into the repo, then hand him the push.** See "How a build
+   reaches the repo" below. The push is what makes the build real, and it is
+   his action, not yours.
 7. **Gate-only changes are not builds.** A change touching `regression.mjs` and
    no shipped file gets a dated `## GATE —` entry and updates `GATE:`, leaving
    `CURRENT:`, the rollback and the deployed files alone. Prove the shipped
